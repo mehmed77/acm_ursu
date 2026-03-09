@@ -1,0 +1,1259 @@
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import Editor from '@monaco-editor/react';
+import { contestsApi } from '../api/contests';
+import { submissionApi } from '../api/submissions'; // Custom check submission
+import { useAuthStore } from '../store/authStore';
+
+/* ═══ COUNTDOWN HOOK ═══════════════════ */
+function useCountdown(target) {
+    const [left, setLeft] = useState({ h: 0, m: 0, s: 0 });
+    useEffect(() => {
+        if (!target) return;
+        const tick = () => {
+            const diff = Math.max(0, new Date(target) - Date.now());
+            setLeft({
+                h: Math.floor(diff / 3600000),
+                m: Math.floor((diff % 3600000) / 60000),
+                s: Math.floor((diff % 60000) / 1000),
+            });
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [target]);
+    return left;
+}
+
+const STARTERS = {
+    python: '# Python 3\nimport sys\ninput = sys.stdin.readline\n\n',
+    cpp: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}\n',
+    java: 'import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        \n    }\n}\n',
+    csharp: 'using System;\n\nclass Solution {\n    static void Main() {\n        \n    }\n}',
+};
+
+const LANGS = [
+    { value: 'python', label: 'Python 3' },
+    { value: 'cpp', label: 'C++ 17' },
+    { value: 'java', label: 'Java' },
+    { value: 'csharp', label: 'C#' },
+];
+
+export default function ContestDetail() {
+    const { slug } = useParams();
+    const navigate = useNavigate();
+    const isAuth = useAuthStore(s => s.isAuthenticated);
+    const currentUser = useAuthStore(s => s.user);
+
+    const handleEditorBeforeMount = (monaco) => {
+        monaco.editor.defineTheme('judge-dark', {
+            base: 'vs-dark', inherit: true,
+            rules: [
+                { token: 'comment', foreground: '4a4a6a', fontStyle: 'italic' },
+                { token: 'keyword', foreground: '8b5cf6' },
+                { token: 'string', foreground: '10b981' },
+                { token: 'number', foreground: 'f59e0b' },
+                { token: 'function', foreground: '6366f1' },
+                { token: 'type', foreground: '818cf8' },
+            ],
+            colors: {
+                'editor.background': '#111122',
+                'editor.foreground': '#e0e0ff',
+                'editor.lineHighlightBackground': '#0e0e1a',
+                'editor.selectionBackground': '#6366f130',
+                'editorLineNumber.foreground': '#2a2a4a',
+                'editorLineNumber.activeForeground': '#6366f1',
+                'editorCursor.foreground': '#6366f1',
+                'editor.findMatchBackground': '#6366f140',
+                'editorBracketMatch.background': '#6366f120',
+                'editorBracketMatch.border': '#6366f160',
+                'editorWidget.background': '#0e0e1a',
+                'editorSuggestWidget.background': '#0e0e1a',
+                'scrollbarSlider.background': '#ffffff10',
+                'scrollbarSlider.hoverBackground': '#ffffff20',
+            },
+        });
+    };
+    const [contest, setContest] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedProblem, setSelectedProblem] = useState(0);
+    const [lang, setLang] = useState('cpp');
+    const [code, setCode] = useState(STARTERS.cpp);
+
+    // Submissions and UI state
+    const [submitting, setSubmitting] = useState(false);
+    const [submitState, setSubmitState] = useState('idle'); // 'idle' | 'running' | 'done' | 'error'
+    const [submitResult, setSubmitResult] = useState(null);
+    const [mySubmissions, setMySubmissions] = useState([]);
+    const [ratingChange, setRatingChange] = useState(null); // Keep for backwards compat
+    const [ratingData, setRatingData] = useState(null);
+    const [ratingLoading, setRatingLoading] = useState(false);
+    const pollingRef = useRef(null);
+
+    const [registering, setRegistering] = useState(false);
+    const [teamName, setTeamName] = useState('');
+    const [inviteCode, setInviteCode] = useState('');
+    const textareaRef = useRef(null);
+
+    const fetchContest = useCallback(async () => {
+        try {
+            const res = await contestsApi.getDetail(slug);
+            setContest(res.data);
+            document.title = `${res.data.title} — OnlineJudge`;
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
+    }, [slug]);
+
+    const fetchMySubmissions = useCallback(async () => {
+        if (!isAuth) return;
+        try {
+            const res = await contestsApi.getMySubmissions(slug);
+            setMySubmissions(res.data);
+        } catch (err) { console.error(err); }
+    }, [slug, isAuth]);
+
+    const loadRatingData = useCallback(async () => {
+        try {
+            const { data } = await contestsApi.getRating(slug);
+            setRatingData(data);
+
+            if (data?.available) {
+                // Find current user's rating change
+                const u = useAuthStore.getState().user;
+                if (u) {
+                    const myR = data.changes?.find(c => c.username === u.username);
+                    if (myR) setRatingChange(myR);
+                }
+                clearInterval(pollingRef.current);
+                pollingRef.current = null;
+            }
+        } catch (err) { console.error(err); }
+    }, [slug]);
+
+    useEffect(() => {
+        fetchContest();
+        fetchMySubmissions();
+        // Initial rating load
+        loadRatingData();
+    }, [fetchContest, fetchMySubmissions, loadRatingData]);
+
+    useEffect(() => {
+        if (contest?.status === 'finished' && contest?.is_rated) {
+            loadRatingData();
+            // Har 10 soniyada tekshirish (rating hisoblangunicha)
+            pollingRef.current = setInterval(() => {
+                loadRatingData();
+            }, 10000);
+        }
+
+        return () => {
+            if (pollingRef.current) {
+                clearInterval(pollingRef.current);
+            }
+        };
+    }, [contest?.status, contest?.is_rated, loadRatingData]);
+
+    // Right Sidebar Auto-refresh submissions
+    useEffect(() => {
+        if (!contest || !(contest.status === 'running' || contest.status === 'frozen')) return;
+        const id = setInterval(fetchMySubmissions, 5000);
+        return () => clearInterval(id);
+    }, [contest, fetchMySubmissions]);
+
+    // Countdown target
+    const countdownTarget = contest?.status === 'upcoming' ? contest.start_time
+        : contest?.status === 'running' || contest?.status === 'frozen' ? contest.end_time : null;
+    const countdown = useCountdown(countdownTarget);
+
+    // Derived contest data
+    const userEntry = contest?.user_entry;
+    const probResults = userEntry?.problem_results || {};
+    const userStats = useMemo(() => {
+        if (!userEntry) return null;
+        const solved = Object.values(probResults).filter(p => p.solved).length;
+        const total = contest?.problem_count || 0;
+        const penalty = userEntry?.penalty || 0;
+        const rank = userEntry?.rank || '—';
+        return { solved, total, penalty, rank, pr: probResults };
+    }, [userEntry, contest, probResults]);
+    const handleLangChange = (newLang) => {
+        setLang(newLang);
+        if (code === '' || Object.values(STARTERS).includes(code)) {
+            setCode(STARTERS[newLang] || '');
+        }
+    };
+
+    const handleRegister = async (isVirtual = false) => {
+        if (!isAuth) { navigate('/login'); return; }
+        setRegistering(true);
+        try {
+            await contestsApi.register(slug, { is_virtual: isVirtual });
+            await fetchContest();
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Xatolik');
+        } finally { setRegistering(false); }
+    };
+
+    const handleCreateTeam = async () => {
+        if (!teamName.trim()) return;
+        try {
+            const res = await contestsApi.createTeam(slug, { name: teamName });
+            alert(`Team yaratildi! Invite code: ${res.data.invite_code}`);
+            await fetchContest();
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Xatolik');
+        }
+    };
+
+    const handleJoinTeam = async () => {
+        if (!inviteCode.trim()) return;
+        try {
+            await contestsApi.joinTeam(slug, { invite_code: inviteCode });
+            await fetchContest();
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Xatolik');
+        }
+    };
+
+    const pollSubmission = async (subId) => {
+        setSubmitState('running');
+        let attempts = 0;
+
+        const poll = async () => {
+            try {
+                const { data } = await submissionApi.getDetail(subId);
+                if (['PENDING', 'RUNNING'].includes(data.status.toUpperCase())) {
+                    attempts++;
+                    if (attempts < 60) {
+                        setTimeout(poll, 1500);
+                    } else {
+                        setSubmitState('error');
+                        setSubmitResult({ error: 'Timeout' });
+                    }
+                    return;
+                }
+                // Final status
+                setSubmitResult(data);
+                setSubmitState('done');
+
+                // Tab rangi yangilash uchun
+                fetchContest();
+                fetchMySubmissions();
+
+            } catch (err) {
+                setSubmitState('error');
+                setSubmitResult({ error: err.response?.data?.detail || 'Xato' });
+            }
+        };
+        poll();
+    };
+
+    const handleSubmit = async () => {
+        if (!contest?.problems?.length) return;
+        const prob = contest.problems[selectedProblem];
+        setSubmitting(true);
+        setSubmitState('idle');
+        setSubmitResult(null);
+        try {
+            const res = await contestsApi.submit(slug, prob.label, { code, language: lang });
+            pollSubmission(res.data.submission_id);
+        } catch (err) {
+            setSubmitState('error');
+            setSubmitResult({ error: err.response?.data?.detail || 'Xatolik yuz berdi' });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Rating Animation
+    const [displayRating, setDisplayRating] = useState(ratingChange?.old_rating || 0);
+    useEffect(() => {
+        if (!ratingChange) return;
+        const start = ratingChange.old_rating;
+        const end = ratingChange.new_rating;
+        const dur = 1200;
+        const startTime = performance.now();
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / dur, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            setDisplayRating(Math.round(start + (end - start) * ease));
+            if (progress < 1) requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+    }, [ratingChange]);
+
+    if (loading) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+            <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#6366f1',
+                animation: 'spin 0.8s linear infinite',
+            }} />
+        </div>
+    );
+    if (!contest) return (
+        <div style={{ textAlign: 'center', padding: '80px 0', color: '#55556a' }}>Kontest topilmadi</div>
+    );
+
+    const sc = {
+        upcoming: { color: '#f59e0b', label: 'KUTILMOQDA' },
+        running: { color: '#10b981', label: 'LIVE' },
+        frozen: { color: '#3b82f6', label: 'FROZEN' },
+        finished: { color: '#6b7280', label: 'TUGADI' },
+        draft: { color: '#6b7280', label: 'DRAFT' },
+    }[contest.status] || { color: '#6b7280', label: contest.status };
+
+    const problems = contest.problems || [];
+    const currentProblem = problems[selectedProblem];
+
+    const countdownColor = countdown.h === 0 && countdown.m < 10 ? '#ef4444'
+        : countdown.h === 0 ? '#f59e0b' : '#10b981';
+
+    // Status Tab Design
+    const getProblemStatus = (label) => {
+        if (!userEntry?.problem_results) return 'none';
+        const pr = userEntry.problem_results[label];
+        if (!pr) return 'none';
+        if (pr.solved) return 'accepted';
+        if (pr.attempts > 0) return 'wrong';
+        if (pr.frozen_attempts > 0) return 'pending';
+        return 'none';
+    };
+
+    const TAB_STATUS = {
+        accepted: { color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.30)', icon: '✓' },
+        wrong: { color: '#ef4444', bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.25)', icon: '✗' },
+        pending: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.25)', icon: '•' },
+        none: { color: '#3a3a5a', bg: 'transparent', border: 'rgba(255,255,255,0.08)', icon: null },
+    };
+
+    return (
+        <div style={{ maxWidth: 1300, margin: '0 auto', padding: '24px 20px' }}>
+            {/* ── BIRINCHI QATOR: Breadcrumb + Meta ── */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '8px',
+            }}>
+                {/* Breadcrumb */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '12px',
+                    color: '#3a3a5a',
+                }}>
+                    <span
+                        onClick={() => navigate('/contests')}
+                        style={{ cursor: 'pointer', color: '#4a4a6a' }}
+                        onMouseEnter={e => e.target.style.color = '#a5b4fc'}
+                        onMouseLeave={e => e.target.style.color = '#4a4a6a'}
+                    >
+                        Musobaqalar
+                    </span>
+                    <span>/</span>
+                    <span style={{ color: '#6b7280' }}>
+                        {contest.title}
+                    </span>
+                </div>
+
+                {/* O'ng: Ishtirokchilar + Scoreboard link */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '12px', color: '#3a3a5a' }}>
+                        👥 {contest.reg_count || 0} ta ishtirokchi
+                    </span>
+                    <button
+                        onClick={() => navigate(`/contests/${slug}/scoreboard`)}
+                        style={{
+                            height: '30px',
+                            padding: '0 14px',
+                            borderRadius: '7px',
+                            background: 'rgba(99,102,241,0.10)',
+                            border: '1px solid rgba(99,102,241,0.25)',
+                            color: '#a5b4fc',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        🏆 Natijalar jadvali
+                    </button>
+                </div>
+            </div>
+
+            {/* ── IKKINCHI QATOR: Title + Badges + Countdown ── */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '14px',
+                gap: '16px',
+            }}>
+                {/* Chap: Title + badges */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                    flex: 1,
+                    minWidth: 0,
+                }}>
+                    <h1 style={{
+                        fontSize: '20px',
+                        fontWeight: '800',
+                        color: '#f0f0ff',
+                        margin: 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}>
+                        {contest.title}
+                    </h1>
+
+                    {/* Status badge */}
+                    {contest.status === 'running' && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            background: 'rgba(16,185,129,0.10)',
+                            border: '1px solid rgba(16,185,129,0.25)',
+                            borderRadius: '100px',
+                            padding: '3px 10px',
+                        }}>
+                            <div style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                boxShadow: '0 0 6px #10b981',
+                                animation: 'pulse 2s infinite',
+                            }} />
+                            <span style={{
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                color: '#10b981',
+                            }}>
+                                JONLI
+                            </span>
+                        </div>
+                    )}
+
+                    {contest.is_rated && (
+                        <span style={{
+                            background: 'rgba(99,102,241,0.10)',
+                            border: '1px solid rgba(99,102,241,0.25)',
+                            borderRadius: '100px',
+                            padding: '3px 10px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: '#a5b4fc',
+                        }}>
+                            Reytingli
+                        </span>
+                    )}
+
+                    {contest.is_team && (
+                        <span style={{
+                            background: 'rgba(245,158,11,0.10)',
+                            border: '1px solid rgba(245,158,11,0.25)',
+                            borderRadius: '100px',
+                            padding: '3px 10px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: '#f59e0b',
+                        }}>
+                            Jamoaviy
+                        </span>
+                    )}
+                </div>
+
+                {/* O'ng: INLINE COUNTDOWN */}
+                {countdownTarget && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${countdown.h === 0 && countdown.m < 10
+                            ? 'rgba(239,68,68,0.30)'
+                            : countdown.h === 0
+                                ? 'rgba(245,158,11,0.25)'
+                                : 'rgba(255,255,255,0.08)'
+                            }`,
+                        borderRadius: '10px',
+                        padding: '6px 14px',
+                        flexShrink: 0,
+                    }}>
+                        <span style={{
+                            fontSize: '11px',
+                            color: '#4a4a6a',
+                            marginRight: '6px',
+                            whiteSpace: 'nowrap',
+                        }}>
+                            {contest.status === 'upcoming'
+                                ? 'Boshlanishiga:'
+                                : 'Tugashiga:'}
+                        </span>
+
+                        {/* HH:MM:SS inline */}
+                        {[
+                            { val: countdown.h, label: 'soat' },
+                            { val: countdown.m, label: 'min' },
+                            { val: countdown.s, label: 'sek' },
+                        ].map((t, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 && (
+                                    <span style={{
+                                        color: '#2a2a4a',
+                                        fontSize: '16px',
+                                        fontWeight: '300',
+                                        margin: '0 2px',
+                                    }}>
+                                        :
+                                    </span>
+                                )}
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{
+                                        fontSize: '22px',
+                                        fontWeight: '800',
+                                        fontFamily: "'JetBrains Mono', monospace",
+                                        color: countdown.h === 0 && countdown.m < 10
+                                            ? '#ef4444'
+                                            : countdown.h === 0
+                                                ? '#f59e0b'
+                                                : '#10b981',
+                                        lineHeight: 1,
+                                        minWidth: '32px',
+                                    }}>
+                                        {String(t.val).padStart(2, '0')}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '9px',
+                                        color: '#2a2a4a',
+                                        marginTop: '2px',
+                                    }}>
+                                        {t.label}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Two column layout */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
+
+                {/* LEFT PANEL */}
+                <div>
+                    {/* Problem tabs */}
+                    {problems.length > 0 && (
+                        <>
+                            {/* ── UCHINCHI QATOR: Problem tabs ── */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                flexWrap: 'wrap',
+                                marginBottom: '16px',
+                            }}>
+                                {problems.map((prob, i) => {
+                                    const status = getProblemStatus(prob.label);
+                                    const tabStyle = TAB_STATUS[status];
+                                    const isActive = i === selectedProblem;
+                                    const pr = probResults[prob.label];
+
+                                    return (
+                                        <div
+                                            key={prob.label}
+                                            onClick={() => { setSelectedProblem(i); setSubmitState('idle'); setSubmitResult(null); }}
+                                            title={pr ? `${prob.label}: ${prob.title} — ${pr.solved ? `Accepted (+${pr.time} min, -${pr.attempts - 1} WA)` : `${pr.attempts} ta urinish (WA)`}` : `${prob.label}: ${prob.title}`}
+                                            style={{
+                                                position: 'relative',
+                                                width: '48px',
+                                                height: '40px',
+                                                borderRadius: '8px',
+                                                border: `1px solid ${isActive ? '#6366f1' : tabStyle.border
+                                                    }`,
+                                                background: isActive
+                                                    ? 'rgba(99,102,241,0.15)'
+                                                    : tabStyle.bg,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '2px',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        >
+                                            <span style={{
+                                                fontSize: '14px',
+                                                fontWeight: '700',
+                                                color: isActive
+                                                    ? '#a5b4fc'
+                                                    : (tabStyle.icon ? tabStyle.color : '#6b7280'),
+                                                lineHeight: 1,
+                                            }}>
+                                                {prob.label}
+                                            </span>
+                                            {tabStyle.icon && (
+                                                <span style={{
+                                                    fontSize: '9px',
+                                                    fontWeight: '800',
+                                                    color: tabStyle.color,
+                                                    lineHeight: 1,
+                                                }}>
+                                                    {tabStyle.icon}
+                                                </span>
+                                            )}
+                                            {isActive && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: 0,
+                                                    left: '20%',
+                                                    right: '20%',
+                                                    height: '2px',
+                                                    borderRadius: '2px 2px 0 0',
+                                                    background:
+                                                        'linear-gradient(90deg,#6366f1,#8b5cf6)',
+                                                }} />
+                                            )}
+                                        </div>
+                                    )
+                                })}
+
+                                {/* Contest meta — tabs yonida */}
+                                <div style={{
+                                    marginLeft: 'auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '14px',
+                                    fontSize: '12px',
+                                    color: '#3a3a5a',
+                                }}>
+                                    <span>
+                                        📅 {new Date(contest.start_time).toLocaleDateString('uz-UZ')} {new Date(contest.start_time).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <span>⏱ {contest.duration_min || 0} daqiqa</span>
+                                </div>
+                            </div>
+
+                            {/* Problem content */}
+                            {currentProblem && (
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.02)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: 14, padding: 24,
+                                }}>
+                                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f0f0ff', marginBottom: 4 }}>
+                                        {currentProblem.label}. {currentProblem.title}
+                                    </h2>
+                                    <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 12, color: '#6b7280' }}>
+                                        <span>⏱ {currentProblem.time_limit}s</span>
+                                        <span>💾 {currentProblem.memory_limit}MB</span>
+                                    </div>
+
+                                    <div className="prose prose-invert" style={{ maxWidth: 'none', fontSize: 14, lineHeight: 1.7, color: '#9898bb' }}>
+                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.description || ''}</ReactMarkdown>
+
+                                        {currentProblem.input_format && (
+                                            <>
+                                                <h3 style={{ fontSize: 15, color: '#f0f0ff', marginTop: 20 }}>Kirish formati</h3>
+                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.input_format}</ReactMarkdown>
+                                            </>
+                                        )}
+                                        {currentProblem.output_format && (
+                                            <>
+                                                <h3 style={{ fontSize: 15, color: '#f0f0ff', marginTop: 20 }}>Chiqish formati</h3>
+                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.output_format}</ReactMarkdown>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Samples */}
+                                    {currentProblem.samples?.length > 0 && (
+                                        <div style={{ marginTop: 20 }}>
+                                            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f0f0ff', marginBottom: 10 }}>Misollar</h3>
+                                            {currentProblem.samples.map((s, i) => (
+                                                <div key={i} style={{
+                                                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12,
+                                                }}>
+                                                    <div>
+                                                        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4, fontWeight: 600 }}>Kirish #{i + 1}</div>
+                                                        <pre style={{
+                                                            background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.06)',
+                                                            borderRadius: 8, padding: 12, fontSize: 13, color: '#e8e8f0',
+                                                            fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'pre-wrap',
+                                                            margin: 0,
+                                                        }}>{s.input}</pre>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4, fontWeight: 600 }}>Chiqish #{i + 1}</div>
+                                                        <pre style={{
+                                                            background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.06)',
+                                                            borderRadius: 8, padding: 12, fontSize: 13, color: '#e8e8f0',
+                                                            fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'pre-wrap',
+                                                            margin: 0,
+                                                        }}>{s.output}</pre>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Code editor */}
+                                    {contest.registered && (contest.status === 'running' || contest.status === 'frozen') && (
+                                        <div style={{ marginTop: 24 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f0ff' }}>Yechim</span>
+                                                <select
+                                                    value={lang}
+                                                    onChange={e => handleLangChange(e.target.value)}
+                                                    style={{
+                                                        padding: '4px 10px', borderRadius: 6, fontSize: 12,
+                                                        background: '#13131f !important', color: '#9898bb !important',
+                                                        border: '1px solid rgba(255,255,255,0.10) !important',
+                                                        width: 'auto',
+                                                    }}
+                                                >
+                                                    {LANGS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                                                </select>
+                                            </div>
+                                            <div style={{
+                                                height: 380, width: '100%',
+                                                border: '1px solid rgba(255,255,255,0.10)',
+                                                borderRadius: 10, overflow: 'hidden'
+                                            }}>
+                                                <Editor
+                                                    height="100%"
+                                                    language={lang === 'cpp' ? 'cpp' : lang}
+                                                    value={code}
+                                                    onChange={(val) => setCode(val || '')}
+                                                    theme="judge-dark"
+                                                    beforeMount={handleEditorBeforeMount}
+                                                    options={{
+                                                        fontSize: 14, fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontLigatures: true,
+                                                        minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: 'on', glyphMargin: false,
+                                                        folding: true, lineDecorationsWidth: 8, lineNumbersMinChars: 3, renderLineHighlight: 'line',
+                                                        cursorBlinking: 'smooth', cursorSmoothCaretAnimation: 'on', smoothScrolling: true,
+                                                        padding: { top: 16, bottom: 16 }, bracketPairColorization: { enabled: true },
+                                                        autoIndent: 'full', formatOnPaste: true, tabSize: 4, wordWrap: 'off',
+                                                        scrollbar: { vertical: 'visible', horizontal: 'visible', verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                                                <button
+                                                    onClick={handleSubmit}
+                                                    disabled={submitting || !code.trim() || submitState === 'running'}
+                                                    style={{
+                                                        padding: '10px 24px', borderRadius: 8,
+                                                        background: submitting ? 'rgba(99,102,241,0.3)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                                        border: 'none', color: 'white', fontSize: 14, fontWeight: 700,
+                                                        cursor: (submitting || submitState === 'running') ? 'wait' : 'pointer',
+                                                        boxShadow: submitting ? 'none' : '0 0 16px rgba(99,102,241,0.3)',
+                                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6,
+                                                    }}
+                                                >
+                                                    {submitState === 'running' || submitting ? (
+                                                        <span style={{
+                                                            width: 14, height: 14, borderRadius: '50%',
+                                                            border: '2px solid rgba(255,255,255,0.3)',
+                                                            borderTopColor: 'white', animation: 'spin 0.6s linear infinite',
+                                                        }} />
+                                                    ) : '⚡'} Yuborish — {currentProblem.label}
+                                                </button>
+                                            </div>
+
+                                            {/* RICH SUBMISSION FEEDBACK PANEL */}
+                                            {submitState !== 'idle' && (
+                                                <div style={{
+                                                    marginTop: 16, borderRadius: 10, padding: '14px 18px',
+                                                    background: submitState === 'running' ? 'rgba(245,158,11,0.05)'
+                                                        : submitResult?.status === 'ACCEPTED' ? 'rgba(16,185,129,0.08)'
+                                                            : submitState === 'error' || submitResult?.status === 'WRONG_ANSWER' || submitResult?.status?.includes('ERROR') ? 'rgba(239,68,68,0.06)'
+                                                                : 'rgba(255,255,255,0.05)',
+                                                    border: `1px solid ${submitState === 'running' ? 'rgba(245,158,11,0.2)'
+                                                        : submitResult?.status === 'ACCEPTED' ? 'rgba(16,185,129,0.25)'
+                                                            : submitState === 'error' || submitResult?.status === 'WRONG_ANSWER' || submitResult?.status?.includes('ERROR') ? 'rgba(239,68,68,0.20)'
+                                                                : 'rgba(255,255,255,0.1)'
+                                                        }`
+                                                }}>
+                                                    {submitState === 'running' && (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#f59e0b', fontWeight: 600 }}>
+                                                            <div style={{ width: 16, height: 16, border: '2px solid rgba(245,158,11,0.3)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                                            ⚙️ Tekshirilmoqda... Kutib turing
+                                                        </div>
+                                                    )}
+                                                    {submitState === 'error' && (
+                                                        <div style={{ color: '#ef4444', fontWeight: 600 }}>
+                                                            ❌ Xatolik: {submitResult?.error}
+                                                        </div>
+                                                    )}
+                                                    {submitState === 'done' && submitResult && (
+                                                        <div>
+                                                            {submitResult.status === 'ACCEPTED' && (
+                                                                <>
+                                                                    <div style={{ color: '#10b981', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>✅ Accepted</div>
+                                                                    <div style={{ color: '#a7f3d0', fontSize: 13, marginBottom: 8 }}>{currentProblem.label} masalasi muvaffaqiyatli yechildi!</div>
+                                                                    <div style={{ fontSize: 12, color: '#ecfdf5', opacity: 0.8, display: 'flex', gap: 12 }}>
+                                                                        <span>Vaqt: {submitResult.time_used}ms</span>
+                                                                        <span>Xotira: {submitResult.memory_used}MB</span>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            {submitResult.status === 'WRONG_ANSWER' && (
+                                                                <>
+                                                                    <div style={{ color: '#ef4444', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>❌ Wrong Answer</div>
+                                                                    <div style={{ color: '#fca5a5', fontSize: 13 }}>Testlarda xatolik mavjud. Qayta urinib ko'ring.</div>
+                                                                    <div style={{ fontSize: 12, marginTop: 4, color: '#fee2e2', opacity: 0.8 }}>Vaqt: {submitResult.time_used}ms</div>
+                                                                </>
+                                                            )}
+                                                            {submitResult.status === 'TIME_LIMIT_EXCEEDED' && (
+                                                                <>
+                                                                    <div style={{ color: '#f59e0b', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>⏱ Time Limit Exceeded</div>
+                                                                    <div style={{ color: '#fde68a', fontSize: 13 }}>Vaqt chegarasidan oshib ketdi ({currentProblem.time_limit}s).</div>
+                                                                </>
+                                                            )}
+                                                            {submitResult.status === 'COMPILATION_ERROR' && (
+                                                                <>
+                                                                    <div style={{ color: '#f97316', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>🔧 Compilation Error</div>
+                                                                    <div style={{ color: '#fdba74', fontSize: 13 }}>Sintaktik xatolik mavjud.</div>
+                                                                    <pre style={{ mt: 8, p: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 4, fontSize: 11, color: '#ffedd5', overflowX: 'auto' }}>
+                                                                        {submitResult.error_message || 'Xato matni yo\'q'}
+                                                                    </pre>
+                                                                </>
+                                                            )}
+                                                            {submitResult.status === 'RUNTIME_ERROR' && (
+                                                                <>
+                                                                    <div style={{ color: '#ef4444', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>💥 Runtime Error</div>
+                                                                    <div style={{ color: '#fca5a5', fontSize: 13 }}>Dastur ishlash vaqtida qulab tushdi.</div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* No problems yet */}
+                    {problems.length === 0 && (
+                        <div style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: '40px 20px', textAlign: 'center',
+                        }}>
+                            {contest.status === 'upcoming' ? (
+                                <>
+                                    <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔒</span>
+                                    <p style={{ color: '#6b7280', fontSize: 14 }}>
+                                        Masalalar kontest boshlanganidan keyin ko'rinadi
+                                    </p>
+                                </>
+                            ) : !contest.registered ? (
+                                <>
+                                    <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔐</span>
+                                    <p style={{ color: '#6b7280', fontSize: 14 }}>
+                                        Masalalarni ko'rish uchun ro'yxatdan o'ting
+                                    </p>
+                                </>
+                            ) : (
+                                <p style={{ color: '#6b7280', fontSize: 14 }}>Masalalar mavjud emas</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Description */}
+                    {contest.description && (
+                        <div style={{
+                            marginTop: 20, background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: 24,
+                        }}>
+                            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f0f0ff', marginBottom: 12 }}>Tavsif</h3>
+                            <div className="prose prose-invert" style={{ maxWidth: 'none', fontSize: 14, color: '#9898bb' }}>
+                                <ReactMarkdown>{contest.description}</ReactMarkdown>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* RIGHT SIDEBAR */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 80 }}>
+
+                    {/* A) Mening natijam */}
+                    {userStats && (
+                        <div style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: 18,
+                        }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: '#9898bb', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                Mening natijam
+                            </h4>
+
+                            {/* Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div style={{ fontSize: 20, fontWeight: 800, color: '#f0f0ff' }}>#{userStats.rank}</div>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>O'rin</div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>{userStats.solved}/{userStats.total}</div>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Yechildi</div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div style={{ fontSize: 20, fontWeight: 800, color: '#9ca3af' }}>{userStats.penalty}</div>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Penalty</div>
+                                </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div style={{ marginBottom: 16 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9898bb', marginBottom: 4 }}>
+                                    <span>Jami progress</span>
+                                    <span>{Math.round((userStats.solved / (userStats.total || 1)) * 100)}%</span>
+                                </div>
+                                <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                                    <div style={{
+                                        height: '100%', background: '#10b981',
+                                        width: `${(userStats.solved / (userStats.total || 1)) * 100}%`,
+                                        transition: 'width 0.5s ease'
+                                    }} />
+                                </div>
+                            </div>
+
+                            {/* Mini grid */}
+                            <h5 style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>MASALALAR</h5>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {problems.map((p, i) => {
+                                    const st = getProblemStatus(p.label);
+                                    const pr = userStats.pr[p.label];
+                                    return (
+                                        <button
+                                            key={p.label}
+                                            onClick={() => setSelectedProblem(i)}
+                                            title={pr ? `${p.label}: ${pr.solved ? `+${pr.time} min (-${pr.attempts - 1})` : `${pr.attempts} ta urinish`}` : `${p.label}: Urinilmagan`}
+                                            style={{
+                                                width: 36, height: 36, borderRadius: 8,
+                                                border: `1px solid ${TAB_STATUS[st].border}`,
+                                                background: TAB_STATUS[st].bg,
+                                                color: st === 'none' ? '#9898bb' : TAB_STATUS[st].color,
+                                                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            }}
+                                        >
+                                            {st === 'accepted' ? '✓' : st === 'wrong' ? '✗' : st === 'pending' ? '•' : p.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* B) So'nggi Submissionlar Card */}
+                    {userStats && (
+                        <div style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: 18, maxHeight: 310, display: 'flex', flexDirection: 'column'
+                        }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: '#9898bb', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                Mening submissionlarim
+                            </h4>
+                            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>Ushbu contest ichida</div>
+
+                            <div style={{ overflowY: 'auto', flex: 1, paddingRight: 4 }}>
+                                {mySubmissions.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '20px 0', color: '#55556a', fontSize: 12 }}>
+                                        Hali submission yo'q.<br />Masalani yechishni boshlang →
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                                        {mySubmissions.map(s => {
+                                            const sUpper = s.status?.toUpperCase() || '';
+                                            const isAc = sUpper === 'ACCEPTED';
+                                            const isWa = sUpper === 'WRONG_ANSWER';
+                                            const isPd = ['PENDING', 'RUNNING'].includes(sUpper);
+                                            return (
+                                                <div key={s.id} style={{
+                                                    display: 'flex', alignItems: 'center', gap: 8,
+                                                    padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                                    background: isAc ? 'rgba(16,185,129,0.03)' : isWa ? 'rgba(239,68,68,0.03)' : 'transparent',
+                                                    margin: '0 -8px', paddingLeft: 8, paddingRight: 8,
+                                                    borderRadius: 4
+                                                }}>
+                                                    <span style={{
+                                                        fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                                                        background: isAc ? 'rgba(16,185,129,0.12)' : isWa ? 'rgba(239,68,68,0.12)' : isPd ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.1)',
+                                                        color: isAc ? '#10b981' : isWa ? '#ef4444' : isPd ? '#f59e0b' : '#9ca3af',
+                                                        minWidth: 42, textAlign: 'center'
+                                                    }}>
+                                                        {isAc ? '✓ AC' : isWa ? '✗ WA' : isPd ? '⏳' : s.status.substring(0, 3)}
+                                                    </span>
+                                                    <span style={{ fontSize: 13, fontWeight: 700, color: '#f0f0ff', width: 20 }}>{s.label}</span>
+                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontSize: 11, color: '#9898bb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.problem_title}</span>
+                                                        <span style={{ fontSize: 10, color: '#55556a' }}>{new Date(s.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })} • {s.time_used}ms</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* C) Reyting o'zgarishi Card */}
+                    {contest.is_rated && userStats && (
+                        <div style={{
+                            background: contest.status === 'running' ? 'rgba(99,102,241,0.05)' : (!ratingData?.available ? 'rgba(245,158,11,0.05)' : 'rgba(255,255,255,0.02)'),
+                            border: `1px solid ${contest.status === 'running' ? 'rgba(99,102,241,0.12)' : (!ratingData?.available ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.08)')}`,
+                            borderRadius: 14, padding: 18,
+                        }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: '#9898bb', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                Reyting o'zgarishi
+                            </h4>
+
+                            {contest.status !== 'finished' ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4a4a6a', fontSize: 12 }}>
+                                    <div style={{ fontSize: 16 }}>🔒</div>
+                                    <div>
+                                        <div style={{ color: '#6b7280', fontWeight: 500 }}>
+                                            Musobaqa tugagandan keyin hisoblanadi
+                                        </div>
+                                        <div style={{ fontSize: 11, color: '#3a3a5a', marginTop: 2 }}>
+                                            Reytingli musobaqa
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : !ratingData?.available ? (
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{
+                                            width: 20, height: 20, borderRadius: '50%',
+                                            border: '2px solid rgba(245,158,11,0.20)',
+                                            borderTopColor: '#f59e0b',
+                                            animation: 'spin 1s linear infinite', flexShrink: 0,
+                                        }} />
+                                        <div>
+                                            <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>
+                                                Reyting hisoblanmoqda...
+                                            </div>
+                                            <div style={{ fontSize: 11, color: '#4a4a6a', marginTop: 2 }}>
+                                                Har 10 soniyada tekshiriladi
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        marginTop: 10, padding: '8px 10px',
+                                        background: 'rgba(245,158,11,0.06)', borderRadius: 8,
+                                        fontSize: 11, color: '#6b7280',
+                                    }}>
+                                        💡 Agar uzoq vaqt o'tsa, sahifani yangilang.
+                                        Muammo davom etsa admin'ga murojaat qiling.
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    {(() => {
+                                        const myChange = ratingData.changes?.find(c => c.username === currentUser?.username);
+                                        return myChange ? (
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                                    <span style={{ fontSize: 20, fontWeight: 800, color: '#6b7280' }}>
+                                                        {myChange.old_rating}
+                                                    </span>
+                                                    <span style={{ color: '#3a3a5a' }}>→</span>
+                                                    <span style={{ fontSize: 20, fontWeight: 800, color: getRatingColor(myChange.new_rating) }}>
+                                                        {myChange.new_rating}
+                                                    </span>
+                                                    <span style={{
+                                                        padding: '3px 8px', borderRadius: 100, fontSize: 12, fontWeight: 700,
+                                                        background: myChange.delta > 0 ? 'rgba(16,185,129,0.15)' : myChange.delta < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(107,114,128,0.12)',
+                                                        color: myChange.delta > 0 ? '#10b981' : myChange.delta < 0 ? '#ef4444' : '#6b7280',
+                                                    }}>
+                                                        {myChange.delta > 0 ? `▲ +${myChange.delta}` : myChange.delta < 0 ? `▼ ${myChange.delta}` : '= 0'}
+                                                    </span>
+                                                </div>
+                                                <div style={{ fontSize: 12, color: '#4a4a6a' }}>
+                                                    O'rin: <strong style={{ color: '#e8e8f0' }}>#{myChange.rank}</strong>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div style={{ fontSize: 12, color: '#4a4a6a' }}>Siz musobaqada ishtirok etmadingiz</div>
+                                        );
+                                    })()}
+                                    <button
+                                        onClick={() => navigate(`/contests/${slug}/scoreboard`)}
+                                        style={{
+                                            width: '100%', marginTop: 12, height: 32, borderRadius: 8,
+                                            background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.20)',
+                                            color: '#a5b4fc', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                        }}
+                                    >📊 Batafsil reyting o'zgarishlari</button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Team Card */}
+                    {contest.is_team && contest.registered && (
+                        <div style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: 18,
+                        }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: '#9898bb', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                Jamoa
+                            </h4>
+                            {contest.team ? (
+                                <div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f0ff', marginBottom: 6 }}>{contest.team.name}</div>
+                                    <div style={{ fontSize: 11, color: '#55556a', marginBottom: 10 }}>Invite: <code style={{ fontSize: 11 }}>{contest.team.invite_code}</code></div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                        {contest.team.members?.map(m => (
+                                            <div key={m.username} style={{
+                                                display: 'flex', alignItems: 'center', gap: 8,
+                                                padding: '4px 8px', borderRadius: 6,
+                                                background: 'rgba(255,255,255,0.03)',
+                                            }}>
+                                                <span style={{
+                                                    width: 22, height: 22, borderRadius: '50%',
+                                                    background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontSize: 10, fontWeight: 700, color: 'white',
+                                                }}>{m.username[0].toUpperCase()}</span>
+                                                <span style={{ fontSize: 13, color: '#e8e8f0' }}>{m.username}</span>
+                                                {m.role === 'leader' && <span style={{ fontSize: 9, color: '#f59e0b' }}>👑</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div>
+                                        <input
+                                            value={teamName}
+                                            onChange={e => setTeamName(e.target.value)}
+                                            placeholder="Jamoa nomi..."
+                                            style={{ fontSize: 13, padding: '8px 12px' }}
+                                        />
+                                        <button onClick={handleCreateTeam} style={{
+                                            marginTop: 6, padding: '6px 14px', borderRadius: 6,
+                                            background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                                            border: 'none', color: 'white', fontSize: 12, fontWeight: 600,
+                                            cursor: 'pointer', width: '100%',
+                                        }}>+ Jamoa yaratish</button>
+                                    </div>
+                                    <div style={{ textAlign: 'center', fontSize: 11, color: '#55556a' }}>yoki</div>
+                                    <div>
+                                        <input
+                                            value={inviteCode}
+                                            onChange={e => setInviteCode(e.target.value)}
+                                            placeholder="Invite code..."
+                                            style={{ fontSize: 13, padding: '8px 12px', fontFamily: "'JetBrains Mono', monospace" }}
+                                        />
+                                        <button onClick={handleJoinTeam} style={{
+                                            marginTop: 6, padding: '6px 14px', borderRadius: 6,
+                                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                                            color: '#9898bb', fontSize: 12, fontWeight: 600,
+                                            cursor: 'pointer', width: '100%',
+                                        }}>Qo'shilish</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Registration Card */}
+                    {!contest.registered && (
+                        <div style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 14, padding: 18,
+                        }}>
+                            {contest.status === 'finished' && contest.is_virtual_allowed ? (
+                                <div style={{ textAlign: 'center' }}>
+                                    <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>▶</span>
+                                    <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10 }}>
+                                        O'tgan contestni qaytadan ishlang
+                                    </p>
+                                    <button
+                                        onClick={() => handleRegister(true)}
+                                        disabled={registering}
+                                        style={{
+                                            padding: '8px 20px', borderRadius: 8, width: '100%',
+                                            background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)',
+                                            color: '#67e8f9', fontSize: 13, fontWeight: 700,
+                                            cursor: 'pointer',
+                                        }}
+                                    >{registering ? 'Kutib turing...' : 'Virtual ishtirok'}</button>
+                                </div>
+                            ) : contest.status !== 'finished' ? (
+                                <div style={{ textAlign: 'center' }}>
+                                    <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🔔</span>
+                                    <button
+                                        onClick={() => handleRegister(false)}
+                                        disabled={registering}
+                                        style={{
+                                            padding: '10px 20px', borderRadius: 8, width: '100%',
+                                            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                            border: 'none', color: 'white', fontSize: 14, fontWeight: 700,
+                                            cursor: 'pointer',
+                                            boxShadow: '0 0 16px rgba(99,102,241,0.3)',
+                                        }}
+                                    >{registering ? 'Kutib turing...' : "Ro'yxatdan o'tish"}</button>
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
+
+                    {/* Scoreboard link */}
+                    {contest.status !== 'upcoming' && (
+                        <Link to={`/contests/${contest.slug}/scoreboard`} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            padding: '10px 16px', borderRadius: 10, textDecoration: 'none',
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                            color: '#9898bb', fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
+                        }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e8e8f0'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = '#9898bb'; }}
+                        >🏆 Scoreboard</Link>
+                    )}
+
+                    {/* Meta info */}
+                    <div style={{
+                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 14, padding: 16,
+                    }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {[
+                                { icon: '📅', label: 'Boshlanish', value: new Date(contest.start_time).toLocaleString('uz-UZ') },
+                                { icon: '🏁', label: 'Tugash', value: new Date(contest.end_time).toLocaleString('uz-UZ') },
+                                { icon: '⏱', label: 'Davomiyligi', value: `${Math.floor(contest.duration_min / 60)} soat ${contest.duration_min % 60} daqiqa` },
+                                { icon: '👥', label: 'Ishtirokchilar', value: contest.reg_count },
+                            ].map(m => (
+                                <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                                    <span style={{ color: '#55556a' }}>{m.icon} {m.label}</span>
+                                    <span style={{ color: '#9898bb', fontWeight: 500 }}>{m.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

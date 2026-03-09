@@ -1,0 +1,22 @@
+# Python
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+*.env
+
+# Build
+dist/
+build/
+
+# Node
+node_modules/
+
+# Celery
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir

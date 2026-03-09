@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "<6.0,>=5.0"
+djangorestframework = ">=3.15,<4.0"
+djangorestframework-simplejwt = "<6.0,>=5.3"
+psycopg2-binary = "<3.0,>=2.9"
+django-environ = "<1.0,>=0.11"
+django-cors-headers = "<5.0,>=4.3"
+pillow = ">=10.0,<11.0"
+celery = "<6.0,>=5.4"
+redis = "<6.0,>=5.0"
+docker = "<8.0,>=7.0.0"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

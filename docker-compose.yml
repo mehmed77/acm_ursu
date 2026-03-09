@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: online_judge
+      POSTGRES_USER: oj_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-oj_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  judge:
+    build: ./docker/judge
+    restart: always
+    command: >-
+      bash -c "mount -o remount,rw /sys/fs/cgroup 2>/dev/null || true; cd /app && python3.13 -m celery -A config worker --loglevel=debug --pool=solo --concurrency=1 --queues=celery"
+    tty: true
+    stdin_open: true
+
+    # ─── ISOLATE UCHUN ZARUR RUXSATLAR ───
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./backend:/app
+
+    tmpfs:
+      - /sandbox:size=100m,mode=1777
+      - /tmp:size=50m
+
+    environment:
+      - CELERY_CONCURRENCY=8
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/onlinejudge
+      - SECRET_KEY=docker-judge-worker-key-not-for-production
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings
+
+    depends_on:
+      - redis
+
+    networks:
+      - backend
+      - internal
+
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 1G
+
+volumes:
+  pgdata:
+
+
+networks:
+  backend:
+    driver: bridge
+  internal:
+    internal: true # Internet yo'q — izolyatsiya
