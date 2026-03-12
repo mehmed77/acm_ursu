@@ -13,6 +13,7 @@ from apps.problems.views import (
 )
 from apps.submissions.views import GlobalSubmissionsView, RunCodeView
 from apps.contests.views import AdminContestListView, AdminContestDetailView, AdminRecalculateRatingView
+from apps.news.views import AdminNewsViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -21,6 +22,7 @@ urlpatterns = [
     path('api/submissions/', include('apps.submissions.urls')),
     path('api/contests/', include('apps.contests.urls')),
     path('api/leaderboard/', include('apps.leaderboard.urls')),
+    path('api/', include('apps.news.urls')),
     
     # Status
     path('api/status/', GlobalSubmissionsView.as_view(), name='global-status'),
@@ -45,6 +47,10 @@ urlpatterns = [
     path('api/admin/contests/', AdminContestListView.as_view()),
     path('api/admin/contests/<slug:slug>/', AdminContestDetailView.as_view()),
     path('api/admin/contests/<slug:slug>/recalculate-rating/', AdminRecalculateRatingView.as_view()),
+
+    # Admin News
+    path('api/admin/news/', AdminNewsViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('api/admin/news/<int:pk>/', AdminNewsViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'})),
 
     # Public Profile
     path('api/users/<str:username>/', UserProfileView.as_view()),
