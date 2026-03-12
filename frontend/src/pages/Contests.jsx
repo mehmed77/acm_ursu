@@ -1,20 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contestsApi } from '../api/contests';
 import { useAuthStore } from '../store/authStore';
 
 /* ═══════════════════════════════════════════════════
-   DESIGN TOKENS — Neural Terminal (unified)
+   DESIGN TOKENS
    ═══════════════════════════════════════════════════ */
 const T = {
-    bg: '#03030b',
-    surf: '#07071a',
-    surf2: '#0b0b22',
-    b: 'rgba(255,255,255,0.055)',
-    text: '#dde0f5',
-    sub: '#44446a',
-    dim: '#0e0e22',
+    bg: 'var(--bg-base)',
+    surf: 'var(--bg-surface)',
+    surf2: 'var(--bg-elevated)',
+    b: 'var(--border-subtle)',
+    text: 'var(--text-primary)',
+    sub: 'var(--text-muted)',
     cyan: '#00d4ff',
     grn: '#00e676',
     amb: '#ffb300',
@@ -32,52 +31,46 @@ const T = {
 const SC = {
     upcoming: {
         label: 'KUTILMOQDA', color: T.amb,
-        bg: 'rgba(255,179,0,0.09)', bd: 'rgba(255,179,0,0.22)',
-        glow: 'rgba(255,179,0,0.3)',
-        topBar: `linear-gradient(90deg,transparent,rgba(255,179,0,0.6),transparent)`,
-        orb: 'rgba(255,179,0,0.08)',
+        bg: 'rgba(255,179,0,0.08)', bd: 'rgba(255,179,0,0.18)',
+        glow: 'rgba(255,179,0,0.25)',
+        topBar: `linear-gradient(90deg,transparent,rgba(255,179,0,0.5),transparent)`,
     },
     running: {
         label: 'LIVE', color: T.grn,
-        bg: 'rgba(0,230,118,0.09)', bd: 'rgba(0,230,118,0.22)',
-        glow: 'rgba(0,230,118,0.35)',
-        topBar: `linear-gradient(90deg,transparent,rgba(0,230,118,0.7),transparent)`,
-        orb: 'rgba(0,230,118,0.09)',
+        bg: 'rgba(0,230,118,0.08)', bd: 'rgba(0,230,118,0.2)',
+        glow: 'rgba(0,230,118,0.3)',
+        topBar: `linear-gradient(90deg,transparent,rgba(0,230,118,0.6),transparent)`,
         dot: true,
     },
     frozen: {
         label: 'FROZEN', color: T.blue,
-        bg: 'rgba(59,130,246,0.09)', bd: 'rgba(59,130,246,0.22)',
-        glow: 'rgba(59,130,246,0.3)',
-        topBar: `linear-gradient(90deg,transparent,rgba(59,130,246,0.6),transparent)`,
-        orb: 'rgba(59,130,246,0.07)',
+        bg: 'rgba(59,130,246,0.08)', bd: 'rgba(59,130,246,0.2)',
+        glow: 'rgba(59,130,246,0.25)',
+        topBar: `linear-gradient(90deg,transparent,rgba(59,130,246,0.5),transparent)`,
     },
     finished: {
         label: 'TUGADI', color: T.sub,
-        bg: 'rgba(68,68,106,0.09)', bd: 'rgba(68,68,106,0.2)',
-        glow: 'rgba(68,68,106,0.2)',
-        topBar: `linear-gradient(90deg,transparent,rgba(68,68,106,0.4),transparent)`,
-        orb: 'rgba(68,68,106,0.05)',
+        bg: 'rgba(120,120,160,0.06)', bd: 'rgba(120,120,160,0.14)',
+        glow: 'rgba(120,120,160,0.12)',
+        topBar: `linear-gradient(90deg,transparent,rgba(120,120,160,0.3),transparent)`,
     },
     draft: {
         label: 'DRAFT', color: T.sub,
-        bg: 'rgba(68,68,106,0.07)', bd: 'rgba(68,68,106,0.15)',
-        glow: 'transparent',
-        topBar: 'transparent',
-        orb: 'transparent',
+        bg: 'rgba(120,120,160,0.05)', bd: 'rgba(120,120,160,0.1)',
+        glow: 'transparent', topBar: 'transparent',
     },
 };
 
 const TYPE_CFG = {
-    icpc: { label: 'ICPC', color: '#818cf8', bg: 'rgba(99,102,241,0.10)', bd: 'rgba(99,102,241,0.22)' },
-    rated: { label: 'RATED', color: T.pur, bg: 'rgba(168,85,247,0.10)', bd: 'rgba(168,85,247,0.22)' },
-    virtual: { label: 'VIRTUAL', color: T.teal, bg: 'rgba(20,184,166,0.10)', bd: 'rgba(20,184,166,0.22)' },
-    unrated: { label: 'UNRATED', color: T.sub, bg: 'rgba(68,68,106,0.10)', bd: 'rgba(68,68,106,0.18)' },
+    icpc:     { label: 'ICPC',     color: '#818cf8', bg: 'rgba(99,102,241,0.10)', bd: 'rgba(99,102,241,0.20)' },
+    rated:    { label: 'RATED',    color: T.pur,     bg: 'rgba(168,85,247,0.10)', bd: 'rgba(168,85,247,0.20)' },
+    virtual:  { label: 'VIRTUAL',  color: T.teal,    bg: 'rgba(20,184,166,0.10)', bd: 'rgba(20,184,166,0.20)' },
+    unrated:  { label: 'UNRATED',  color: T.sub,     bg: 'rgba(120,120,160,0.08)', bd: 'rgba(120,120,160,0.14)' },
 };
 
 const FILTERS = [
-    { key: 'all', label: 'Barchasi' },
-    { key: 'running', label: 'Live' },
+    { key: 'all',      label: 'Barchasi' },
+    { key: 'running',  label: 'Live' },
     { key: 'upcoming', label: 'Kutilmoqda' },
     { key: 'finished', label: 'Tugagan' },
 ];
@@ -86,90 +79,55 @@ const FILTERS = [
    GLOBAL CSS
    ═══════════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
-  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  :root { color-scheme:dark; }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-  @keyframes scan-v {
-    0%   { transform:translateY(-100%); opacity:0; }
-    5%   { opacity:.045; }
-    95%  { opacity:.045; }
-    100% { transform:translateY(110vh); opacity:0; }
-  }
-  @keyframes scan-h {
-    0%   { transform:translateX(-100%); opacity:0; }
-    6%   { opacity:.025; }
-    94%  { opacity:.025; }
-    100% { transform:translateX(110vw); opacity:0; }
-  }
   @keyframes shimmer {
     0%   { background-position:-200% 0; }
     100% { background-position:200% 0; }
   }
   @keyframes ring-ping {
     0%   { transform:scale(1);   opacity:.8; }
-    100% { transform:scale(2.6); opacity:0; }
+    100% { transform:scale(2.4); opacity:0; }
   }
   @keyframes pulse-slow {
     0%,100% { opacity:1; }
     50%     { opacity:.35; }
   }
-  @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes live-border {
     0%,100% { opacity:.5; }
     50%     { opacity:1; }
   }
-  @keyframes countdown-tick {
-    0%  { transform:translateY(3px); opacity:0; }
-    20% { transform:translateY(0);   opacity:1; }
-    80% { transform:translateY(0);   opacity:1; }
-    100%{ transform:translateY(-3px);opacity:0; }
-  }
-  @keyframes card-glow-in {
-    from { box-shadow:0 8px 32px rgba(0,0,0,0.4); }
-  }
-  @keyframes float-trophy {
-    0%,100% { transform:translateY(0) rotate(-3deg); }
-    50%     { transform:translateY(-10px) rotate(3deg); }
-  }
-  @keyframes progress-pulse {
-    0%,100% { opacity:.7; }
-    50%     { opacity:1; }
-  }
-  @keyframes hero-orb {
-    0%,100% { transform:translate(-50%,-50%) scale(1); }
-    33%     { transform:translate(-45%,-55%) scale(1.08); }
-    66%     { transform:translate(-55%,-45%) scale(.94); }
-  }
 
   .skel {
-    border-radius:5px;
+    border-radius:4px;
     background:linear-gradient(90deg,
-      rgba(255,255,255,.03) 25%,
-      rgba(255,255,255,.07) 50%,
-      rgba(255,255,255,.03) 75%);
+      var(--bg-elevated) 25%,
+      var(--border-subtle) 50%,
+      var(--bg-elevated) 75%);
     background-size:200% 100%;
     animation:shimmer 1.6s ease-in-out infinite;
   }
 
-  ::-webkit-scrollbar       { width:3px; height:3px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.06); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,.25); }
+  .contest-card-wrap {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .contest-card-wrap:hover {
+    transform: translateY(-3px) scale(1.005);
+  }
 `;
 
 /* ═══════════════════════════════════════════════════
    MICRO COMPONENTS
    ═══════════════════════════════════════════════════ */
-function M({ ch, col = T.sub, sz = 12, w = 500 }) {
+function Mono({ ch, col = T.sub, sz = 11, w = 500 }) {
     return (
-        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col }}>
+        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col, lineHeight: 1 }}>
             {ch}
         </span>
     );
 }
 
-function LiveDot({ color = T.grn, size = 7 }) {
+function LiveDot({ color = T.grn, size = 6 }) {
     return (
         <span style={{ position: 'relative', display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
             <span style={{
@@ -206,7 +164,6 @@ function useCountdown(target) {
     return left;
 }
 
-/* Format date */
 function fmtDate(d) {
     return new Date(d).toLocaleString('uz-UZ', {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -220,27 +177,25 @@ function SkeletonCard() {
     return (
         <div style={{
             background: T.surf, border: `1px solid ${T.b}`,
-            borderRadius: 18, padding: '24px',
-            display: 'flex', flexDirection: 'column', gap: 14,
+            borderRadius: 14, padding: 16,
+            display: 'flex', flexDirection: 'column', gap: 10,
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div className="skel" style={{ width: 70, height: 22 }} />
-                <div className="skel" style={{ width: 80, height: 22 }} />
+                <div className="skel" style={{ width: 60, height: 18 }} />
+                <div className="skel" style={{ width: 70, height: 18 }} />
             </div>
-            <div className="skel" style={{ width: '80%', height: 20 }} />
-            <div className="skel" style={{ width: '55%', height: 16 }} />
-            <div style={{ height: 1, background: T.b }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[...Array(4)].map((_, i) => <div key={i} className="skel" style={{ height: 14 }} />)}
+            <div className="skel" style={{ width: '75%', height: 16 }} />
+            <div className="skel" style={{ width: '50%', height: 13 }} />
+            <div style={{ display: 'flex', gap: 16 }}>
+                {[...Array(4)].map((_, i) => <div key={i} className="skel" style={{ flex: 1, height: 12 }} />)}
             </div>
-            <div style={{ height: 1, background: T.b }} />
-            <div className="skel" style={{ height: 38, borderRadius: 10 }} />
+            <div className="skel" style={{ height: 34, borderRadius: 8 }} />
         </div>
     );
 }
 
 /* ═══════════════════════════════════════════════════
-   CONTEST CARD
+   CONTEST CARD — Compact Premium
    ═══════════════════════════════════════════════════ */
 function ContestCard({ contest, onRegister, idx }) {
     const sc = SC[contest.status] || SC.draft;
@@ -257,96 +212,82 @@ function ContestCard({ contest, onRegister, idx }) {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * .07, duration: .35, ease: [.4, 0, .2, 1] }}
+            transition={{ delay: idx * .05, duration: .3, ease: [.4, 0, .2, 1] }}
+            className="contest-card-wrap"
             style={{
                 position: 'relative', overflow: 'hidden',
                 background: T.surf,
                 border: `1px solid ${isLive ? sc.bd : T.b}`,
-                borderRadius: 18,
+                borderRadius: 14,
                 display: 'flex', flexDirection: 'column',
                 boxShadow: isLive
-                    ? `0 8px 40px ${sc.glow}, 0 0 0 1px ${sc.bd}`
-                    : '0 8px 32px rgba(0,0,0,0.35)',
-                transition: 'border-color .2s, box-shadow .25s, transform .22s',
+                    ? `0 4px 24px ${sc.glow}, 0 0 0 1px ${sc.bd}`
+                    : 'var(--card-shadow)',
                 animation: isLive ? 'live-border 3s ease-in-out infinite' : 'none',
-            }}
-            whileHover={{
-                y: -6, scale: 1.012,
-                boxShadow: `0 20px 60px ${sc.glow}, 0 0 0 1px ${sc.bd}`,
-                borderColor: sc.bd,
             }}
         >
             {/* Top accent line */}
             <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                background: sc.topBar, borderRadius: '18px 18px 0 0',
+                position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+                background: sc.topBar, borderRadius: '14px 14px 0 0',
             }} />
 
-            {/* Background corner orb */}
-            <div style={{
-                position: 'absolute', top: -40, right: -40,
-                width: 180, height: 180, borderRadius: '50%',
-                background: `radial-gradient(circle,${sc.orb},transparent 70%)`,
-                pointerEvents: 'none',
-            }} />
+            {/* ── Card Body ── */}
+            <div style={{ padding: '14px 16px 0', flexGrow: 1 }}>
 
-            {/* ── Card Header ── */}
-            <div style={{ padding: '24px 22px 0', flexGrow: 1 }}>
-
-                {/* Badges row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                    {/* Left chips */}
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {/* Type */}
+                {/* Badges + Status row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {/* Type chip */}
                         <div style={{
-                            display: 'inline-flex', alignItems: 'center', height: 22,
-                            padding: '0 9px', borderRadius: 6,
+                            display: 'inline-flex', alignItems: 'center', height: 20,
+                            padding: '0 7px', borderRadius: 5,
                             background: tc.bg, border: `1px solid ${tc.bd}`,
                         }}>
-                            <M ch={tc.label} col={tc.color} sz={9} w={700} />
+                            <Mono ch={tc.label} col={tc.color} sz={9} w={700} />
                         </div>
                         {/* Rated chip */}
                         {contest.is_rated && (
                             <div style={{
-                                display: 'inline-flex', alignItems: 'center', height: 22,
-                                padding: '0 9px', borderRadius: 6,
-                                background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)',
+                                display: 'inline-flex', alignItems: 'center', height: 20,
+                                padding: '0 7px', borderRadius: 5,
+                                background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.18)',
                             }}>
-                                <M ch="RATED" col={T.pur} sz={9} w={700} />
+                                <Mono ch="RATED" col={T.pur} sz={9} w={700} />
                             </div>
                         )}
                         {/* Team chip */}
                         {contest.is_team && (
                             <div style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 4, height: 22,
-                                padding: '0 9px', borderRadius: 6,
-                                background: 'rgba(255,179,0,0.08)', border: '1px solid rgba(255,179,0,0.2)',
+                                display: 'inline-flex', alignItems: 'center', gap: 3, height: 20,
+                                padding: '0 7px', borderRadius: 5,
+                                background: 'rgba(255,179,0,0.07)', border: '1px solid rgba(255,179,0,0.16)',
                             }}>
-                                <span style={{ fontSize: 9 }}>👥</span>
-                                <M ch="TEAM" col={T.amb} sz={9} w={700} />
+                                <span style={{ fontSize: 8 }}>👥</span>
+                                <Mono ch="TEAM" col={T.amb} sz={9} w={700} />
                             </div>
                         )}
                     </div>
 
                     {/* Status badge */}
                     <div style={{
-                        display: 'flex', alignItems: 'center', gap: 7,
-                        height: 26, padding: '0 10px', borderRadius: 7,
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        height: 22, padding: '0 8px', borderRadius: 5,
                         background: sc.bg, border: `1px solid ${sc.bd}`,
                         flexShrink: 0,
                     }}>
-                        {sc.dot && <LiveDot color={sc.color} size={6} />}
-                        <M ch={sc.label} col={sc.color} sz={10} w={700} />
+                        {sc.dot && <LiveDot color={sc.color} size={5} />}
+                        <Mono ch={sc.label} col={sc.color} sz={9} w={700} />
                     </div>
                 </div>
 
                 {/* Title */}
-                <Link to={`/contests/${contest.slug}`} style={{ textDecoration: 'none', display: 'block', marginBottom: 14 }}>
+                <Link to={`/contests/${contest.slug}`} style={{ textDecoration: 'none', display: 'block', marginBottom: 10 }}>
                     <h3 style={{
                         fontFamily: "'Syne',sans-serif",
-                        fontSize: 18, fontWeight: 800, color: T.text,
+                        fontSize: 16, fontWeight: 700, color: T.text,
                         lineHeight: 1.3, margin: 0,
                         letterSpacing: '-.02em',
                         display: '-webkit-box',
@@ -355,96 +296,95 @@ function ContestCard({ contest, onRegister, idx }) {
                         overflow: 'hidden',
                         transition: 'color .15s',
                     }}
-                        onMouseEnter={e => { e.currentTarget.style.color = sc.color; e.currentTarget.style.textShadow = `0 0 20px ${sc.color}44`; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.textShadow = 'none'; }}
+                        onMouseEnter={e => { e.currentTarget.style.color = sc.color; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = T.text; }}
                     >{contest.title}</h3>
                 </Link>
 
-                {/* Countdown block */}
+                {/* Countdown — compact inline */}
                 <AnimatePresence>
                     {countdown && (
                         <motion.div
-                            initial={{ opacity: 0, scale: .95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: .95 }}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
                             style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 10,
-                                padding: '8px 14px', borderRadius: 10, marginBottom: 16,
-                                background: isLive
-                                    ? `rgba(0,230,118,0.07)`
-                                    : `rgba(255,179,0,0.07)`,
-                                border: isLive
-                                    ? '1px solid rgba(0,230,118,0.15)'
-                                    : '1px solid rgba(255,179,0,0.15)',
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '5px 10px', borderRadius: 7, marginBottom: 10,
+                                background: isLive ? `rgba(0,230,118,0.06)` : `rgba(255,179,0,0.06)`,
+                                border: isLive ? '1px solid rgba(0,230,118,0.12)' : '1px solid rgba(255,179,0,0.12)',
                             }}
                         >
-                            <span style={{ fontSize: 13 }}>{isLive ? '🔥' : '⌛'}</span>
-                            <div>
-                                <div style={{
-                                    fontFamily: "'DM Sans',sans-serif", fontSize: 10,
-                                    color: T.sub, marginBottom: 1
-                                }}>
-                                    {isLive ? 'Tugashiga:' : 'Boshlanishiga:'}
-                                </div>
-                                <div style={{
-                                    fontFamily: "'IBM Plex Mono',monospace",
-                                    fontSize: 17, fontWeight: 700, color: sc.color,
-                                    letterSpacing: '.06em', lineHeight: 1,
-                                    textShadow: `0 0 16px ${sc.color}55`,
-                                }}>
-                                    {countdown}
-                                </div>
-                            </div>
+                            <span style={{ fontSize: 11 }}>{isLive ? '🔥' : '⌛'}</span>
+                            <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub }}>
+                                {isLive ? 'Tugashiga:' : 'Boshlanishiga:'}
+                            </span>
+                            <span style={{
+                                fontFamily: "'IBM Plex Mono',monospace",
+                                fontSize: 13, fontWeight: 700, color: sc.color,
+                                letterSpacing: '.04em',
+                                textShadow: `0 0 10px ${sc.color}44`,
+                            }}>
+                                {countdown}
+                            </span>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* ── Divider ── */}
-            <div style={{ height: 1, background: `linear-gradient(90deg,transparent,${T.b},transparent)`, margin: '0 22px' }} />
-
-            {/* ── Meta grid ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', padding: '14px 22px' }}>
+            {/* ── Meta row — horizontal compact ── */}
+            <div style={{
+                display: 'flex', gap: 0,
+                borderTop: `1px solid ${T.b}`,
+                borderBottom: `1px solid ${T.b}`,
+            }}>
                 {[
-                    { emoji: '📅', label: 'Boshlanish', val: fmtDate(contest.start_time) },
-                    { emoji: '⏱', label: 'Davomiylik', val: `${durH}h ${durM}m` },
-                    { emoji: '👥', label: 'Ishtirokchilar', val: `${contest.reg_count || 0}` },
-                    { emoji: '📝', label: 'Masalalar', val: `${contest.problem_count || 0} ta` },
-                ].map((m, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-                        <span style={{ fontSize: 12, flexShrink: 0, marginTop: 1 }}>{m.emoji}</span>
-                        <div>
-                            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub, marginBottom: 1 }}>
-                                {m.label}
-                            </div>
-                            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, fontWeight: 600, color: T.text }}>
-                                {m.val}
-                            </div>
+                    { icon: '📅', label: 'Boshlanish', val: fmtDate(contest.start_time) },
+                    { icon: '⏱', label: 'Davomiylik', val: `${durH}h ${durM}m` },
+                    { icon: '👥', label: 'Ishtirokchilar', val: `${contest.reg_count || 0}` },
+                    { icon: '📝', label: 'Masalalar', val: `${contest.problem_count || 0} ta` },
+                ].map((m, i, arr) => (
+                    <div key={i} style={{
+                        flex: 1, padding: '8px 10px',
+                        borderRight: i < arr.length - 1 ? `1px solid ${T.b}` : 'none',
+                        textAlign: 'center',
+                    }}>
+                        <div style={{
+                            fontFamily: "'DM Sans',sans-serif", fontSize: 9,
+                            color: T.sub, marginBottom: 2, textTransform: 'uppercase',
+                            letterSpacing: '.04em',
+                        }}>
+                            {m.label}
+                        </div>
+                        <div style={{
+                            fontFamily: "'IBM Plex Mono',monospace",
+                            fontSize: 11, fontWeight: 600, color: T.text,
+                        }}>
+                            {m.val}
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Registered indicator */}
-            {contest.registered && (
+            {contest.registered && contest.status !== 'running' && contest.status !== 'frozen' && (
                 <div style={{
-                    margin: '0 22px 12px', display: 'flex', alignItems: 'center', gap: 7,
-                    padding: '6px 12px', borderRadius: 7,
-                    background: 'rgba(0,230,118,0.06)', border: '1px solid rgba(0,230,118,0.14)'
+                    margin: '8px 16px 0', display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px', borderRadius: 6,
+                    background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.12)',
                 }}>
                     <span style={{
-                        width: 5, height: 5, borderRadius: '50%', background: T.grn, display: 'inline-block',
-                        boxShadow: `0 0 6px ${T.grn}`
+                        width: 4, height: 4, borderRadius: '50%', background: T.grn, display: 'inline-block',
+                        boxShadow: `0 0 5px ${T.grn}`
                     }} />
-                    <M ch="Ro'yxatdan o'tildi" col={T.grn} sz={11} w={600} />
+                    <Mono ch="Ro'yxatdan o'tildi" col={T.grn} sz={10} w={600} />
                 </div>
             )}
 
             {/* ── Footer / CTA ── */}
             <div style={{
-                padding: '14px 22px 20px',
-                borderTop: `1px solid rgba(255,255,255,0.035)`,
-                display: 'flex', gap: 10,
+                padding: '10px 16px 12px',
+                display: 'flex', gap: 8,
             }}>
                 {contest.status === 'finished' ? (
                     <>
@@ -464,24 +404,25 @@ function ContestCard({ contest, onRegister, idx }) {
                 ) : contest.registered ? (
                     isLive ? (
                         <CTA
-                            label="🚀 Musobaqaga kirish"
+                            label="🚀 Kirish"
                             onClick={() => navigate(`/contests/${contest.slug}`)}
                             variant="primary"
                             glow={sc.color}
+                            fullWidth
                         />
                     ) : (
                         <div style={{
-                            flex: 1, height: 40, borderRadius: 10,
-                            background: 'rgba(0,230,118,0.07)', border: '1px solid rgba(0,230,118,0.18)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                            flex: 1, height: 34, borderRadius: 8,
+                            background: 'rgba(0,230,118,0.06)', border: '1px solid rgba(0,230,118,0.14)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         }}>
-                            <span style={{ fontSize: 13 }}>✅</span>
-                            <M ch="Ro'yxatdan o'tildi" col={T.grn} sz={12} w={700} />
+                            <span style={{ fontSize: 11 }}>✅</span>
+                            <Mono ch="Ro'yxatdan o'tildi" col={T.grn} sz={11} w={700} />
                         </div>
                     )
                 ) : (
                     <CTA
-                        label={isLive ? '⚡ Kirish' : '✨ Ro\'yxatdan o\'tish'}
+                        label={isLive ? '⚡ Kirish' : "✨ Ro'yxatdan o'tish"}
                         onClick={() => onRegister(contest.slug, false)}
                         variant={isLive ? 'green' : 'primary'}
                         glow={sc.color}
@@ -494,102 +435,48 @@ function ContestCard({ contest, onRegister, idx }) {
 }
 
 /* CTA button */
-function CTA({ label, onClick, variant = 'primary', glow, fullWidth }) {
+function CTA({ label, onClick, variant = 'primary', fullWidth }) {
     const styles = {
         primary: {
             background: `linear-gradient(135deg,${T.ind},#7c3aed)`,
             border: 'none', color: 'white',
-            shadow: `0 0 20px rgba(99,102,241,0.35)`,
-            shadowHover: `0 0 32px rgba(99,102,241,0.6)`,
+            shadow: `0 0 14px rgba(99,102,241,0.3)`,
+            shadowHover: `0 0 24px rgba(99,102,241,0.5)`,
         },
         green: {
             background: `linear-gradient(135deg,${T.grn},${T.teal})`,
-            border: 'none', color: '#03030b',
-            shadow: `0 0 18px rgba(0,230,118,0.3)`,
-            shadowHover: `0 0 28px rgba(0,230,118,0.5)`,
+            border: 'none', color: 'var(--bg-base)',
+            shadow: `0 0 12px rgba(0,230,118,0.25)`,
+            shadowHover: `0 0 22px rgba(0,230,118,0.45)`,
         },
         teal: {
-            background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.3)',
-            color: T.teal, shadow: 'none', shadowHover: `0 0 18px rgba(20,184,166,0.25)`,
+            background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.25)',
+            color: T.teal, shadow: 'none', shadowHover: `0 0 14px rgba(20,184,166,0.2)`,
         },
         ghost: {
-            background: 'rgba(255,255,255,0.04)', border: `1px solid ${T.b}`,
-            color: T.sub, shadow: 'none', shadowHover: 'rgba(255,255,255,0.08)',
+            background: 'var(--bg-elevated)', border: `1px solid ${T.b}`,
+            color: T.sub, shadow: 'none', shadowHover: 'none',
         },
     };
     const s = styles[variant] || styles.primary;
 
     return (
         <motion.button
-            whileHover={{ scale: 1.03, y: -1 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: .96 }}
             onClick={onClick}
             style={{
                 flex: fullWidth ? 1 : undefined,
-                height: 40, padding: '0 18px', borderRadius: 10,
+                height: 34, padding: '0 14px', borderRadius: 8,
                 background: s.background, border: s.border || 'none',
-                color: s.color, fontSize: 13, fontWeight: 700,
+                color: s.color, fontSize: 12, fontWeight: 700,
                 cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
                 boxShadow: s.shadow, transition: 'box-shadow .18s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
             }}
             onMouseEnter={e => { e.currentTarget.style.boxShadow = s.shadowHover; }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow = s.shadow; }}
         >{label}</motion.button>
-    );
-}
-
-/* ═══════════════════════════════════════════════════
-   STATS BAR
-   ═══════════════════════════════════════════════════ */
-function StatsBar({ contests }) {
-    const live = contests.filter(c => c.status === 'running').length;
-    const upcoming = contests.filter(c => c.status === 'upcoming').length;
-    const total = contests.length;
-    const players = contests.reduce((a, c) => a + (c.reg_count || 0), 0);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: .2 }}
-            style={{
-                display: 'flex', gap: 1, marginBottom: 32, overflow: 'hidden',
-                borderRadius: 14, border: `1px solid ${T.b}`,
-                background: T.surf,
-            }}
-        >
-            {[
-                { val: live, label: 'Live', color: T.grn, icon: '🔴' },
-                { val: upcoming, label: 'Kutilmoqda', color: T.amb, icon: '⌛' },
-                { val: total, label: 'Jami', color: T.cyan, icon: '🏁' },
-                { val: players, label: 'Ishtirokchilar', color: T.pur, icon: '👥' },
-            ].map((s, i, arr) => (
-                <div key={i} style={{
-                    flex: 1, padding: '14px 16px',
-                    borderRight: i < arr.length - 1 ? `1px solid ${T.b}` : 'none',
-                    position: 'relative', overflow: 'hidden',
-                }}>
-                    <div style={{
-                        position: 'absolute', top: -10, right: -10,
-                        width: 60, height: 60, borderRadius: '50%',
-                        background: `radial-gradient(circle,${s.color}12,transparent 70%)`,
-                        pointerEvents: 'none',
-                    }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
-                        <span style={{ fontSize: 12 }}>{s.icon}</span>
-                        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub, textTransform: 'uppercase', letterSpacing: '.08em' }}>
-                            {s.label}
-                        </span>
-                    </div>
-                    <div style={{
-                        fontFamily: "'IBM Plex Mono',monospace",
-                        fontSize: 22, fontWeight: 700, color: s.color,
-                        textShadow: `0 0 16px ${s.color}44`, lineHeight: 1,
-                    }}>{s.val.toLocaleString()}</div>
-                </div>
-            ))}
-        </motion.div>
     );
 }
 
@@ -626,201 +513,210 @@ export default function Contests() {
 
     const filtered = filter === 'all' ? contests : contests.filter(c => c.status === filter);
     const liveContests = contests.filter(c => c.status === 'running');
+    const upcomingCount = contests.filter(c => c.status === 'upcoming').length;
+    const totalPlayers = contests.reduce((a, c) => a + (c.reg_count || 0), 0);
 
     return (
         <>
             <style>{CSS}</style>
 
-            {/* ── BACKGROUND FX ── */}
-            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-                <div style={{
-                    position: 'absolute', left: 0, right: 0, height: '1px',
-                    background: `linear-gradient(90deg,transparent 5%,${T.ind}44 40%,${T.cyan}33 60%,transparent 95%)`,
-                    animation: 'scan-v 14s linear infinite',
-                }} />
-                <div style={{
-                    position: 'absolute', top: 0, bottom: 0, width: '1px',
-                    background: `linear-gradient(180deg,transparent,${T.pur}28,transparent)`,
-                    animation: 'scan-h 20s linear 7s infinite',
-                }} />
-                <div style={{
-                    position: 'absolute', inset: 0, opacity: .018,
-                    backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)`,
-                    backgroundSize: '52px 52px',
-                }} />
-                {/* Orbs */}
-                <div style={{
-                    position: 'absolute', top: '-8%', left: '50%',
-                    width: 800, height: 800, borderRadius: '50%',
-                    background: `radial-gradient(circle,rgba(99,102,241,0.07),transparent 65%)`,
-                    animation: 'hero-orb 18s ease-in-out infinite',
-                }} />
-                <div style={{
-                    position: 'absolute', bottom: '10%', right: '5%',
-                    width: 400, height: 400, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.grn}06,transparent 65%)`,
-                }} />
-            </div>
-
             <div style={{
                 position: 'relative', zIndex: 1,
-                maxWidth: 1240, margin: '0 auto',
-                padding: '44px 24px 80px',
+                maxWidth: 1200, margin: '0 auto',
+                padding: '20px 20px 60px',
                 fontFamily: "'DM Sans',sans-serif", color: T.text,
                 minHeight: '100vh',
             }}>
 
-                {/* ── HERO HEADER ── */}
+                {/* ── COMPACT HERO ── */}
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: .45, ease: [.4, 0, .2, 1] }}
-                    style={{ textAlign: 'center', marginBottom: 44 }}
-                >
-                    {/* Floating trophy */}
-                    <motion.div
-                        animate={{ y: [0, -10, 0], rotate: [-3, 3, -3] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                        style={{
-                            fontSize: 52, marginBottom: 18, display: 'inline-block',
-                            filter: 'drop-shadow(0 0 24px rgba(99,102,241,0.5))',
-                        }}
-                    >🏆</motion.div>
-
-                    {/* Label pill */}
-                    <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 9,
-                        padding: '5px 16px', borderRadius: 100, marginBottom: 14,
-                        background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.22)',
-                    }}>
-                        {liveContests.length > 0 && <LiveDot size={6} />}
-                        <M ch={liveContests.length > 0 ? `${liveContests.length} ta musobaqa LIVE` : 'MUSOBAQALAR'} col={liveContests.length > 0 ? T.grn : T.ind} sz={10} w={700} />
-                    </div>
-
-                    <h1 style={{
-                        fontFamily: "'Syne',sans-serif",
-                        fontSize: 'clamp(34px,5vw,50px)',
-                        fontWeight: 800, letterSpacing: '-.04em',
-                        lineHeight: 1, margin: '0 0 14px',
-                    }}>
-                        <span style={{
-                            background: `linear-gradient(90deg,#fff 0%,${T.ind} 45%,${T.cyan} 75%,${T.grn})`,
-                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                            filter: `drop-shadow(0 0 28px rgba(99,102,241,0.3))`,
-                        }}>
-                            Musobaqalar
-                        </span>
-                    </h1>
-
-                    <p style={{
-                        fontSize: 14, color: T.sub, maxWidth: 520, margin: '0 auto',
-                        lineHeight: 1.7, letterSpacing: '.01em',
-                    }}>
-                        Qobiliyatingizni sinang · Reyting oling · Global top ga kiring
-                    </p>
-                </motion.div>
-
-                {/* ── STATS BAR ── */}
-                {!loading && <StatsBar contests={contests} />}
-
-                {/* ── FILTER TABS ── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: .15 }}
+                    transition={{ duration: .35 }}
                     style={{
-                        display: 'flex', gap: 4, marginBottom: 28,
-                        background: T.surf, border: `1px solid ${T.b}`,
-                        borderRadius: 12, padding: 5, width: 'fit-content',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        flexWrap: 'wrap', gap: 16,
+                        marginBottom: 20,
+                        padding: '16px 20px',
+                        background: T.surf,
+                        border: `1px solid ${T.b}`,
+                        borderRadius: 14,
+                        position: 'relative', overflow: 'hidden',
                     }}
                 >
-                    {FILTERS.map(f => {
-                        const active = filter === f.key;
-                        const count = f.key === 'all'
-                            ? contests.length
-                            : contests.filter(c => c.status === f.key).length;
+                    {/* Decorative gradient orb */}
+                    <div style={{
+                        position: 'absolute', top: -60, right: -40,
+                        width: 200, height: 200, borderRadius: '50%',
+                        background: `radial-gradient(circle,rgba(99,102,241,0.08),transparent 70%)`,
+                        pointerEvents: 'none',
+                    }} />
 
-                        return (
-                            <motion.button
-                                key={f.key}
-                                whileTap={{ scale: .94 }}
-                                onClick={() => setFilter(f.key)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: 7,
-                                    height: 34, padding: '0 16px', borderRadius: 9,
-                                    background: active
-                                        ? `linear-gradient(135deg,${T.ind}22,${T.cyan}12)`
-                                        : 'transparent',
-                                    border: active ? `1px solid ${T.ind}35` : '1px solid transparent',
-                                    color: active ? T.cyan : T.sub,
-                                    fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer',
-                                    fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
-                                    boxShadow: active ? `0 0 16px ${T.ind}18` : 'none',
-                                }}
-                            >
-                                {f.label}
-                                {count > 0 && (
-                                    <span style={{
-                                        height: 17, minWidth: 17, borderRadius: 100,
-                                        padding: '0 5px',
-                                        background: active ? T.ind : 'rgba(255,255,255,0.07)',
-                                        color: active ? '#fff' : T.sub,
-                                        fontSize: 9, fontWeight: 800,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontFamily: "'IBM Plex Mono',monospace",
-                                    }}>{count}</span>
-                                )}
-                            </motion.button>
-                        );
-                    })}
+                    {/* Left: Trophy + Title */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+                        <motion.span
+                            animate={{ rotate: [-3, 3, -3] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                            style={{
+                                fontSize: 32,
+                                filter: 'drop-shadow(0 0 12px rgba(99,102,241,0.4))',
+                            }}
+                        >🏆</motion.span>
+                        <div>
+                            <h1 style={{
+                                fontFamily: "'Syne',sans-serif",
+                                fontSize: 'clamp(22px, 3vw, 30px)',
+                                fontWeight: 800, letterSpacing: '-.03em',
+                                lineHeight: 1.1, margin: 0,
+                            }}>
+                                <span style={{
+                                    background: `linear-gradient(90deg,${T.text} 0%,${T.ind} 40%,${T.cyan} 70%,${T.grn})`,
+                                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                }}>
+                                    Musobaqalar
+                                </span>
+                            </h1>
+                            <p style={{
+                                fontSize: 12, color: T.sub, margin: '3px 0 0',
+                                letterSpacing: '.01em',
+                            }}>
+                                Qobiliyatingizni sinang · Reyting oling · Global top ga kiring
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Right: Quick stats pills */}
+                    {!loading && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', position: 'relative' }}>
+                            {[
+                                { val: liveContests.length, label: 'Live', color: T.grn, icon: '🔴', dot: true },
+                                { val: upcomingCount, label: 'Kutilmoqda', color: T.amb, icon: '⌛' },
+                                { val: contests.length, label: 'Jami', color: T.cyan, icon: '🏁' },
+                                { val: totalPlayers, label: 'Ishtirokchilar', color: T.pur, icon: '👥' },
+                            ].map((s, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                    padding: '5px 10px', borderRadius: 8,
+                                    background: `${s.color}0a`,
+                                    border: `1px solid ${s.color}1a`,
+                                }}>
+                                    <span style={{ fontSize: 10 }}>{s.icon}</span>
+                                    <div>
+                                        <div style={{
+                                            fontFamily: "'DM Sans',sans-serif", fontSize: 8,
+                                            color: T.sub, textTransform: 'uppercase',
+                                            letterSpacing: '.06em', lineHeight: 1,
+                                        }}>{s.label}</div>
+                                        <div style={{
+                                            fontFamily: "'IBM Plex Mono',monospace",
+                                            fontSize: 14, fontWeight: 700, color: s.color,
+                                            lineHeight: 1.1,
+                                        }}>{s.val}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </motion.div>
 
-                {/* ── LIVE BANNER (if any) ── */}
-                <AnimatePresence>
-                    {liveContests.length > 0 && filter !== 'finished' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: 12,
-                                padding: '12px 18px', borderRadius: 12, marginBottom: 20,
-                                background: 'rgba(0,230,118,0.06)',
-                                border: '1px solid rgba(0,230,118,0.18)',
-                                borderLeft: `3px solid ${T.grn}`,
-                            }}
-                        >
-                            <LiveDot size={8} />
-                            <div>
-                                <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 14, fontWeight: 700, color: T.grn }}>
-                                    {liveContests.length} ta musobaqa hozir davom etmoqda
+                {/* ── FILTER TABS + LIVE BANNER ── */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    flexWrap: 'wrap', gap: 10,
+                    marginBottom: 16,
+                }}>
+                    {/* Tabs */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: .1 }}
+                        style={{
+                            display: 'flex', gap: 3,
+                            background: T.surf, border: `1px solid ${T.b}`,
+                            borderRadius: 10, padding: 3,
+                        }}
+                    >
+                        {FILTERS.map(f => {
+                            const active = filter === f.key;
+                            const count = f.key === 'all'
+                                ? contests.length
+                                : contests.filter(c => c.status === f.key).length;
+
+                            return (
+                                <motion.button
+                                    key={f.key}
+                                    whileTap={{ scale: .94 }}
+                                    onClick={() => setFilter(f.key)}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 6,
+                                        height: 30, padding: '0 12px', borderRadius: 7,
+                                        background: active
+                                            ? `linear-gradient(135deg,${T.ind}20,${T.cyan}10)`
+                                            : 'transparent',
+                                        border: active ? `1px solid ${T.ind}30` : '1px solid transparent',
+                                        color: active ? T.cyan : T.sub,
+                                        fontSize: 11, fontWeight: active ? 700 : 500, cursor: 'pointer',
+                                        fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
+                                    }}
+                                >
+                                    {f.label}
+                                    {count > 0 && (
+                                        <span style={{
+                                            height: 16, minWidth: 16, borderRadius: 100,
+                                            padding: '0 4px',
+                                            background: active ? T.ind : T.b,
+                                            color: active ? '#fff' : T.sub,
+                                            fontSize: 9, fontWeight: 700,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontFamily: "'IBM Plex Mono',monospace",
+                                        }}>{count}</span>
+                                    )}
+                                </motion.button>
+                            );
+                        })}
+                    </motion.div>
+
+                    {/* Compact live indicator */}
+                    <AnimatePresence>
+                        {liveContests.length > 0 && filter !== 'finished' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: 8,
+                                    padding: '6px 14px', borderRadius: 8,
+                                    background: 'rgba(0,230,118,0.05)',
+                                    border: '1px solid rgba(0,230,118,0.14)',
+                                }}
+                            >
+                                <LiveDot size={5} />
+                                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, fontWeight: 600, color: T.grn }}>
+                                    {liveContests.length} ta musobaqa LIVE
                                 </span>
-                                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: T.sub, marginLeft: 10 }}>
-                                    Hoziroq qo'shiling!
-                                </span>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* ── GRID ── */}
                 {loading ? (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill,minmax(360px,1fr))',
-                        gap: 22,
+                        gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
+                        gap: 16,
                     }}>
                         {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
                     </div>
                 ) : filtered.length === 0 ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        style={{ textAlign: 'center', padding: '90px 20px' }}>
+                        style={{ textAlign: 'center', padding: '60px 20px' }}>
                         <motion.div
-                            animate={{ y: [0, -8, 0] }}
+                            animate={{ y: [0, -6, 0] }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                            style={{ fontSize: 52, marginBottom: 18, display: 'inline-block', filter: 'grayscale(.4)' }}
+                            style={{ fontSize: 40, marginBottom: 12, display: 'inline-block', filter: 'grayscale(.4)' }}
                         >🏜️</motion.div>
-                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 18, fontWeight: 700, color: T.sub }}>
+                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.sub }}>
                             Musobaqa topilmadi
                         </div>
                     </motion.div>
@@ -829,8 +725,8 @@ export default function Contests() {
                         layout
                         style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill,minmax(360px,1fr))',
-                            gap: 22,
+                            gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
+                            gap: 16,
                         }}
                     >
                         <AnimatePresence mode="popLayout">

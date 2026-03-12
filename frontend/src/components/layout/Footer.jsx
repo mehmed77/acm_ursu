@@ -2,7 +2,7 @@ import { Code2 } from 'lucide-react';
 
 export default function Footer() {
     return (
-        <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} className="mt-auto">
+        <footer style={{ borderTop: '1px solid var(--border-subtle)' }} className="mt-auto">
             <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[13px]" style={{ color: '#55556a' }}>
                     <Code2 className="w-3.5 h-3.5" />

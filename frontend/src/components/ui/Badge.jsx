@@ -13,7 +13,7 @@ const colorMap = {
     info: { bg: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: 'rgba(59,130,246,0.15)' },
     success: { bg: 'rgba(16,185,129,0.08)', color: '#34d399', border: 'rgba(16,185,129,0.15)' },
     warning: { bg: 'rgba(245,158,11,0.08)', color: '#fbbf24', border: 'rgba(245,158,11,0.15)' },
-    default: { bg: 'rgba(255,255,255,0.04)', color: '#9898bb', border: 'rgba(255,255,255,0.08)' },
+    default: { bg: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: 'var(--border-subtle)' },
 };
 
 export default function Badge({ children, color = 'default', className = '' }) {

@@ -3,22 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 
-// ═══════════════════════════════════════════════════
-// DESIGN TOKENS  —  "Neural Terminal" aesthetic
-// Deep cosmic void · electric neon accents
-// IBM Plex Mono + Syne display
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════ */
 const T = {
-    bg: '#03030b',
-    surf: '#07071a',
-    surf2: '#0b0b22',
-    b: 'rgba(255,255,255,0.055)',
-    bA: 'rgba(0,212,255,0.25)',
-    text: '#dde0f5',
-    sub: '#44446a',
-    dim: '#0e0e22',
+    bg: 'var(--bg-base)',
+    surf: 'var(--bg-surface)',
+    surf2: 'var(--bg-elevated)',
+    b: 'var(--border-subtle)',
+    text: 'var(--text-primary)',
+    sub: 'var(--text-muted)',
     cyan: '#00d4ff',
-    cyanD: '#008aaa',
     grn: '#00e676',
     amb: '#ffb300',
     red: '#ff2d55',
@@ -28,51 +23,34 @@ const T = {
 };
 
 const SC = {
-    accepted: { label: 'Accepted', color: '#00e676', dim: 'rgba(0,230,118,0.12)', bd: 'rgba(0,230,118,0.22)' },
-    wrong_answer: { label: 'Wrong Answer', color: '#ff2d55', dim: 'rgba(255,45,85,0.12)', bd: 'rgba(255,45,85,0.22)' },
-    time_limit_exceeded: { label: 'Time Limit', color: '#ffb300', dim: 'rgba(255,179,0,0.12)', bd: 'rgba(255,179,0,0.22)' },
-    memory_limit_exceeded: { label: 'Mem Limit', color: '#ffb300', dim: 'rgba(255,179,0,0.12)', bd: 'rgba(255,179,0,0.22)' },
-    runtime_error: { label: 'Runtime Err', color: '#ff2d55', dim: 'rgba(255,45,85,0.10)', bd: 'rgba(255,45,85,0.20)' },
-    compilation_error: { label: 'Compile Err', color: '#f97316', dim: 'rgba(249,115,22,0.10)', bd: 'rgba(249,115,22,0.20)' },
-    security_violation: { label: 'Blocked', color: '#a855f7', dim: 'rgba(168,85,247,0.10)', bd: 'rgba(168,85,247,0.20)' },
-    pending: { label: 'Pending', color: '#6366f1', dim: 'rgba(99,102,241,0.10)', bd: 'rgba(99,102,241,0.20)' },
-    running: { label: 'Running', color: '#00d4ff', dim: 'rgba(0,212,255,0.10)', bd: 'rgba(0,212,255,0.22)' },
-    system_error: { label: 'System Err', color: '#44446a', dim: 'rgba(68,68,106,0.10)', bd: 'rgba(68,68,106,0.20)' },
+    accepted:              { label: 'Accepted',    color: '#00e676', dim: 'rgba(0,230,118,0.10)',  bd: 'rgba(0,230,118,0.18)' },
+    wrong_answer:          { label: 'Wrong Answer', color: '#ff2d55', dim: 'rgba(255,45,85,0.10)',  bd: 'rgba(255,45,85,0.18)' },
+    time_limit_exceeded:   { label: 'Time Limit',  color: '#ffb300', dim: 'rgba(255,179,0,0.10)',  bd: 'rgba(255,179,0,0.18)' },
+    memory_limit_exceeded: { label: 'Mem Limit',   color: '#ffb300', dim: 'rgba(255,179,0,0.10)',  bd: 'rgba(255,179,0,0.18)' },
+    runtime_error:         { label: 'Runtime Err',  color: '#ff2d55', dim: 'rgba(255,45,85,0.08)',  bd: 'rgba(255,45,85,0.16)' },
+    compilation_error:     { label: 'Compile Err',  color: '#f97316', dim: 'rgba(249,115,22,0.08)', bd: 'rgba(249,115,22,0.16)' },
+    security_violation:    { label: 'Blocked',      color: '#a855f7', dim: 'rgba(168,85,247,0.08)', bd: 'rgba(168,85,247,0.16)' },
+    pending:               { label: 'Pending',      color: '#6366f1', dim: 'rgba(99,102,241,0.08)', bd: 'rgba(99,102,241,0.16)' },
+    running:               { label: 'Running',      color: '#00d4ff', dim: 'rgba(0,212,255,0.08)',  bd: 'rgba(0,212,255,0.18)' },
+    system_error:          { label: 'System Err',    color: 'var(--text-muted)', dim: 'rgba(120,120,160,0.08)', bd: 'rgba(120,120,160,0.14)' },
 };
 
 const LANG = {
-    python: { label: 'Python', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: 'PY' },
-    cpp: { label: 'C++17', color: '#818cf8', bg: 'rgba(129,140,248,0.12)', icon: 'C+' },
-    java: { label: 'Java', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: 'JV' },
-    csharp: { label: 'C#', color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: 'C#' },
+    python: { label: 'Python', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)', icon: 'PY' },
+    cpp:    { label: 'C++17',  color: '#818cf8', bg: 'rgba(129,140,248,0.10)', icon: 'C+' },
+    java:   { label: 'Java',   color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', icon: 'JV' },
+    csharp: { label: 'C#',     color: '#10b981', bg: 'rgba(16,185,129,0.10)', icon: 'C#' },
 };
 
-// ═══════════════════════════════════════════════════
-// GLOBAL STYLES
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   GLOBAL CSS
+   ═══════════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap');
-  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  :root { color-scheme:dark; }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-  @keyframes scan-v {
-    0%   { transform:translateY(-100%); opacity:0; }
-    6%   { opacity:.055; }
-    94%  { opacity:.055; }
-    100% { transform:translateY(110vh); opacity:0; }
-  }
-  @keyframes scan-h {
-    0%   { transform:translateX(-100%); opacity:0; }
-    6%   { opacity:.03; }
-    94%  { opacity:.03; }
-    100% { transform:translateX(110vw); opacity:0; }
-  }
   @keyframes shimmer {
     0%   { background-position:-200% 0; }
     100% { background-position:200% 0; }
-  }
-  @keyframes spin {
-    to { transform:rotate(360deg); }
   }
   @keyframes ring-ping {
     0%   { transform:scale(1); opacity:.7; }
@@ -83,62 +61,36 @@ const CSS = `
     50%     { opacity:.45; }
   }
   @keyframes flash-row {
-    0%   { background:rgba(0,212,255,.15); }
+    0%   { background:rgba(0,212,255,.12); }
     100% { background:transparent; }
   }
-  @keyframes count-up {
-    from { transform:translateY(6px); opacity:0; }
-    to   { transform:translateY(0);   opacity:1; }
-  }
-  @keyframes border-glow {
-    0%,100% { border-color:rgba(0,212,255,.18); }
-    50%     { border-color:rgba(0,212,255,.45); }
-  }
-  @keyframes float {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-6px); }
-  }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
   .skel {
     border-radius:4px;
     background:linear-gradient(90deg,
-      rgba(255,255,255,.03) 25%,
-      rgba(255,255,255,.07) 50%,
-      rgba(255,255,255,.03) 75%);
+      var(--bg-elevated) 25%,
+      var(--border-subtle) 50%,
+      var(--bg-elevated) 75%);
     background-size:200% 100%;
     animation:shimmer 1.6s ease-in-out infinite;
   }
 
   .r {
     position:relative;
-    transition:background .12s;
+    transition:background .1s;
   }
-  .r::after {
-    content:'';
-    position:absolute; left:0; top:0; bottom:0; width:2px;
-    background:linear-gradient(to bottom,transparent,${T.cyan},transparent);
-    opacity:0; transition:opacity .2s;
-    box-shadow:0 0 12px ${T.cyan};
-  }
-  .r:hover { background:rgba(0,212,255,.035) !important; }
-  .r:hover::after { opacity:1; }
-
-  .live-pill {
-    animation:border-glow 2.5s ease-in-out infinite;
-  }
+  .r:hover { background:rgba(99,102,241,.035) !important; }
 
   ::-webkit-scrollbar { width:3px; height:3px; }
   ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.07); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,.3); }
+  ::-webkit-scrollbar-thumb { background:var(--border-subtle); border-radius:4px; }
 `;
 
-// ═══════════════════════════════════════════════════
-// MICRO-COMPONENTS
-// ═══════════════════════════════════════════════════
-
-/* Dual-ring live dot */
-function LiveDot({ color = T.grn, size = 7, active = true }) {
+/* ═══════════════════════════════════════════════════
+   MICRO COMPONENTS
+   ═══════════════════════════════════════════════════ */
+function LiveDot({ color = T.grn, size = 5, active = true }) {
     return (
         <span style={{ position: 'relative', display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
             {active && (
@@ -157,44 +109,41 @@ function LiveDot({ color = T.grn, size = 7, active = true }) {
     );
 }
 
-/* Monospace text */
-function M({ ch, col = T.sub, sz = 12, w = 500 }) {
+function M({ ch, col = T.sub, sz = 11, w = 500 }) {
     return (
-        <span style={{
-            fontFamily: "'IBM Plex Mono',monospace",
-            fontSize: sz, fontWeight: w, color: col,
-        }}>{ch}</span>
+        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col, lineHeight: 1 }}>
+            {ch}
+        </span>
     );
 }
 
-/* Status badge */
+/* Status badge — compact */
 function SBadge({ status }) {
     const c = SC[status] || SC.system_error;
     const isRun = status === 'running' || status === 'pending';
     return (
         <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7,
-            height: 24, padding: '0 10px', borderRadius: 7,
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            height: 20, padding: '0 7px', borderRadius: 5,
             background: c.dim, border: `1px solid ${c.bd}`,
             width: 'fit-content',
         }}>
             {isRun ? (
                 <div style={{
-                    width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                     border: `1.5px solid ${c.color}44`, borderTopColor: c.color,
                     animation: 'spin .65s linear infinite',
                 }} />
             ) : (
                 <span style={{
-                    width: 5, height: 5, borderRadius: '50%',
+                    width: 4, height: 4, borderRadius: '50%',
                     background: c.color, display: 'inline-block', flexShrink: 0,
-                    boxShadow: `0 0 7px ${c.color}`,
+                    boxShadow: `0 0 5px ${c.color}`,
                 }} />
             )}
             <span style={{
                 fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: 11, fontWeight: 600, color: c.color,
-                textShadow: `0 0 10px ${c.color}66`,
+                fontSize: 9, fontWeight: 600, color: c.color,
                 letterSpacing: '.01em', whiteSpace: 'nowrap',
             }}>
                 {c.label}
@@ -203,141 +152,63 @@ function SBadge({ status }) {
     );
 }
 
-/* Language badge */
+/* Language badge — compact */
 function LBadge({ lang }) {
-    const c = LANG[lang] || { label: lang, color: T.sub, bg: 'rgba(100,100,130,.12)', icon: '??' };
+    const c = LANG[lang] || { label: lang, color: T.sub, bg: 'rgba(120,120,160,.08)', icon: '??' };
     return (
         <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            height: 22, padding: '0 8px', borderRadius: 6,
-            background: c.bg, border: `1px solid ${c.color}28`,
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            height: 18, padding: '0 6px', borderRadius: 4,
+            background: c.bg, border: `1px solid ${c.color}22`,
             width: 'fit-content',
         }}>
             <span style={{
                 fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: 9, fontWeight: 700, color: c.color, letterSpacing: '.04em',
+                fontSize: 8, fontWeight: 700, color: c.color, letterSpacing: '.04em',
             }}>{c.icon}</span>
             <span style={{
                 fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: 10, fontWeight: 600, color: c.color,
+                fontSize: 9, fontWeight: 600, color: c.color,
             }}>{c.label}</span>
         </div>
     );
 }
 
-/* Control button */
-function Btn({ children, onClick, active, variant = 'default', style: s = {} }) {
-    const palettes = {
-        default: {
-            bg: active ? 'rgba(99,102,241,.14)' : 'rgba(255,255,255,.04)',
-            bd: active ? 'rgba(99,102,241,.35)' : T.b,
-            col: active ? '#818cf8' : T.sub
-        },
-        live: {
-            bg: active ? 'rgba(0,230,118,.1)' : 'rgba(255,255,255,.04)',
-            bd: active ? 'rgba(0,230,118,.28)' : T.b,
-            col: active ? T.grn : T.sub
-        },
-        danger: { bg: 'rgba(255,45,85,.09)', bd: 'rgba(255,45,85,.25)', col: T.red },
-        cyan: { bg: 'rgba(0,212,255,.1)', bd: 'rgba(0,212,255,.3)', col: T.cyan },
-    };
-    const p = palettes[variant] || palettes.default;
-    return (
-        <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: .94 }}
-            onClick={onClick}
-            style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                height: 36, padding: '0 16px', borderRadius: 10,
-                background: p.bg, border: `1px solid ${p.bd}`,
-                color: p.col, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
-                boxShadow: active ? `0 0 18px ${p.col}18` : 'none',
-                transition: 'all .15s', whiteSpace: 'nowrap',
-                ...s,
-            }}
-        >{children}</motion.button>
-    );
+/* ═══════════════════════════════════════════════════
+   TIME FORMATTING — FIXED QACHON
+   ═══════════════════════════════════════════════════ */
+function formatDate(iso) {
+    if (!iso) return '—';
+    const date = new Date(iso);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+
+    // Less than 60 seconds
+    if (diffSec < 60) return `${diffSec} soniya oldin`;
+    // Less than 60 minutes
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)} daqiqa oldin`;
+    // Less than 24 hours
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} soat oldin`;
+
+    // More than 24 hours — show proper date
+    const day = String(date.getDate()).padStart(2, '0');
+    const months = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
+    const month = months[date.getMonth()];
+    const hours = String(date.getHours()).padStart(2, '0');
+    const mins = String(date.getMinutes()).padStart(2, '0');
+
+    // Same year — show day month time
+    if (date.getFullYear() === now.getFullYear()) {
+        return `${day} ${month} ${hours}:${mins}`;
+    }
+    // Different year
+    return `${day} ${month} ${date.getFullYear()} ${hours}:${mins}`;
 }
 
-// ═══════════════════════════════════════════════════
-// TIME AGO
-// ═══════════════════════════════════════════════════
-function ago(iso) {
-    const s = Math.floor((Date.now() - new Date(iso)) / 1000);
-    if (s < 60) return `${s}s`;
-    if (s < 3600) return `${Math.floor(s / 60)}m`;
-    if (s < 86400) return `${Math.floor(s / 3600)}h`;
-    return new Date(iso).toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' });
-}
-
-// ═══════════════════════════════════════════════════
-// STAT CARD
-// ═══════════════════════════════════════════════════
-function StatCard({ icon, label, value, color, delay = 0 }) {
-    const [n, setN] = useState(0);
-    const done = useRef(false);
-    useEffect(() => {
-        if (done.current || !value) return;
-        done.current = true;
-        const t0 = Date.now(), d = 700 + delay * 100;
-        const tick = () => {
-            const p = Math.min((Date.now() - t0) / d, 1);
-            setN(Math.round(value * (1 - Math.pow(1 - p, 3))));
-            if (p < 1) requestAnimationFrame(tick);
-        };
-        setTimeout(() => requestAnimationFrame(tick), delay * 80);
-    }, [value]);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: delay * .07 }}
-            style={{
-                background: T.surf, border: `1px solid ${T.b}`,
-                borderRadius: 14, padding: '16px 18px',
-                display: 'flex', alignItems: 'center', gap: 14,
-                boxShadow: '0 4px 24px rgba(0,0,0,.3)',
-                position: 'relative', overflow: 'hidden',
-            }}
-        >
-            {/* Corner glow */}
-            <div style={{
-                position: 'absolute', top: -20, right: -20,
-                width: 80, height: 80, borderRadius: '50%',
-                background: `radial-gradient(circle,${color}18,transparent 70%)`,
-                pointerEvents: 'none',
-            }} />
-
-            <div style={{
-                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-                background: `${color}12`, border: `1px solid ${color}22`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16,
-            }}>{icon}</div>
-
-            <div>
-                <div style={{
-                    fontFamily: "'IBM Plex Mono',monospace",
-                    fontSize: 21, fontWeight: 700, color,
-                    lineHeight: 1, textShadow: `0 0 20px ${color}44`,
-                    animation: 'count-up .4s ease both',
-                }}>
-                    {n.toLocaleString()}
-                </div>
-                <div style={{ fontSize: 10, color: T.sub, marginTop: 3, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                    {label}
-                </div>
-            </div>
-        </motion.div>
-    );
-}
-
-// ═══════════════════════════════════════════════════
-// FILTER INPUT
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   FILTER INPUTS
+   ═══════════════════════════════════════════════════ */
 function FInput({ placeholder, value, onChange }) {
     return (
         <input
@@ -345,21 +216,15 @@ function FInput({ placeholder, value, onChange }) {
             onChange={e => onChange(e.target.value)}
             placeholder={placeholder}
             style={{
-                width: '100%', height: 36,
+                width: '100%', height: 30,
                 background: T.surf2, border: `1px solid ${T.b}`,
-                borderRadius: 9, padding: '0 12px',
-                color: T.text, fontSize: 12, outline: 'none',
+                borderRadius: 6, padding: '0 10px',
+                color: T.text, fontSize: 11, outline: 'none',
                 fontFamily: "'DM Sans',sans-serif",
-                transition: 'border-color .2s, box-shadow .2s',
+                transition: 'border-color .2s',
             }}
-            onFocus={e => {
-                e.target.style.borderColor = T.cyan;
-                e.target.style.boxShadow = `0 0 0 3px rgba(0,212,255,.1)`;
-            }}
-            onBlur={e => {
-                e.target.style.borderColor = T.b;
-                e.target.style.boxShadow = 'none';
-            }}
+            onFocus={e => { e.target.style.borderColor = T.cyan; }}
+            onBlur={e => { e.target.style.borderColor = T.b; }}
         />
     );
 }
@@ -369,11 +234,11 @@ function FSel({ value, onChange, options }) {
             value={value}
             onChange={e => onChange(e.target.value)}
             style={{
-                width: '100%', height: 36,
-                background: '#07071a', border: `1px solid ${T.b}`,
-                borderRadius: 9, padding: '0 10px',
+                width: '100%', height: 30,
+                background: 'var(--bg-surface)', border: `1px solid ${T.b}`,
+                borderRadius: 6, padding: '0 8px',
                 color: value ? T.text : T.sub,
-                fontSize: 12, outline: 'none', cursor: 'pointer',
+                fontSize: 11, outline: 'none', cursor: 'pointer',
                 fontFamily: "'DM Sans',sans-serif",
                 transition: 'border-color .2s',
             }}
@@ -381,40 +246,76 @@ function FSel({ value, onChange, options }) {
             onBlur={e => e.target.style.borderColor = T.b}
         >
             {options.map(o => (
-                <option key={o.v} value={o.v} style={{ background: '#07071a' }}>{o.l}</option>
+                <option key={o.v} value={o.v} style={{ background: 'var(--bg-surface)' }}>{o.l}</option>
             ))}
         </select>
     );
 }
 
-// ═══════════════════════════════════════════════════
-// PAGINATION BUTTON
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   COMPACT BUTTON
+   ═══════════════════════════════════════════════════ */
+function Btn({ children, onClick, active, variant = 'default', style: s = {} }) {
+    const palettes = {
+        default: {
+            bg: active ? 'rgba(99,102,241,.12)' : 'var(--bg-elevated)',
+            bd: active ? 'rgba(99,102,241,.30)' : T.b,
+            col: active ? '#818cf8' : T.sub,
+        },
+        live: {
+            bg: active ? 'rgba(0,230,118,.08)' : 'var(--bg-elevated)',
+            bd: active ? 'rgba(0,230,118,.22)' : T.b,
+            col: active ? T.grn : T.sub,
+        },
+        danger: { bg: 'rgba(255,45,85,.07)', bd: 'rgba(255,45,85,.20)', col: T.red },
+        cyan: { bg: 'rgba(0,212,255,.08)', bd: 'rgba(0,212,255,.22)', col: T.cyan },
+    };
+    const p = palettes[variant] || palettes.default;
+    return (
+        <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: .94 }}
+            onClick={onClick}
+            style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 10px', borderRadius: 6,
+                background: p.bg, border: `1px solid ${p.bd}`,
+                color: p.col, fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                transition: 'all .12s', whiteSpace: 'nowrap',
+                ...s,
+            }}
+        >{children}</motion.button>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   PAGINATION BUTTON
+   ═══════════════════════════════════════════════════ */
 function PBtn({ onClick, disabled, active, label }) {
     return (
         <motion.button
             onClick={onClick} disabled={disabled}
-            whileHover={!disabled && !active ? { scale: 1.1 } : {}}
+            whileHover={!disabled && !active ? { scale: 1.08 } : {}}
             whileTap={!disabled ? { scale: .88 } : {}}
             style={{
-                width: 34, height: 34, borderRadius: 9,
-                fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer',
+                width: 28, height: 28, borderRadius: 6,
+                fontSize: 11, cursor: disabled ? 'not-allowed' : 'pointer',
                 fontFamily: "'IBM Plex Mono',monospace", fontWeight: active ? 700 : 500,
                 background: active
                     ? `linear-gradient(135deg,${T.ind},${T.cyan})`
-                    : 'rgba(255,255,255,.04)',
+                    : 'var(--bg-elevated)',
                 border: active ? 'none' : `1px solid ${T.b}`,
-                color: active ? '#03030b' : disabled ? T.dim : T.sub,
-                boxShadow: active ? `0 0 24px ${T.cyan}40,0 0 48px ${T.ind}20` : 'none',
-                transition: 'all .15s',
+                color: active ? 'var(--bg-base)' : disabled ? 'var(--bg-elevated)' : T.sub,
+                transition: 'all .12s',
             }}
         >{label}</motion.button>
     );
 }
 
-// ═══════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════ */
 export default function Status() {
     const navigate = useNavigate();
 
@@ -433,7 +334,6 @@ export default function Status() {
     const timerRef = useRef(null);
     const prevFirst = useRef(null);
 
-    // ── fetch ────────────────────────────────
     const fetchSubs = async (silent = false) => {
         if (!silent) setLoading(true);
         try {
@@ -486,211 +386,207 @@ export default function Status() {
     const acCount = subs.filter(s => s.status === 'accepted').length;
     const runCount = subs.filter(s => s.status === 'running' || s.status === 'pending').length;
 
+    /* Grid columns — compact */
+    const gridCols = '56px 120px 1fr 80px 120px 64px 60px 110px';
+
     return (
         <>
             <style>{CSS}</style>
 
-            {/* ── BACKGROUND FX ─────────────────── */}
-            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-                {/* Vertical scanline */}
-                <div style={{
-                    position: 'absolute', left: 0, right: 0, height: '1px',
-                    background: `linear-gradient(90deg,transparent 5%,${T.cyan}55 40%,${T.grn}44 60%,transparent 95%)`,
-                    animation: 'scan-v 12s linear infinite',
-                }} />
-                {/* Horizontal scanline */}
-                <div style={{
-                    position: 'absolute', top: 0, bottom: 0, width: '1px',
-                    background: `linear-gradient(180deg,transparent,${T.ind}33,transparent)`,
-                    animation: 'scan-h 18s linear 6s infinite',
-                }} />
-                {/* Grid */}
-                <div style={{
-                    position: 'absolute', inset: 0, opacity: .022,
-                    backgroundImage: `linear-gradient(${T.b} 1px,transparent 1px),linear-gradient(90deg,${T.b} 1px,transparent 1px)`,
-                    backgroundSize: '52px 52px',
-                }} />
-                {/* Orbs */}
-                <div style={{
-                    position: 'absolute', top: '-8%', right: '12%', width: 640, height: 640, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.ind}0b,transparent 68%)`
-                }} />
-                <div style={{
-                    position: 'absolute', bottom: '5%', left: '3%', width: 480, height: 480, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.grn}07,transparent 65%)`
-                }} />
-                <div style={{
-                    position: 'absolute', top: '30%', left: '25%', width: 300, height: 300, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.cyan}06,transparent 65%)`
-                }} />
-            </div>
-
             <div style={{
                 position: 'relative', zIndex: 1,
                 maxWidth: 1280, margin: '0 auto',
-                padding: '40px 24px',
+                padding: '14px 16px 40px',
                 fontFamily: "'DM Sans',sans-serif", color: T.text,
                 minHeight: '100vh',
             }}>
 
-                {/* ── HERO HEADER ───────────────────── */}
+                {/* ══ COMPACT HEADER BAR ══ */}
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: .4, ease: [.4, 0, .2, 1] }}
-                    style={{ marginBottom: 28 }}
+                    transition={{ duration: .3 }}
+                    style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 12, flexWrap: 'wrap',
+                        padding: '10px 16px',
+                        background: T.surf,
+                        border: `1px solid ${T.b}`,
+                        borderRadius: 12,
+                        marginBottom: 10,
+                        position: 'relative', overflow: 'hidden',
+                    }}
                 >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+                    {/* Decorative orb */}
+                    <div style={{
+                        position: 'absolute', top: -40, right: -20,
+                        width: 140, height: 140, borderRadius: '50%',
+                        background: `radial-gradient(circle,rgba(99,102,241,0.06),transparent 70%)`,
+                        pointerEvents: 'none',
+                    }} />
 
-                        {/* Left: title */}
-                        <div>
-                            <div style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 9,
-                                padding: '5px 14px', borderRadius: 100, marginBottom: 10,
-                                background: `${T.ind}0f`,
-                                border: `1px solid ${T.ind}30`,
-                                className: 'live-pill',
+                    {/* Left: title + live indicator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+                        {/* Live indicator */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            padding: '3px 8px', borderRadius: 100,
+                            background: autoRef ? 'rgba(0,230,118,0.06)' : 'rgba(120,120,160,0.06)',
+                            border: `1px solid ${autoRef ? 'rgba(0,230,118,0.16)' : 'rgba(120,120,160,0.14)'}`,
+                        }}>
+                            <LiveDot color={autoRef ? T.grn : T.sub} size={4} active={autoRef} />
+                            <span style={{
+                                fontFamily: "'IBM Plex Mono',monospace",
+                                fontSize: 8, fontWeight: 700, color: autoRef ? T.grn : T.sub,
+                                letterSpacing: '.1em',
                             }}>
-                                <LiveDot color={autoRef ? T.grn : T.sub} size={6} active={autoRef} />
-                                <span style={{
-                                    fontFamily: "'IBM Plex Mono',monospace",
-                                    fontSize: 10, fontWeight: 700, color: autoRef ? T.grn : T.sub,
-                                    letterSpacing: '.12em',
-                                }}>
-                                    {autoRef ? 'LIVE MONITOR' : 'PAUSED'}
-                                </span>
-                                {autoRef && lastUp && (
-                                    <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: T.sub }}>
-                                        · {lastUp.toLocaleTimeString('uz-UZ')}
-                                    </span>
-                                )}
-                            </div>
+                                {autoRef ? 'LIVE' : 'PAUSED'}
+                            </span>
+                        </div>
 
+                        <div>
                             <h1 style={{
                                 fontFamily: "'Syne',sans-serif",
-                                fontSize: 36, fontWeight: 800,
-                                letterSpacing: '-.03em', lineHeight: 1, margin: 0,
+                                fontSize: 'clamp(18px, 2.5vw, 24px)',
+                                fontWeight: 800, letterSpacing: '-.02em',
+                                lineHeight: 1.1, margin: 0,
                             }}>
                                 Submission{' '}
                                 <span style={{
                                     background: `linear-gradient(90deg,${T.ind},${T.cyan} 55%,${T.grn})`,
                                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                    filter: `drop-shadow(0 0 20px ${T.cyan}33)`,
                                 }}>
                                     Monitor
                                 </span>
                             </h1>
-
-                            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 14 }}>
-                                <M ch={`Jami: `} sz={12} />
-                                <M ch={total.toLocaleString()} col={T.cyan} sz={13} w={700} />
-                                <M ch="ta submission" sz={12} />
-                                {page > 1 && <M ch={`· Sahifa ${page}/${totalPages}`} sz={11} />}
+                            <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <M ch={`Jami: `} sz={10} />
+                                <M ch={total.toLocaleString()} col={T.cyan} sz={11} w={700} />
+                                <M ch="ta submission" sz={10} />
+                                {page > 1 && <M ch={`· Sahifa ${page}/${totalPages}`} sz={9} />}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Right: controls */}
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-
-                            {/* New badge */}
-                            <AnimatePresence>
-                                {newCount > 0 && (
-                                    <motion.button
-                                        initial={{ opacity: 0, scale: .75, x: 12 }}
-                                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                                        exit={{ opacity: 0, scale: .75 }}
-                                        transition={{ type: 'spring', stiffness: 350 }}
-                                        onClick={() => { setNewCount(0); fetchSubs(); }}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: 8,
-                                            height: 36, padding: '0 14px', borderRadius: 10,
-                                            background: `${T.cyan}12`, border: `1px solid ${T.cyan}35`,
-                                            color: T.cyan, fontSize: 12, fontWeight: 700,
-                                            cursor: 'pointer', fontFamily: "'IBM Plex Mono',monospace",
-                                            boxShadow: `0 0 24px ${T.cyan}25`,
-                                        }}
-                                    >
-                                        <LiveDot color={T.cyan} size={5} />
-                                        +{newCount} yangi — yangilash
-                                    </motion.button>
-                                )}
-                            </AnimatePresence>
-
-                            <Btn
-                                active={fOpen || hasF}
-                                onClick={() => setFOpen(o => !o)}
-                            >
-                                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                                </svg>
-                                Filter
-                                {fCount > 0 && (
-                                    <span style={{
-                                        width: 17, height: 17, borderRadius: '50%',
-                                        background: T.ind, color: 'white',
-                                        fontSize: 9, fontWeight: 800,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    }}>{fCount}</span>
-                                )}
-                            </Btn>
-
-                            <Btn variant="live" active={autoRef} onClick={() => setAutoRef(a => !a)}>
-                                {autoRef
-                                    ? <><span style={{ fontSize: 11 }}>⏸</span> Pauza</>
-                                    : <><span style={{ fontSize: 11 }}>▶</span> Live</>
-                                }
-                            </Btn>
-
-                            <motion.button
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ rotate: 180, scale: .9 }}
-                                onClick={() => fetchSubs()}
-                                style={{
-                                    width: 36, height: 36, borderRadius: 10,
-                                    background: T.surf, border: `1px solid ${T.b}`,
-                                    color: T.sub, fontSize: 17, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    transition: 'color .15s',
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.color = T.cyan}
-                                onMouseLeave={e => e.currentTarget.style.color = T.sub}
-                            >↻</motion.button>
+                    {/* Right: stats pills + controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative', flexWrap: 'wrap' }}>
+                        {/* Compact stats */}
+                        <div style={{ display: 'flex', gap: 4 }}>
+                            {[
+                                { val: total, label: 'Jami', color: T.cyan, icon: '📡' },
+                                { val: subs.length, label: 'Sahifada', color: T.sub, icon: '✓' },
+                                { val: acCount, label: 'Accepted', color: T.grn, icon: '⚡' },
+                                { val: runCount, label: 'Jarayonda', color: T.ind, icon: '⟳' },
+                            ].map((s, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 5,
+                                    padding: '4px 8px', borderRadius: 6,
+                                    background: `${s.color}08`,
+                                    border: `1px solid ${s.color}16`,
+                                }}>
+                                    <div>
+                                        <div style={{
+                                            fontFamily: "'DM Sans',sans-serif", fontSize: 7,
+                                            color: T.sub, textTransform: 'uppercase',
+                                            letterSpacing: '.05em', lineHeight: 1,
+                                        }}>{s.label}</div>
+                                        <div style={{
+                                            fontFamily: "'IBM Plex Mono',monospace",
+                                            fontSize: 12, fontWeight: 700, color: s.color,
+                                            lineHeight: 1.1,
+                                        }}>{s.val}</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+
+                        {/* New submissions badge */}
+                        <AnimatePresence>
+                            {newCount > 0 && (
+                                <motion.button
+                                    initial={{ opacity: 0, scale: .75 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: .75 }}
+                                    onClick={() => { setNewCount(0); fetchSubs(); }}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 5,
+                                        height: 24, padding: '0 8px', borderRadius: 5,
+                                        background: `${T.cyan}10`, border: `1px solid ${T.cyan}28`,
+                                        color: T.cyan, fontSize: 10, fontWeight: 700,
+                                        cursor: 'pointer', fontFamily: "'IBM Plex Mono',monospace",
+                                    }}
+                                >
+                                    <LiveDot color={T.cyan} size={4} />
+                                    +{newCount} yangi
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Filter button */}
+                        <Btn active={fOpen || hasF} onClick={() => setFOpen(o => !o)}>
+                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                            </svg>
+                            Filter
+                            {fCount > 0 && (
+                                <span style={{
+                                    width: 14, height: 14, borderRadius: '50%',
+                                    background: T.ind, color: 'white',
+                                    fontSize: 8, fontWeight: 800,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>{fCount}</span>
+                            )}
+                        </Btn>
+
+                        {/* Live/Pause */}
+                        <Btn variant="live" active={autoRef} onClick={() => setAutoRef(a => !a)}>
+                            {autoRef
+                                ? <><span style={{ fontSize: 9 }}>⏸</span> Pauza</>
+                                : <><span style={{ fontSize: 9 }}>▶</span> Live</>
+                            }
+                        </Btn>
+
+                        {/* Refresh */}
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ rotate: 180, scale: .9 }}
+                            onClick={() => fetchSubs()}
+                            style={{
+                                width: 28, height: 28, borderRadius: 6,
+                                background: 'transparent', border: `1px solid ${T.b}`,
+                                color: T.sub, fontSize: 13, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'color .12s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = T.cyan}
+                            onMouseLeave={e => e.currentTarget.style.color = T.sub}
+                        >↻</motion.button>
                     </div>
                 </motion.div>
 
-                {/* ── STAT CARDS ─────────────────────── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
-                    <StatCard icon="📡" label="Jami submissions" value={total} color={T.cyan} delay={0} />
-                    <StatCard icon="✓" label="Bu sahifada" value={subs.length} color={T.sub} delay={1} />
-                    <StatCard icon="⚡" label="Accepted" value={acCount} color={T.grn} delay={2} />
-                    <StatCard icon="⟳" label="Jarayonda" value={runCount} color={T.ind} delay={3} />
-                </div>
-
-                {/* ── FILTER PANEL ───────────────────── */}
+                {/* ══ FILTER PANEL ══ */}
                 <AnimatePresence>
                     {fOpen && (
                         <motion.div
                             key="filter"
                             initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                            animate={{ opacity: 1, height: 'auto', marginBottom: 14 }}
+                            animate={{ opacity: 1, height: 'auto', marginBottom: 8 }}
                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                            transition={{ duration: .22, ease: [.4, 0, .2, 1] }}
+                            transition={{ duration: .18 }}
                             style={{ overflow: 'hidden' }}
                         >
                             <div style={{
                                 background: T.surf,
-                                border: `1px solid ${T.ind}22`,
-                                borderRadius: 13, padding: '14px 16px',
-                                boxShadow: `0 0 40px ${T.ind}08`,
+                                border: `1px solid ${T.ind}18`,
+                                borderRadius: 10, padding: '10px 12px',
                             }}>
                                 <div style={{
                                     display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr 190px 230px auto',
-                                    gap: 10, alignItems: 'center',
+                                    gridTemplateColumns: '1fr 1fr 160px 200px auto',
+                                    gap: 8, alignItems: 'center',
                                 }}>
                                     <FInput placeholder="👤 Username..." value={filters.username} onChange={v => setF('username', v)} />
-                                    <FInput placeholder="📝 Masala (A0001)..." value={filters.problem} onChange={v => setF('problem', v)} />
+                                    <FInput placeholder="📝 Masala..." value={filters.problem} onChange={v => setF('problem', v)} />
                                     <FSel value={filters.language} onChange={v => setF('language', v)} options={[
                                         { v: '', l: '🌐 Barcha tillar' },
                                         { v: 'python', l: 'PY  Python 3' },
@@ -707,7 +603,7 @@ export default function Status() {
                                         { v: 'compilation_error', l: '🔧  Compile Error' },
                                     ]} />
                                     {hasF && (
-                                        <Btn variant="danger" onClick={clearF} style={{ padding: '0 14px' }}>
+                                        <Btn variant="danger" onClick={clearF} style={{ padding: '0 10px' }}>
                                             ✕ Tozalash
                                         </Btn>
                                     )}
@@ -717,44 +613,42 @@ export default function Status() {
                     )}
                 </AnimatePresence>
 
-                {/* ── TABLE ─────────────────────────── */}
+                {/* ══ TABLE ══ */}
                 <motion.div
-                    initial={{ opacity: 0, y: 14 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: .2 }}
+                    transition={{ delay: .1 }}
                     style={{
                         background: T.surf, border: `1px solid ${T.b}`,
-                        borderRadius: 16, overflow: 'hidden',
-                        boxShadow: '0 16px 60px rgba(0,0,0,.5)',
+                        borderRadius: 10, overflow: 'hidden',
+                        boxShadow: 'var(--card-shadow)',
                     }}
                 >
                     {/* Table header */}
                     <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '70px 148px 1fr 104px 148px 82px 78px 96px',
-                        padding: '10px 20px',
-                        background: `linear-gradient(90deg,rgba(99,102,241,.07),rgba(0,212,255,.04),transparent)`,
+                        display: 'grid', gridTemplateColumns: gridCols,
+                        padding: '7px 14px',
+                        background: `linear-gradient(90deg,rgba(99,102,241,.04),rgba(0,212,255,.02),transparent)`,
                         borderBottom: `1px solid ${T.b}`,
                     }}>
                         {['#ID', 'FOYDALANUVCHI', 'MASALA', 'TIL', 'HOLATI', 'VAQT', 'XOTIRA', 'QACHON'].map((h, i) => (
                             <span key={i} style={{
                                 fontFamily: "'IBM Plex Mono',monospace",
-                                fontSize: 9, fontWeight: 700, color: T.sub,
-                                letterSpacing: '.1em', textTransform: 'uppercase',
+                                fontSize: 8, fontWeight: 700, color: T.sub,
+                                letterSpacing: '.08em', textTransform: 'uppercase',
                             }}>{h}</span>
                         ))}
                     </div>
 
                     {/* Skeleton */}
-                    {loading && [...Array(14)].map((_, i) => (
+                    {loading && [...Array(12)].map((_, i) => (
                         <div key={i} style={{
-                            display: 'grid',
-                            gridTemplateColumns: '70px 148px 1fr 104px 148px 82px 78px 96px',
-                            padding: '0 20px', height: 46, alignItems: 'center',
-                            borderBottom: `1px solid rgba(255,255,255,.03)`, gap: 8,
+                            display: 'grid', gridTemplateColumns: gridCols,
+                            padding: '0 14px', height: 36, alignItems: 'center',
+                            borderBottom: `1px solid var(--bg-elevated)`, gap: 6,
                         }}>
-                            {[42, 100, 190, 68, 100, 46, 46, 72].map((w, j) => (
-                                <div key={j} className="skel" style={{ height: 11, width: w, maxWidth: '100%' }} />
+                            {[36, 80, 160, 56, 80, 36, 36, 70].map((w, j) => (
+                                <div key={j} className="skel" style={{ height: 10, width: w, maxWidth: '100%' }} />
                             ))}
                         </div>
                     ))}
@@ -764,41 +658,39 @@ export default function Status() {
                         {!loading && subs.map((sub, idx) => {
                             const isAC = sub.status === 'accepted';
                             const isNew = newIds.has(sub.id);
-                            const isRun = sub.status === 'running' || sub.status === 'pending';
 
                             return (
                                 <motion.div
                                     key={sub.id}
                                     className="r"
-                                    initial={{ opacity: 0, x: -12 }}
+                                    initial={{ opacity: 0, x: -8 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: idx * .025, duration: .2 }}
+                                    transition={{ delay: idx * .02, duration: .15 }}
                                     style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: '70px 148px 1fr 104px 148px 82px 78px 96px',
-                                        padding: '0 20px', height: 46, alignItems: 'center',
+                                        display: 'grid', gridTemplateColumns: gridCols,
+                                        padding: '0 14px', height: 36, alignItems: 'center',
                                         borderBottom: idx < subs.length - 1
-                                            ? `1px solid rgba(255,255,255,.04)` : 'none',
+                                            ? `1px solid var(--bg-elevated)` : 'none',
                                         background: isNew
                                             ? undefined
-                                            : isAC ? 'rgba(0,230,118,.02)' : 'transparent',
+                                            : isAC ? 'rgba(0,230,118,.015)' : 'transparent',
                                         animation: isNew ? 'flash-row 3s ease-out forwards' : 'none',
                                     }}
                                 >
                                     {/* ID */}
-                                    <M ch={`#${sub.id}`} sz={11} />
+                                    <M ch={`#${sub.id}`} sz={10} />
 
                                     {/* Username */}
                                     <div
                                         onClick={() => navigate(`/profile/${sub.username}`)}
                                         style={{
-                                            fontSize: 13, fontWeight: 600, color: '#7c85f5',
+                                            fontSize: 11, fontWeight: 600, color: '#7c85f5',
                                             cursor: 'pointer', overflow: 'hidden',
                                             textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                            paddingRight: 8, transition: 'color .12s',
+                                            paddingRight: 6, transition: 'color .1s',
                                         }}
-                                        onMouseEnter={e => { e.currentTarget.style.color = '#b8c0ff'; e.currentTarget.style.textShadow = `0 0 12px #7c85f566`; }}
-                                        onMouseLeave={e => { e.currentTarget.style.color = '#7c85f5'; e.currentTarget.style.textShadow = 'none'; }}
+                                        onMouseEnter={e => e.currentTarget.style.color = '#b8c0ff'}
+                                        onMouseLeave={e => e.currentTarget.style.color = '#7c85f5'}
                                     >
                                         {sub.username}
                                     </div>
@@ -807,18 +699,18 @@ export default function Status() {
                                     <div
                                         onClick={() => navigate(`/problems/${sub.problem_slug}`)}
                                         style={{
-                                            display: 'flex', alignItems: 'center', gap: 7,
-                                            cursor: 'pointer', overflow: 'hidden', paddingRight: 8,
+                                            display: 'flex', alignItems: 'center', gap: 5,
+                                            cursor: 'pointer', overflow: 'hidden', paddingRight: 6,
                                         }}
                                     >
-                                        <M ch={sub.problem_slug} sz={10} col="#3a3a62" />
+                                        <M ch={sub.problem_slug} sz={9} col="var(--text-muted)" />
                                         <span style={{
-                                            fontSize: 13, fontWeight: 500, color: '#9898bb',
+                                            fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)',
                                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                            transition: 'color .12s',
+                                            transition: 'color .1s',
                                         }}
-                                            onMouseEnter={e => e.currentTarget.style.color = '#c4c4e8'}
-                                            onMouseLeave={e => e.currentTarget.style.color = '#9898bb'}
+                                            onMouseEnter={e => e.currentTarget.style.color = T.text}
+                                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                                         >{sub.problem_title}</span>
                                     </div>
 
@@ -829,27 +721,27 @@ export default function Status() {
                                     <SBadge status={sub.status} />
 
                                     {/* Time */}
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
                                         {sub.time_used ? (
                                             <>
-                                                <M ch={sub.time_used} col={sub.time_used > 900 ? T.amb : T.text} sz={13} w={600} />
-                                                <M ch="ms" sz={9} />
+                                                <M ch={sub.time_used} col={sub.time_used > 900 ? T.amb : T.text} sz={11} w={600} />
+                                                <M ch="ms" sz={8} />
                                             </>
-                                        ) : <M ch="—" />}
+                                        ) : <M ch="—" sz={10} />}
                                     </div>
 
                                     {/* Memory */}
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
                                         {sub.memory_used ? (
                                             <>
-                                                <M ch={sub.memory_used} col={T.text} sz={13} w={600} />
-                                                <M ch="MB" sz={9} />
+                                                <M ch={sub.memory_used} col={T.text} sz={11} w={600} />
+                                                <M ch="MB" sz={8} />
                                             </>
-                                        ) : <M ch="—" />}
+                                        ) : <M ch="—" sz={10} />}
                                     </div>
 
-                                    {/* Time ago */}
-                                    <M ch={`${ago(sub.created_at)} oldin`} sz={11} />
+                                    {/* QACHON — FIXED proper date */}
+                                    <M ch={formatDate(sub.created_at)} sz={9} />
                                 </motion.div>
                             );
                         })}
@@ -857,42 +749,35 @@ export default function Status() {
 
                     {/* Empty state */}
                     {!loading && subs.length === 0 && (
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                            style={{ textAlign: 'center', padding: '90px 20px' }}
-                        >
-                            <motion.div
-                                animate={{ y: [0, -8, 0] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                                style={{ fontSize: 52, marginBottom: 18, display: 'inline-block', filter: 'grayscale(.3)' }}
-                            >📭</motion.div>
+                        <div style={{ textAlign: 'center', padding: '50px 16px' }}>
+                            <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
                             <div style={{
                                 fontFamily: "'Syne',sans-serif",
-                                fontSize: 18, fontWeight: 700, color: T.sub, marginBottom: 8,
+                                fontSize: 14, fontWeight: 700, color: T.sub, marginBottom: 6,
                             }}>
                                 {hasF ? 'Mos submission topilmadi' : "Hali submission yo'q"}
                             </div>
                             {hasF && (
                                 <Btn variant="cyan" onClick={clearF}
-                                    style={{ margin: '12px auto 0', width: 'fit-content' }}
+                                    style={{ margin: '8px auto 0', width: 'fit-content' }}
                                 >
                                     Filtrlarni tozalash
                                 </Btn>
                             )}
-                        </motion.div>
+                        </div>
                     )}
                 </motion.div>
 
-                {/* ── PAGINATION ─────────────────────── */}
+                {/* ══ PAGINATION ══ */}
                 <AnimatePresence>
                     {totalPages > 1 && !loading && (
                         <motion.div
-                            initial={{ opacity: 0, y: 8 }}
+                            initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
                             style={{
                                 display: 'flex', justifyContent: 'center',
-                                alignItems: 'center', gap: 6, marginTop: 28,
+                                alignItems: 'center', gap: 4, marginTop: 16,
                             }}
                         >
                             <PBtn onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} label="←" />

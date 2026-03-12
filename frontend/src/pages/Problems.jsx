@@ -9,15 +9,15 @@ import { useAuthStore } from '../store/authStore';
 // Deep void + electric accents, IBM Plex Mono
 // ─────────────────────────────────────────────
 const T = {
-    bg: '#04040e',
-    surf: '#080816',
-    surf2: '#0d0d20',
-    border: 'rgba(255,255,255,0.05)',
-    borderB: 'rgba(255,255,255,0.09)',
+    bg: 'var(--bg-base)',
+    surf: 'var(--bg-surface)',
+    surf2: 'var(--bg-elevated)',
+    border: 'var(--border-default)',
+    borderB: 'var(--border-subtle)',
     glow: 'rgba(0,212,255,0.08)',
-    text: '#e2e2f2',
-    sub: '#666688',
-    dim: '#222240',
+    text: 'var(--text-primary)',
+    sub: 'var(--text-secondary)',
+    dim: 'var(--border-strong)',
     // accents
     cyan: '#00d4ff',
     cyanD: '#0099bb',
@@ -39,7 +39,6 @@ const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { color-scheme: dark; }
 
   @keyframes shimmer {
     0%   { background-position: -200% 0; }
@@ -66,9 +65,9 @@ const CSS = `
   .skel {
     background: linear-gradient(
       90deg,
-      rgba(255,255,255,.03) 25%,
-      rgba(255,255,255,.07) 50%,
-      rgba(255,255,255,.03) 75%
+      var(--bg-elevated) 25%,
+      var(--border-subtle) 50%,
+      var(--bg-elevated) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.6s infinite;
@@ -275,19 +274,6 @@ export default function Problems() {
                                 <PulseDot color={T.cyan} />
                                 MASALALAR
                             </div>
-                            <h1 style={{
-                                fontFamily: "'Syne',sans-serif",
-                                fontSize: 32, fontWeight: 800, color: T.text,
-                                letterSpacing: '-.025em', lineHeight: 1,
-                            }}>
-                                Problem{' '}
-                                <span style={{
-                                    background: `linear-gradient(90deg,${T.cyan},${T.grn})`,
-                                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                }}>
-                                    Archive
-                                </span>
-                            </h1>
                         </div>
                         {/* Live counter */}
                         <div style={{
@@ -463,7 +449,7 @@ export default function Problems() {
                                 background: T.surf,
                                 border: `1px solid ${T.border}`,
                                 borderRadius: 14, overflow: 'hidden',
-                                boxShadow: '0 8px 40px rgba(0,0,0,.4)',
+                                boxShadow: 'var(--card-shadow)',
                             }}
                         >
                             {/* Header */}
@@ -555,8 +541,8 @@ export default function Problems() {
                                                 <span key={t.slug} style={{
                                                     height: 20, padding: '0 8px', borderRadius: 5,
                                                     fontSize: 10, fontWeight: 600, color: T.sub,
-                                                    background: `rgba(255,255,255,0.04)`,
-                                                    border: `1px solid rgba(255,255,255,0.07)`,
+                                                    background: `var(--bg-elevated)`,
+                                                    border: `1px solid var(--border-subtle)`,
                                                     display: 'flex', alignItems: 'center', whiteSpace: 'nowrap',
                                                     fontFamily: "'IBM Plex Mono',monospace",
                                                 }}>{t.name}</span>
@@ -661,7 +647,7 @@ export default function Problems() {
                             style={{
                                 background: T.surf, border: `1px solid ${T.border}`,
                                 borderRadius: 14, padding: '20px',
-                                boxShadow: '0 8px 32px rgba(0,0,0,.3)',
+                                boxShadow: 'var(--card-shadow)',
                             }}
                         >
                             <div style={{
@@ -735,7 +721,7 @@ export default function Problems() {
                                 style={{
                                     background: T.surf, border: `1px solid ${T.border}`,
                                     borderRadius: 14, padding: '20px',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,.25)',
+                                    boxShadow: 'var(--card-shadow)',
                                 }}
                             >
                                 <div style={{
@@ -760,9 +746,9 @@ export default function Problems() {
                                                 style={{
                                                     height: 24, padding: '0 10px', borderRadius: 6,
                                                     fontSize: 11, fontWeight: on ? 700 : 500, cursor: 'pointer',
-                                                    background: on ? `${T.cyan}14` : `rgba(255,255,255,0.03)`,
-                                                    border: on ? `1px solid ${T.cyan}35` : `1px solid rgba(255,255,255,0.07)`,
-                                                    color: on ? T.cyan : '#4a4a6a',
+                                                    background: on ? `${T.cyan}14` : `var(--bg-elevated)`,
+                                                    border: on ? `1px solid ${T.cyan}35` : `1px solid var(--border-subtle)`,
+                                                    color: on ? T.cyan : 'var(--text-muted)',
                                                     transition: 'all .15s',
                                                     boxShadow: on ? `0 0 10px ${T.cyan}18` : 'none',
                                                 }}
@@ -818,8 +804,8 @@ function PageBtn({ onClick, disabled, active, label }) {
                 fontFamily: "'IBM Plex Mono',monospace",
                 background: active
                     ? `linear-gradient(135deg,${T.cyan},${T.cyanD})`
-                    : 'rgba(255,255,255,0.04)',
-                border: active ? 'none' : `1px solid rgba(255,255,255,0.08)`,
+                    : 'var(--bg-elevated)',
+                border: active ? 'none' : `1px solid var(--border-subtle)`,
                 color: active ? '#04040e' : disabled ? T.dim : T.sub,
                 boxShadow: active ? `0 0 20px ${T.cyan}40` : 'none',
                 transition: 'all .15s',

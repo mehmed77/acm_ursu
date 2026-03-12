@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 
 const RANKS = [
     { min: 2100, color: '#f59e0b' },
     { min: 1900, color: '#8b5cf6' },
     { min: 1600, color: '#3b82f6' },
     { min: 1400, color: '#10b981' },
-    { min: 1200, color: '#9ca3af' },
-    { min: 0, color: '#6b7280' },
+    { min: 1200, color: 'var(--text-muted)' },
+    { min: 0, color: 'var(--text-muted)' },
 ];
 const getRankColor = (r) =>
     (RANKS.find(x => (r || 0) >= x.min) || RANKS.at(-1)).color;
@@ -18,6 +19,7 @@ export default function Navbar() {
     const location = useLocation();
     const { user, logout } = useAuthStore();
     const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+    const { theme, toggleTheme } = useThemeStore();
     const [dropdown, setDropdown] = useState(false);
     const dropRef = useRef(null);
 
@@ -116,10 +118,10 @@ export default function Navbar() {
                 top: 0, left: 0, right: 0,
                 zIndex: 1000,
                 height: '56px',
-                background: 'rgba(8,8,16,0.85)',
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px)',
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                borderBottom: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0 24px',
@@ -159,7 +161,7 @@ export default function Navbar() {
                     <span style={{
                         fontSize: '16px',
                         fontWeight: '700',
-                        color: '#f0f0ff',
+                        color: 'var(--text-primary)',
                         letterSpacing: '-0.3px',
                     }}>
                         Judge
@@ -170,7 +172,7 @@ export default function Navbar() {
                 <div style={{
                     width: '1px',
                     height: '20px',
-                    background: 'rgba(255,255,255,0.08)',
+                    background: 'var(--border-default)',
                     margin: '0 8px',
                 }} />
 
@@ -195,9 +197,9 @@ export default function Navbar() {
                                     borderRadius: '8px',
                                     fontSize: '13.5px',
                                     fontWeight: active ? '600' : '500',
-                                    color: active ? '#e8e8f0' : '#6b7280',
+                                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
                                     background: active
-                                        ? 'rgba(255,255,255,0.07)'
+                                        ? 'var(--border-subtle)'
                                         : 'transparent',
                                     textDecoration: 'none',
                                     transition: 'all 0.15s',
@@ -206,14 +208,14 @@ export default function Navbar() {
                                 }}
                                 onMouseEnter={e => {
                                     if (!active) {
-                                        e.currentTarget.style.color = '#c4c4e0';
+                                        e.currentTarget.style.color = 'var(--text-primary)';
                                         e.currentTarget.style.background =
-                                            'rgba(255,255,255,0.04)';
+                                            'var(--bg-elevated)';
                                     }
                                 }}
                                 onMouseLeave={e => {
                                     if (!active) {
-                                        e.currentTarget.style.color = '#6b7280';
+                                        e.currentTarget.style.color = 'var(--text-muted)';
                                         e.currentTarget.style.background = 'transparent';
                                     }
                                 }}
@@ -254,6 +256,52 @@ export default function Navbar() {
                     gap: '10px',
                 }}>
 
+                    
+                    {/* ── THEME TOGGLE ── */}
+                    <button
+                        onClick={toggleTheme}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'transparent',
+                            border: '1px solid var(--border-subtle)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.background = 'var(--bg-elevated)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                        aria-label="Toggle Theme"
+                    >
+                        {theme === 'dark' ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                        ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        )}
+                    </button>
+
                     {isAuthenticated ? (
                         /* ── USER DROPDOWN ── */
                         <div
@@ -270,28 +318,28 @@ export default function Navbar() {
                                     padding: '5px 10px 5px 5px',
                                     borderRadius: '10px',
                                     background: dropdown
-                                        ? 'rgba(255,255,255,0.08)'
-                                        : 'rgba(255,255,255,0.04)',
+                                        ? 'var(--border-default)'
+                                        : 'var(--bg-elevated)',
                                     border: `1px solid ${dropdown
-                                        ? 'rgba(255,255,255,0.12)'
-                                        : 'rgba(255,255,255,0.07)'}`,
+                                        ? 'var(--border-strong)'
+                                        : 'var(--border-subtle)'}`,
                                     cursor: 'pointer',
                                     transition: 'all 0.15s',
                                 }}
                                 onMouseEnter={e => {
                                     if (!dropdown) {
                                         e.currentTarget.style.background =
-                                            'rgba(255,255,255,0.07)';
+                                            'var(--border-subtle)';
                                         e.currentTarget.style.borderColor =
-                                            'rgba(255,255,255,0.12)';
+                                            'var(--border-strong)';
                                     }
                                 }}
                                 onMouseLeave={e => {
                                     if (!dropdown) {
                                         e.currentTarget.style.background =
-                                            'rgba(255,255,255,0.04)';
+                                            'var(--bg-elevated)';
                                         e.currentTarget.style.borderColor =
-                                            'rgba(255,255,255,0.07)';
+                                            'var(--border-subtle)';
                                     }
                                 }}
                             >
@@ -319,7 +367,7 @@ export default function Navbar() {
                                     <div style={{
                                         fontSize: '13px',
                                         fontWeight: '600',
-                                        color: '#e8e8f0',
+                                        color: 'var(--text-primary)',
                                         lineHeight: 1.2,
                                     }}>
                                         {user?.username}
@@ -339,7 +387,7 @@ export default function Navbar() {
                                     width="12" height="12"
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    stroke="#6b7280"
+                                    stroke='var(--text-muted)'
                                     strokeWidth="2.5"
                                     strokeLinecap="round"
                                     style={{
@@ -360,11 +408,11 @@ export default function Navbar() {
                                     top: 'calc(100% + 8px)',
                                     right: 0,
                                     width: '220px',
-                                    background: '#0e0e1a',
-                                    border: '1px solid rgba(255,255,255,0.10)',
+                                    background: 'var(--bg-surface)',
+                                    border: '1px solid var(--border-strong)',
                                     borderRadius: '12px',
                                     boxShadow: `
-                    0 0 0 1px rgba(255,255,255,0.04),
+                    0 0 0 1px var(--bg-elevated),
                     0 20px 48px rgba(0,0,0,0.6),
                     0 4px 16px rgba(0,0,0,0.4)
                   `,
@@ -375,8 +423,8 @@ export default function Navbar() {
                                     {/* User info header */}
                                     <div style={{
                                         padding: '14px 16px',
-                                        borderBottom: '1px solid rgba(255,255,255,0.07)',
-                                        background: 'rgba(255,255,255,0.02)',
+                                        borderBottom: '1px solid var(--border-subtle)',
+                                        background: 'var(--bg-base)',
                                     }}>
                                         <div style={{
                                             display: 'flex',
@@ -406,7 +454,7 @@ export default function Navbar() {
                                                 <div style={{
                                                     fontSize: '14px',
                                                     fontWeight: '700',
-                                                    color: '#f0f0ff',
+                                                    color: 'var(--text-primary)',
                                                 }}>
                                                     {user?.username}
                                                 </div>
@@ -439,7 +487,7 @@ export default function Navbar() {
                                                     </span>
                                                     <span style={{
                                                         fontSize: '11px',
-                                                        color: '#4a4a6a',
+                                                        color: 'var(--text-muted)',
                                                     }}>
                                                         · {user?.rating || 0}
                                                     </span>
@@ -467,11 +515,11 @@ export default function Navbar() {
                                                 },
                                             ].map(stat => (
                                                 <div key={stat.label} style={{
-                                                    background: 'rgba(255,255,255,0.04)',
+                                                    background: 'var(--bg-elevated)',
                                                     borderRadius: '8px',
                                                     padding: '8px 10px',
                                                     border:
-                                                        '1px solid rgba(255,255,255,0.06)',
+                                                        '1px solid var(--border-subtle)',
                                                 }}>
                                                     <div style={{
                                                         fontSize: '16px',
@@ -482,7 +530,7 @@ export default function Navbar() {
                                                     </div>
                                                     <div style={{
                                                         fontSize: '10px',
-                                                        color: '#4a4a6a',
+                                                        color: 'var(--text-muted)',
                                                         marginTop: '2px',
                                                     }}>
                                                         {stat.label}
@@ -531,7 +579,7 @@ export default function Navbar() {
                                             <>
                                                 <div style={{
                                                     height: '1px',
-                                                    background: 'rgba(255,255,255,0.06)',
+                                                    background: 'var(--border-subtle)',
                                                     margin: '4px 6px',
                                                 }} />
                                                 <DropdownItem
@@ -549,7 +597,7 @@ export default function Navbar() {
                                         {/* Divider */}
                                         <div style={{
                                             height: '1px',
-                                            background: 'rgba(255,255,255,0.06)',
+                                            background: 'var(--border-subtle)',
                                             margin: '4px 6px',
                                         }} />
 
@@ -582,8 +630,8 @@ export default function Navbar() {
                                     padding: '7px 16px',
                                     borderRadius: '8px',
                                     background: 'transparent',
-                                    border: '1px solid rgba(255,255,255,0.12)',
-                                    color: '#9898bb',
+                                    border: '1px solid var(--border-strong)',
+                                    color: 'var(--text-secondary)',
                                     fontSize: '13px',
                                     fontWeight: '500',
                                     cursor: 'pointer',
@@ -591,13 +639,13 @@ export default function Navbar() {
                                 }}
                                 onMouseEnter={e => {
                                     e.currentTarget.style.borderColor =
-                                        'rgba(255,255,255,0.22)';
-                                    e.currentTarget.style.color = '#e8e8f0';
+                                        'var(--border-strong)';
+                                    e.currentTarget.style.color = 'var(--text-primary)';
                                 }}
                                 onMouseLeave={e => {
                                     e.currentTarget.style.borderColor =
-                                        'rgba(255,255,255,0.12)';
-                                    e.currentTarget.style.color = '#9898bb';
+                                        'var(--border-strong)';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
                                 }}
                             >
                                 Kirish
@@ -666,7 +714,7 @@ function DropdownItem({
                 borderRadius: '8px',
                 cursor: soon ? 'default' : 'pointer',
                 background: hovered && !soon
-                    ? 'rgba(255,255,255,0.06)'
+                    ? 'var(--border-subtle)'
                     : 'transparent',
                 transition: 'background 0.12s',
                 userSelect: 'none',
@@ -682,8 +730,8 @@ function DropdownItem({
                 fontSize: '13px',
                 fontWeight: '500',
                 color: soon
-                    ? '#3a3a5a'
-                    : color || '#c4c4e0',
+                    ? 'var(--text-muted)'
+                    : color || 'var(--text-primary)',
                 flex: 1,
             }}>
                 {label}
@@ -692,9 +740,9 @@ function DropdownItem({
                 <span style={{
                     fontSize: '9px',
                     fontWeight: '700',
-                    color: '#3a3a5a',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.07)',
+                    color: 'var(--text-muted)',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '4px',
                     padding: '2px 5px',
                     letterSpacing: '0.05em',

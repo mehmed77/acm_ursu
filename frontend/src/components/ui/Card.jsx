@@ -11,10 +11,10 @@ export default function Card({ children, className = '', hover = true, glow = fa
                 ...(glow ? { boxShadow: '0 0 30px rgba(99,102,241,0.06)' } : {}),
             }}
             onMouseEnter={(e) => {
-                if (hover) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+                if (hover) e.currentTarget.style.borderColor = 'var(--border-default)';
             }}
             onMouseLeave={(e) => {
-                if (hover) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                if (hover) e.currentTarget.style.borderColor = 'var(--border-subtle)';
             }}
             {...props}
         >

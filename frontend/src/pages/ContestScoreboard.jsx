@@ -5,132 +5,102 @@ import { contestsApi } from '../api/contests';
 import { useAuthStore } from '../store/authStore';
 
 /* ═══════════════════════════════════════════════════
-   DESIGN TOKENS — Neural Terminal (unified)
+   DESIGN TOKENS
    ═══════════════════════════════════════════════════ */
 const T = {
-    bg: '#03030b',
-    surf: '#07071a',
-    surf2: '#0b0b22',
-    b: 'rgba(255,255,255,0.055)',
-    text: '#dde0f5',
-    sub: '#44446a',
-    dim: '#0e0e22',
+    bg: 'var(--bg-base)',
+    surf: 'var(--bg-surface)',
+    surf2: 'var(--bg-elevated)',
+    b: 'var(--border-subtle)',
+    text: 'var(--text-primary)',
+    sub: 'var(--text-muted)',
     cyan: '#00d4ff',
     grn: '#00e676',
     amb: '#ffb300',
     red: '#ff2d55',
     pur: '#a855f7',
     ind: '#6366f1',
-    org: '#f97316',
     teal: '#14b8a6',
     blue: '#3b82f6',
 };
 
 /* ═══════════════════════════════════════════════════
-   RANK CONFIG — gold / silver / bronze + beyond
+   RANK & STATUS CONFIG
    ═══════════════════════════════════════════════════ */
 const RANK_CFG = {
-    1: { color: '#f59e0b', glow: 'rgba(245,158,11,0.5)', medal: '🥇', bg: 'rgba(245,158,11,0.07)', bd: 'rgba(245,158,11,0.2)' },
-    2: { color: '#94a3b8', glow: 'rgba(148,163,184,0.4)', medal: '🥈', bg: 'rgba(148,163,184,0.06)', bd: 'rgba(148,163,184,0.16)' },
-    3: { color: '#b45309', glow: 'rgba(180,83,9,0.4)', medal: '🥉', bg: 'rgba(180,83,9,0.06)', bd: 'rgba(180,83,9,0.16)' },
+    1: { color: '#f59e0b', medal: '🥇', bg: 'rgba(245,158,11,0.06)' },
+    2: { color: '#94a3b8', medal: '🥈', bg: 'rgba(148,163,184,0.05)' },
+    3: { color: '#b45309', medal: '🥉', bg: 'rgba(180,83,9,0.05)' },
 };
 const getRankCfg = r => RANK_CFG[r] || null;
 
-/* STATUS config */
 const STATUS = {
-    running: { color: T.grn, bg: 'rgba(0,230,118,0.09)', bd: 'rgba(0,230,118,0.22)', label: 'LIVE', dot: true },
-    frozen: { color: T.blue, bg: 'rgba(59,130,246,0.09)', bd: 'rgba(59,130,246,0.22)', label: 'FROZEN', dot: false },
-    finished: { color: T.sub, bg: 'rgba(68,68,106,0.09)', bd: 'rgba(68,68,106,0.18)', label: 'TUGADI', dot: false },
-    upcoming: { color: T.amb, bg: 'rgba(255,179,0,0.09)', bd: 'rgba(255,179,0,0.22)', label: 'KUTILMOQDA', dot: false },
+    running:  { color: T.grn,  bg: 'rgba(0,230,118,0.08)',  bd: 'rgba(0,230,118,0.18)',  label: 'LIVE',       dot: true },
+    frozen:   { color: T.blue, bg: 'rgba(59,130,246,0.08)',  bd: 'rgba(59,130,246,0.18)',  label: 'FROZEN',     dot: false },
+    finished: { color: T.sub,  bg: 'rgba(120,120,160,0.06)', bd: 'rgba(120,120,160,0.14)', label: 'TUGADI',     dot: false },
+    upcoming: { color: T.amb,  bg: 'rgba(255,179,0,0.08)',   bd: 'rgba(255,179,0,0.18)',   label: 'KUTILMOQDA', dot: false },
 };
 
 /* ═══════════════════════════════════════════════════
    GLOBAL CSS
    ═══════════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
-  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  :root { color-scheme:dark; }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-  @keyframes scan-v {
-    0%   { transform:translateY(-100%); opacity:0; }
-    5%   { opacity:.04; }
-    95%  { opacity:.04; }
-    100% { transform:translateY(110vh); opacity:0; }
-  }
   @keyframes shimmer {
     0%   { background-position:-200% 0; }
     100% { background-position:200% 0; }
   }
-  @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes ring-ping {
     0%   { transform:scale(1); opacity:.8; }
-    100% { transform:scale(2.6); opacity:0; }
+    100% { transform:scale(2.4); opacity:0; }
   }
   @keyframes pulse-slow {
     0%,100% { opacity:1; }
     50%     { opacity:.35; }
   }
   @keyframes cell-flash-green {
-    0%   { background:rgba(0,230,118,0.35); box-shadow:0 0 16px rgba(0,230,118,0.4); }
-    100% { background:rgba(0,230,118,0.10); box-shadow:none; }
-  }
-  @keyframes row-highlight {
-    0%   { background:rgba(0,212,255,0.12); }
-    100% { background:transparent; }
-  }
-  @keyframes float-medal {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-8px); }
-  }
-  @keyframes delta-in {
-    from { transform:translateY(6px); opacity:0; }
-    to   { transform:translateY(0);   opacity:1; }
+    0%   { background:rgba(0,230,118,0.3); }
+    100% { background:rgba(0,230,118,0.08); }
   }
   @keyframes frozen-pulse {
     0%,100% { opacity:.6; }
     50%     { opacity:1; }
   }
-  @keyframes rank-glow {
-    0%,100% { box-shadow:0 0 12px var(--rank-glow); }
-    50%     { box-shadow:0 0 28px var(--rank-glow), 0 0 48px var(--rank-glow); }
+  @keyframes delta-in {
+    from { transform:translateY(4px); opacity:0; }
+    to   { transform:translateY(0);   opacity:1; }
   }
-  @keyframes ticker-scroll {
-    from { transform:translateX(100%); }
-    to   { transform:translateX(-100%); }
-  }
+  @keyframes gspin { to { transform:rotate(360deg); } }
 
   .skel {
     border-radius:4px;
     background:linear-gradient(90deg,
-      rgba(255,255,255,.03) 25%,
-      rgba(255,255,255,.07) 50%,
-      rgba(255,255,255,.03) 75%);
+      var(--bg-elevated) 25%,
+      var(--border-subtle) 50%,
+      var(--bg-elevated) 75%);
     background-size:200% 100%;
     animation:shimmer 1.6s ease-in-out infinite;
   }
 
-  .sb-row { transition:background .12s; }
-  .sb-row:hover { background:rgba(0,212,255,0.025) !important; }
+  .sb-row { transition:background .1s; }
+  .sb-row:hover { background:rgba(99,102,241,0.04) !important; }
 
-  ::-webkit-scrollbar       { width:3px; height:3px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.07); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,.25); }
+  .gs { width:22px; height:22px; border:2px solid rgba(99,102,241,0.1); border-top-color:#6366f1; border-radius:50%; animation:gspin .8s linear infinite; }
 `;
 
 /* ═══════════════════════════════════════════════════
    MICRO COMPONENTS
    ═══════════════════════════════════════════════════ */
-function M({ ch, col = T.sub, sz = 12, w = 500 }) {
+function M({ ch, col = T.sub, sz = 11, w = 500 }) {
     return (
-        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col }}>
+        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col, lineHeight: 1 }}>
             {ch}
         </span>
     );
 }
 
-function LiveDot({ color = T.grn, size = 7 }) {
+function LiveDot({ color = T.grn, size = 5 }) {
     return (
         <span style={{ position: 'relative', display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
             <span style={{
@@ -151,17 +121,17 @@ function StatusBadge({ status }) {
     const s = STATUS[status] || STATUS.finished;
     return (
         <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7,
-            height: 26, padding: '0 11px', borderRadius: 7,
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            height: 22, padding: '0 8px', borderRadius: 5,
             background: s.bg, border: `1px solid ${s.bd}`,
         }}>
-            {s.dot && <LiveDot color={s.color} size={6} />}
-            <M ch={s.label} col={s.color} sz={10} w={700} />
+            {s.dot && <LiveDot color={s.color} size={5} />}
+            <M ch={s.label} col={s.color} sz={9} w={700} />
         </div>
     );
 }
 
-/* Auto-refresh countdown */
+/* Auto-refresh progress */
 function useAutoRefreshTimer(interval = 15000) {
     const [pct, setPct] = useState(100);
     useEffect(() => {
@@ -176,7 +146,7 @@ function useAutoRefreshTimer(interval = 15000) {
 }
 
 /* ═══════════════════════════════════════════════════
-   PROBLEM HEADER CELL
+   PROBLEM HEADER CELL — compact
    ═══════════════════════════════════════════════════ */
 function ProblemHeader({ pid, title, scoreboard }) {
     let solved = 0;
@@ -187,24 +157,22 @@ function ProblemHeader({ pid, title, scoreboard }) {
 
     return (
         <th style={{
-            padding: '10px 6px', textAlign: 'center', minWidth: 58,
-            borderRight: `1px solid rgba(255,255,255,0.04)`,
+            padding: '6px 4px', textAlign: 'center', minWidth: 50,
+            borderRight: `1px solid var(--bg-elevated)`,
         }}>
             <div style={{
                 fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: 12, fontWeight: 700, color: T.text,
-                marginBottom: 4,
+                fontSize: 11, fontWeight: 700, color: T.text,
+                marginBottom: 2,
             }} title={title}>{pid}</div>
             <div style={{
                 fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: 9, fontWeight: 700, color,
+                fontSize: 8, fontWeight: 600, color,
             }}>{solved}/{total}</div>
-            {/* Tiny bar */}
-            <div style={{ height: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 1, marginTop: 4, overflow: 'hidden' }}>
+            <div style={{ height: 2, background: 'var(--bg-elevated)', borderRadius: 1, marginTop: 3, overflow: 'hidden' }}>
                 <div style={{
                     height: '100%', width: `${ratio * 100}%`,
                     background: color, borderRadius: 1,
-                    boxShadow: `0 0 6px ${color}88`,
                 }} />
             </div>
         </th>
@@ -212,73 +180,73 @@ function ProblemHeader({ pid, title, scoreboard }) {
 }
 
 /* ═══════════════════════════════════════════════════
-   CELL RENDERER
+   CELL — compact
    ═══════════════════════════════════════════════════ */
 function Cell({ cell, justSolved }) {
+    const tdStyle = { padding: '3px 2px', textAlign: 'center', borderRight: `1px solid var(--bg-elevated)` };
+
     if (!cell) return (
-        <td style={{ padding: '4px 3px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.03)` }}>
-            <div style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 12 }}>·</span>
+        <td style={tdStyle}>
+            <div style={{ height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--border-subtle)', fontSize: 10 }}>·</span>
             </div>
         </td>
     );
 
     if (cell.frozen) return (
-        <td style={{ padding: '4px 3px', borderRight: `1px solid rgba(255,255,255,0.03)` }}>
+        <td style={tdStyle}>
             <div style={{
-                height: 36, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.18)',
+                height: 30, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.14)',
                 animation: 'frozen-pulse 3s ease-in-out infinite',
             }}>
-                <span style={{ fontSize: 12, color: T.blue }}>❄</span>
+                <span style={{ fontSize: 10, color: T.blue }}>❄</span>
             </div>
         </td>
     );
 
     if (cell.solved) return (
-        <td style={{ padding: '4px 3px', borderRight: `1px solid rgba(255,255,255,0.03)` }}>
+        <td style={tdStyle}>
             <div style={{
-                height: 36, borderRadius: 7,
-                background: 'rgba(0,230,118,0.10)', border: '1px solid rgba(0,230,118,0.22)',
+                height: 30, borderRadius: 5,
+                background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.18)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                lineHeight: 1.2, gap: 1,
-                boxShadow: justSolved ? '0 0 16px rgba(0,230,118,0.4)' : 'none',
-                animation: justSolved ? 'cell-flash-green 3s ease-out forwards' : 'none',
+                gap: 0, lineHeight: 1,
+                animation: justSolved ? 'cell-flash-green 2s ease-out forwards' : 'none',
             }}>
-                <M ch={`+${cell.time}`} col={T.grn} sz={11} w={700} />
-                {cell.attempts > 1 && <M ch={`-${cell.attempts - 1}`} col={T.red} sz={9} w={600} />}
+                <M ch={`+${cell.time}`} col={T.grn} sz={10} w={700} />
+                {cell.attempts > 1 && <M ch={`${cell.attempts - 1}`} col={T.red} sz={8} w={600} />}
             </div>
         </td>
     );
 
     if (cell.attempts > 0) return (
-        <td style={{ padding: '4px 3px', borderRight: `1px solid rgba(255,255,255,0.03)` }}>
+        <td style={tdStyle}>
             <div style={{
-                height: 36, borderRadius: 7,
-                background: 'rgba(255,45,85,0.07)', border: '1px solid rgba(255,45,85,0.14)',
+                height: 30, borderRadius: 5,
+                background: 'rgba(255,45,85,0.06)', border: '1px solid rgba(255,45,85,0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-                <M ch={`-${cell.attempts}`} col={T.red} sz={11} w={600} />
+                <M ch={`-${cell.attempts}`} col={T.red} sz={10} w={600} />
             </div>
         </td>
     );
 
     return (
-        <td style={{ padding: '4px 3px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.03)` }}>
-            <div style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 12 }}>·</span>
+        <td style={tdStyle}>
+            <div style={{ height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--border-subtle)', fontSize: 10 }}>·</span>
             </div>
         </td>
     );
 }
 
 /* ═══════════════════════════════════════════════════
-   SCOREBOARD ROW
+   SCOREBOARD ROW — compact
    ═══════════════════════════════════════════════════ */
 function ScoreRow({ row, problems, isMe, prevRef, idx }) {
     const rc = getRankCfg(row.rank);
 
-    // Detect just-solved cells
     const justSolvedMap = {};
     problems.forEach(p => {
         const key = `${row.username}_${p}`;
@@ -289,50 +257,43 @@ function ScoreRow({ row, problems, isMe, prevRef, idx }) {
 
     return (
         <motion.tr
-            initial={{ opacity: 0, x: -8 }}
+            initial={{ opacity: 0, x: -6 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * .025, duration: .2 }}
+            transition={{ delay: idx * .02, duration: .18 }}
             className="sb-row"
             style={{
-                borderBottom: `1px solid rgba(255,255,255,0.04)`,
+                borderBottom: `1px solid var(--bg-elevated)`,
                 background: isMe
-                    ? 'rgba(99,102,241,0.08)'
+                    ? 'rgba(99,102,241,0.07)'
                     : rc ? rc.bg : 'transparent',
-                position: isMe ? 'sticky' : 'static',
-                bottom: isMe ? 0 : 'auto',
-                '--rank-glow': rc?.glow || 'transparent',
-                boxShadow: isMe ? `inset 3px 0 0 ${T.ind}` : rc ? `inset 3px 0 0 ${rc.color}` : 'none',
+                boxShadow: isMe ? `inset 3px 0 0 ${T.ind}` : rc ? `inset 2px 0 0 ${rc.color}` : 'none',
             }}
         >
             {/* Rank */}
-            <td style={{ padding: '10px 14px', textAlign: 'center', width: 60 }}>
+            <td style={{ padding: '6px 10px', textAlign: 'center', width: 48 }}>
                 {rc ? (
-                    <motion.span
-                        animate={{ scale: [1, 1.15, 1] }}
-                        transition={{ duration: 3, repeat: Infinity, delay: idx * .3 }}
-                        style={{ fontSize: 18 }}
-                    >{rc.medal}</motion.span>
+                    <span style={{ fontSize: 14 }}>{rc.medal}</span>
                 ) : (
                     <M ch={`#${row.rank}`}
                         col={row.rank <= 10 ? T.cyan : T.sub}
-                        sz={12} w={700}
+                        sz={11} w={700}
                     />
                 )}
             </td>
 
             {/* User / Team */}
-            <td style={{ padding: '10px 14px', minWidth: 160 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <td style={{ padding: '6px 10px', minWidth: 140 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     {/* Avatar */}
                     <div style={{
-                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                         background: rc
-                            ? `linear-gradient(135deg,${rc.color}44,${rc.color}22)`
-                            : `${T.ind}18`,
-                        border: `1px solid ${rc ? rc.color + '44' : T.b}`,
+                            ? `linear-gradient(135deg,${rc.color}33,${rc.color}18)`
+                            : `${T.ind}14`,
+                        border: `1px solid ${rc ? rc.color + '33' : T.b}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontFamily: "'Syne',sans-serif",
-                        fontSize: 11, fontWeight: 800,
+                        fontSize: 10, fontWeight: 800,
                         color: rc ? rc.color : T.sub,
                     }}>
                         {(row.team || row.username)[0].toUpperCase()}
@@ -342,19 +303,19 @@ function ScoreRow({ row, problems, isMe, prevRef, idx }) {
                         {row.team ? (
                             <>
                                 <div style={{
-                                    fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 800,
+                                    fontFamily: "'Syne',sans-serif", fontSize: 12, fontWeight: 700,
                                     color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                                 }}>
                                     {row.team}
                                 </div>
-                                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub }}>
+                                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, color: T.sub }}>
                                     {row.username} (L)
                                 </div>
                             </>
                         ) : (
                             <Link to={`/profile/${row.username}`} style={{
                                 fontFamily: "'DM Sans',sans-serif",
-                                fontSize: 13, fontWeight: 600,
+                                fontSize: 12, fontWeight: 600,
                                 color: rc ? rc.color : '#9898d8',
                                 textDecoration: 'none', transition: 'color .12s',
                                 whiteSpace: 'nowrap',
@@ -367,24 +328,24 @@ function ScoreRow({ row, problems, isMe, prevRef, idx }) {
 
                     {isMe && (
                         <div style={{
-                            padding: '2px 7px', borderRadius: 5,
-                            background: `${T.ind}22`, border: `1px solid ${T.ind}44`,
+                            padding: '1px 5px', borderRadius: 4,
+                            background: `${T.ind}18`, border: `1px solid ${T.ind}33`,
                             flexShrink: 0,
                         }}>
-                            <M ch="SIZ" col={T.ind} sz={8} w={800} />
+                            <M ch="SIZ" col={T.ind} sz={7} w={800} />
                         </div>
                     )}
                 </div>
             </td>
 
             {/* Solved */}
-            <td style={{ padding: '10px 12px', textAlign: 'center', width: 52, borderRight: `1px solid rgba(255,255,255,0.04)` }}>
-                <M ch={`${row.solved}`} col={T.grn} sz={16} w={800} />
+            <td style={{ padding: '6px 8px', textAlign: 'center', width: 44, borderRight: `1px solid var(--bg-elevated)` }}>
+                <M ch={`${row.solved}`} col={T.grn} sz={13} w={800} />
             </td>
 
             {/* Penalty */}
-            <td style={{ padding: '10px 12px', textAlign: 'center', width: 72, borderRight: `1px solid rgba(255,255,255,0.04)` }}>
-                <M ch={`${row.penalty}`} col={T.sub} sz={12} />
+            <td style={{ padding: '6px 8px', textAlign: 'center', width: 60, borderRight: `1px solid var(--bg-elevated)` }}>
+                <M ch={`${row.penalty}`} col={T.sub} sz={11} />
             </td>
 
             {/* Problem cells */}
@@ -396,7 +357,7 @@ function ScoreRow({ row, problems, isMe, prevRef, idx }) {
 }
 
 /* ═══════════════════════════════════════════════════
-   RATING CHANGE ROW
+   RATING ROW — compact
    ═══════════════════════════════════════════════════ */
 function RatingRow({ r, idx, isMe }) {
     const sign = r.delta > 0 ? '+' : '';
@@ -405,105 +366,49 @@ function RatingRow({ r, idx, isMe }) {
 
     return (
         <motion.tr
-            initial={{ opacity: 0, x: -8 }}
+            initial={{ opacity: 0, x: -6 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * .03, duration: .2 }}
+            transition={{ delay: idx * .025, duration: .18 }}
             className="sb-row"
             style={{
-                borderBottom: `1px solid rgba(255,255,255,0.04)`,
-                background: isMe ? 'rgba(99,102,241,0.08)' : 'transparent',
+                borderBottom: `1px solid var(--bg-elevated)`,
+                background: isMe ? 'rgba(99,102,241,0.07)' : 'transparent',
                 boxShadow: isMe ? `inset 3px 0 0 ${T.ind}` : 'none',
             }}
         >
-            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                <M ch={`#${r.rank}`} col={r.rank <= 10 ? T.cyan : T.sub} sz={12} w={700} />
+            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                <M ch={`#${r.rank}`} col={r.rank <= 10 ? T.cyan : T.sub} sz={11} w={700} />
             </td>
-            <td style={{ padding: '12px 16px' }}>
+            <td style={{ padding: '8px 12px' }}>
                 <Link to={`/profile/${r.username}`} style={{
                     fontFamily: "'DM Sans',sans-serif",
-                    fontSize: 13, fontWeight: 600, color: '#9898d8', textDecoration: 'none',
+                    fontSize: 12, fontWeight: 600, color: '#9898d8', textDecoration: 'none',
                 }}
                     onMouseEnter={e => e.currentTarget.style.color = T.cyan}
                     onMouseLeave={e => e.currentTarget.style.color = '#9898d8'}
                 >{r.username}</Link>
             </td>
-            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                <M ch={`${r.old_rating}`} col={T.sub} sz={13} />
+            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                <M ch={`${r.old_rating}`} col={T.sub} sz={12} />
             </td>
-            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                 <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '4px 12px', borderRadius: 7,
-                    background: `${col}10`, border: `1px solid ${col}28`,
-                    animation: 'delta-in .35s ease both',
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '3px 8px', borderRadius: 5,
+                    background: `${col}0c`, border: `1px solid ${col}22`,
+                    animation: 'delta-in .3s ease both',
                 }}>
-                    <span style={{ fontSize: 10, color: col }}>{arrow}</span>
-                    <M ch={`${sign}${r.delta}`} col={col} sz={14} w={700} />
+                    <span style={{ fontSize: 8, color: col }}>{arrow}</span>
+                    <M ch={`${sign}${r.delta}`} col={col} sz={12} w={700} />
                 </div>
             </td>
-            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                 <M ch={`${r.new_rating}`}
                     col={r.new_rating > r.old_rating ? T.grn : r.new_rating < r.old_rating ? T.red : T.text}
-                    sz={15} w={800}
+                    sz={13} w={800}
                 />
             </td>
         </motion.tr>
-    );
-}
-
-/* ═══════════════════════════════════════════════════
-   STATS STRIP
-   ═══════════════════════════════════════════════════ */
-function StatsStrip({ scoreboard, problems }) {
-    const solved = scoreboard.filter(r => r.solved > 0).length;
-    const totalSolves = scoreboard.reduce((a, r) => a + r.solved, 0);
-    const hardest = problems.reduce((hardP, p) => {
-        const cnt = scoreboard.filter(r => r.problems[p]?.solved).length;
-        const prev = scoreboard.filter(r => r.problems[hardP]?.solved).length;
-        return cnt < prev ? p : hardP;
-    }, problems[0]);
-
-    return (
-        <div style={{
-            display: 'flex', gap: 1,
-            background: T.surf, border: `1px solid ${T.b}`,
-            borderRadius: 12, overflow: 'hidden',
-            marginBottom: 20,
-        }}>
-            {[
-                { val: scoreboard.length, label: 'Ishtirokchi', color: T.cyan, icon: '👥' },
-                { val: solved, label: "Yechgan", color: T.grn, icon: '✓' },
-                { val: totalSolves, label: 'Jami hal', color: T.ind, icon: '📝' },
-                { val: hardest || '—', label: 'Eng qiyin', color: T.red, icon: '💀' },
-            ].map((s, i, arr) => (
-                <div key={i} style={{
-                    flex: 1, padding: '12px 14px',
-                    borderRight: i < arr.length - 1 ? `1px solid ${T.b}` : 'none',
-                    position: 'relative', overflow: 'hidden',
-                }}>
-                    <div style={{
-                        position: 'absolute', top: -8, right: -8,
-                        width: 50, height: 50, borderRadius: '50%',
-                        background: `radial-gradient(circle,${s.color}14,transparent 70%)`,
-                        pointerEvents: 'none',
-                    }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        <span style={{ fontSize: 11 }}>{s.icon}</span>
-                        <span style={{
-                            fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub,
-                            textTransform: 'uppercase', letterSpacing: '.07em'
-                        }}>{s.label}</span>
-                    </div>
-                    <div style={{
-                        fontFamily: "'IBM Plex Mono',monospace",
-                        fontSize: 20, fontWeight: 700, color: s.color,
-                        textShadow: `0 0 16px ${s.color}44`, lineHeight: 1
-                    }}>
-                        {typeof s.val === 'number' ? s.val.toLocaleString() : s.val}
-                    </div>
-                </div>
-            ))}
-        </div>
     );
 }
 
@@ -553,10 +458,9 @@ export default function ContestScoreboard() {
     if (loading) return (
         <>
             <style>{CSS}</style>
-            <style>{`@keyframes gspin{to{transform:rotate(360deg)}}.gs{width:32px;height:32px;border:2px solid rgba(99,102,241,0.12);border-top-color:#6366f1;border-radius:50%;animation:gspin .8s linear infinite}`}</style>
-            <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: T.bg }}>
+            <div style={{ height: '50vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <div className="gs" />
-                <M ch="Scoreboard yuklanmoqda..." col={T.sub} sz={12} />
+                <M ch="Scoreboard yuklanmoqda..." col={T.sub} sz={11} />
             </div>
         </>
     );
@@ -564,7 +468,7 @@ export default function ContestScoreboard() {
     if (!data) return (
         <>
             <style>{CSS}</style>
-            <div style={{ textAlign: 'center', padding: '80px 0', color: T.sub, fontFamily: "'DM Sans',sans-serif" }}>
+            <div style={{ textAlign: 'center', padding: '60px 0', color: T.sub, fontFamily: "'DM Sans',sans-serif" }}>
                 Ma'lumot topilmadi
             </div>
         </>
@@ -577,129 +481,158 @@ export default function ContestScoreboard() {
     const cStatus = STATUS[c.status] || STATUS.finished;
     const isLive = c.status === 'running' || c.status === 'frozen';
 
-    /* Filter "me ±5" */
     const myRank = user ? board.find(r => r.username === user.username)?.rank : null;
     const displayBoard = filterRange === 'me' && myRank
         ? board.filter(r => Math.abs(r.rank - myRank) <= 5)
         : board;
 
+    /* Stats calculations */
+    const solvedCount = board.filter(r => r.solved > 0).length;
+    const totalSolves = board.reduce((a, r) => a + r.solved, 0);
+    const hardest = problems.length > 0 ? problems.reduce((hardP, p) => {
+        const cnt = board.filter(r => r.problems[p]?.solved).length;
+        const prev = board.filter(r => r.problems[hardP]?.solved).length;
+        return cnt < prev ? p : hardP;
+    }, problems[0]) : '—';
+
     return (
         <>
             <style>{CSS}</style>
-            <style>{`@keyframes gspin{to{transform:rotate(360deg)}}.gs{width:20px;height:20px;border:1.5px solid rgba(99,102,241,0.1);border-top-color:#6366f1;border-radius:50%;animation:gspin .8s linear infinite}`}</style>
-
-            {/* BG FX */}
-            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-                <div style={{
-                    position: 'absolute', left: 0, right: 0, height: '1px',
-                    background: `linear-gradient(90deg,transparent 5%,${T.ind}44 40%,${T.cyan}33 60%,transparent 95%)`,
-                    animation: 'scan-v 14s linear infinite',
-                }} />
-                <div style={{
-                    position: 'absolute', inset: 0, opacity: .016,
-                    backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)`,
-                    backgroundSize: '52px 52px',
-                }} />
-                <div style={{
-                    position: 'absolute', top: '-5%', right: '10%',
-                    width: 600, height: 600, borderRadius: '50%',
-                    background: `radial-gradient(circle,rgba(99,102,241,0.06),transparent 65%)`,
-                }} />
-            </div>
 
             <div style={{
                 position: 'relative', zIndex: 1,
                 maxWidth: 1400, margin: '0 auto',
-                padding: '28px 20px 80px',
+                padding: '14px 16px 40px',
                 fontFamily: "'DM Sans',sans-serif", color: T.text,
                 minHeight: '100vh',
             }}>
 
-                {/* ── BREADCRUMB ── */}
+                {/* ══ COMPACT HEADER BAR ══ */}
                 <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 20, flexWrap: 'wrap' }}
-                >
-                    {[
-                        { to: '/contests', label: 'Musobaqalar' },
-                        { to: `/contests/${slug}`, label: c.title },
-                        { label: 'Scoreboard' },
-                    ].map((b, i, arr) => (
-                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                            {i > 0 && <span style={{ color: T.sub, fontSize: 11 }}>/</span>}
-                            {b.to ? (
-                                <Link to={b.to} style={{
-                                    fontFamily: "'DM Sans',sans-serif",
-                                    fontSize: 12, color: T.sub, textDecoration: 'none',
-                                    transition: 'color .12s',
-                                }}
-                                    onMouseEnter={e => e.currentTarget.style.color = T.cyan}
-                                    onMouseLeave={e => e.currentTarget.style.color = T.sub}
-                                >{b.label}</Link>
-                            ) : (
-                                <M ch={b.label} col='#7880c4' sz={12} w={600} />
-                            )}
-                        </span>
-                    ))}
-                </motion.div>
-
-                {/* ── HERO HEADER ── */}
-                <motion.div
-                    initial={{ opacity: 0, y: -16 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: .4, ease: [.4, 0, .2, 1] }}
-                    style={{ marginBottom: 24 }}
+                    transition={{ duration: .3 }}
+                    style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 12, flexWrap: 'wrap',
+                        padding: '12px 16px',
+                        background: T.surf,
+                        border: `1px solid ${T.b}`,
+                        borderRadius: 12,
+                        marginBottom: 12,
+                        position: 'relative', overflow: 'hidden',
+                    }}
                 >
-                    {/* Top row */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                        <div>
-                            {/* Contest title */}
+                    {/* Decorative orb */}
+                    <div style={{
+                        position: 'absolute', top: -40, right: -20,
+                        width: 150, height: 150, borderRadius: '50%',
+                        background: `radial-gradient(circle,rgba(99,102,241,0.06),transparent 70%)`,
+                        pointerEvents: 'none',
+                    }} />
+
+                    {/* Left: breadcrumb + title */}
+                    <div style={{ position: 'relative', minWidth: 0 }}>
+                        {/* Breadcrumb */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                            {[
+                                { to: '/contests', label: 'Musobaqalar' },
+                                { to: `/contests/${slug}`, label: c.title },
+                                { label: 'Scoreboard' },
+                            ].map((b, i) => (
+                                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    {i > 0 && <span style={{ color: T.sub, fontSize: 9 }}>/</span>}
+                                    {b.to ? (
+                                        <Link to={b.to} style={{
+                                            fontSize: 10, color: T.sub, textDecoration: 'none',
+                                            transition: 'color .12s',
+                                        }}
+                                            onMouseEnter={e => e.currentTarget.style.color = T.cyan}
+                                            onMouseLeave={e => e.currentTarget.style.color = T.sub}
+                                        >{b.label}</Link>
+                                    ) : (
+                                        <M ch={b.label} col={T.ind} sz={10} w={600} />
+                                    )}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* Title row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <h1 style={{
                                 fontFamily: "'Syne',sans-serif",
-                                fontSize: 'clamp(20px,3vw,30px)',
-                                fontWeight: 800, letterSpacing: '-.03em',
-                                lineHeight: 1.15, margin: '0 0 10px',
-                                color: T.text,
+                                fontSize: 'clamp(16px, 2.5vw, 22px)',
+                                fontWeight: 800, letterSpacing: '-.02em',
+                                lineHeight: 1.1, margin: 0, color: T.text,
                             }}>
                                 {c.title}
                                 <span style={{
                                     fontFamily: "'IBM Plex Mono',monospace",
-                                    fontSize: 14, fontWeight: 600,
-                                    color: T.sub, marginLeft: 10, letterSpacing: 'normal',
+                                    fontSize: 11, fontWeight: 500,
+                                    color: T.sub, marginLeft: 8, letterSpacing: 'normal',
                                 }}>/ Scoreboard</span>
                             </h1>
-
-                            {/* Meta chips */}
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                                <StatusBadge status={c.status} />
-
-                                {/* Auto-refresh indicator */}
-                                {isLive && (
-                                    <div style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: 7,
-                                        height: 26, padding: '0 10px', borderRadius: 7,
-                                        background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.16)',
-                                    }}>
-                                        {/* Tiny progress arc */}
-                                        <div style={{ position: 'relative', width: 14, height: 14 }}>
-                                            <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: 'rotate(-90deg)' }}>
-                                                <circle cx="7" cy="7" r="5.5" fill="none" stroke="rgba(0,212,255,0.15)" strokeWidth="1.5" />
-                                                <circle cx="7" cy="7" r="5.5" fill="none" stroke={T.cyan} strokeWidth="1.5"
-                                                    strokeDasharray={`${2 * Math.PI * 5.5}`}
-                                                    strokeDashoffset={`${2 * Math.PI * 5.5 * (1 - refreshPct / 100)}`}
-                                                    style={{ transition: 'stroke-dashoffset .2s linear' }}
-                                                />
-                                            </svg>
-                                        </div>
-                                        <M ch="Auto-refresh 15s" col={T.cyan} sz={10} w={600} />
-                                    </div>
-                                )}
-
-                                {lastUpdated && (
-                                    <M ch={`Yangilangan: ${lastUpdated.toLocaleTimeString('uz-UZ')}`} sz={10} />
-                                )}
-                            </div>
+                            <StatusBadge status={c.status} />
+                            {lastUpdated && (
+                                <M ch={`Yangilangan: ${lastUpdated.toLocaleTimeString('uz-UZ')}`} sz={9} />
+                            )}
                         </div>
+                    </div>
+
+                    {/* Right: stats pills + refresh */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative', flexShrink: 0 }}>
+                        {/* Compact stats */}
+                        {board.length > 0 && (
+                            <div style={{ display: 'flex', gap: 4 }}>
+                                {[
+                                    { val: board.length, label: 'Ishtirokchi', color: T.cyan, icon: '👥' },
+                                    { val: solvedCount, label: 'Yechgan', color: T.grn, icon: '✓' },
+                                    { val: totalSolves, label: 'Jami hal', color: T.ind, icon: '📝' },
+                                    { val: hardest, label: 'Eng qiyin', color: T.red, icon: '💀' },
+                                ].map((s, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex', alignItems: 'center', gap: 5,
+                                        padding: '4px 8px', borderRadius: 6,
+                                        background: `${s.color}08`,
+                                        border: `1px solid ${s.color}16`,
+                                    }}>
+                                        <div>
+                                            <div style={{
+                                                fontFamily: "'DM Sans',sans-serif", fontSize: 7,
+                                                color: T.sub, textTransform: 'uppercase',
+                                                letterSpacing: '.05em', lineHeight: 1,
+                                            }}>{s.label}</div>
+                                            <div style={{
+                                                fontFamily: "'IBM Plex Mono',monospace",
+                                                fontSize: 12, fontWeight: 700, color: s.color,
+                                                lineHeight: 1.1,
+                                            }}>{typeof s.val === 'number' ? s.val : s.val}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Auto-refresh indicator */}
+                        {isLive && (
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: 4,
+                                padding: '4px 8px', borderRadius: 6,
+                                background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.12)',
+                            }}>
+                                <div style={{ position: 'relative', width: 12, height: 12 }}>
+                                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: 'rotate(-90deg)' }}>
+                                        <circle cx="6" cy="6" r="4.5" fill="none" stroke="rgba(0,212,255,0.12)" strokeWidth="1.5" />
+                                        <circle cx="6" cy="6" r="4.5" fill="none" stroke={T.cyan} strokeWidth="1.5"
+                                            strokeDasharray={`${2 * Math.PI * 4.5}`}
+                                            strokeDashoffset={`${2 * Math.PI * 4.5 * (1 - refreshPct / 100)}`}
+                                            style={{ transition: 'stroke-dashoffset .2s linear' }}
+                                        />
+                                    </svg>
+                                </div>
+                                <M ch="15s" col={T.cyan} sz={8} w={600} />
+                            </div>
+                        )}
 
                         {/* Refresh button */}
                         <motion.button
@@ -707,167 +640,157 @@ export default function ContestScoreboard() {
                             whileTap={{ rotate: 180, scale: .9 }}
                             onClick={fetchScoreboard}
                             style={{
-                                width: 38, height: 38, borderRadius: 10,
-                                background: T.surf, border: `1px solid ${T.b}`,
-                                color: T.sub, fontSize: 17, cursor: 'pointer',
+                                width: 30, height: 30, borderRadius: 7,
+                                background: 'transparent', border: `1px solid ${T.b}`,
+                                color: T.sub, fontSize: 14, cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'color .15s',
+                                transition: 'color .12s, border-color .12s',
                             }}
-                            onMouseEnter={e => e.currentTarget.style.color = T.cyan}
-                            onMouseLeave={e => e.currentTarget.style.color = T.sub}
+                            onMouseEnter={e => { e.currentTarget.style.color = T.cyan; e.currentTarget.style.borderColor = T.cyan + '44'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = T.sub; e.currentTarget.style.borderColor = T.b; }}
                         >↻</motion.button>
                     </div>
                 </motion.div>
 
-                {/* ── TABS ── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: .1 }}
-                    style={{
-                        display: 'flex', gap: 3, marginBottom: 20,
+                {/* ══ TABS + FILTER ROW ══ */}
+                <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    flexWrap: 'wrap', gap: 8,
+                    marginBottom: 10,
+                }}>
+                    {/* Tabs */}
+                    <div style={{
+                        display: 'flex', gap: 2,
                         background: T.surf, border: `1px solid ${T.b}`,
-                        borderRadius: 11, padding: 4, width: 'fit-content',
-                    }}
-                >
-                    {[
-                        { key: 'scoreboard', label: 'Scoreboard', icon: '🏆' },
-                        { key: 'rating', label: 'Rating o\'zgarishlari', icon: '📊' },
-                    ].map(t => {
-                        const active = tab === t.key;
-                        return (
-                            <motion.button key={t.key}
-                                whileTap={{ scale: .94 }}
-                                onClick={() => setTab(t.key)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: 7,
-                                    height: 32, padding: '0 16px', borderRadius: 8,
-                                    background: active ? `linear-gradient(135deg,${T.ind}22,${T.cyan}12)` : 'transparent',
-                                    border: active ? `1px solid ${T.ind}35` : '1px solid transparent',
-                                    color: active ? T.cyan : T.sub,
-                                    fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer',
-                                    fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
-                                }}
-                            >
-                                <span>{t.icon}</span> {t.label}
-                            </motion.button>
-                        );
-                    })}
-                </motion.div>
+                        borderRadius: 8, padding: 3,
+                    }}>
+                        {[
+                            { key: 'scoreboard', label: 'Scoreboard', icon: '🏆' },
+                            { key: 'rating', label: "Rating o'zgarishlari", icon: '📊' },
+                        ].map(t => {
+                            const active = tab === t.key;
+                            return (
+                                <motion.button key={t.key}
+                                    whileTap={{ scale: .94 }}
+                                    onClick={() => setTab(t.key)}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 5,
+                                        height: 28, padding: '0 12px', borderRadius: 6,
+                                        background: active ? `linear-gradient(135deg,${T.ind}20,${T.cyan}10)` : 'transparent',
+                                        border: active ? `1px solid ${T.ind}30` : '1px solid transparent',
+                                        color: active ? T.cyan : T.sub,
+                                        fontSize: 11, fontWeight: active ? 700 : 500, cursor: 'pointer',
+                                        fontFamily: "'DM Sans',sans-serif", transition: 'all .12s',
+                                    }}
+                                >
+                                    <span style={{ fontSize: 10 }}>{t.icon}</span> {t.label}
+                                </motion.button>
+                            );
+                        })}
+                    </div>
 
-                {/* ── SCOREBOARD TAB ── */}
+                    {/* Right: filter + info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <M ch={`${displayBoard.length} ishtirokchi`} col={T.sub} sz={10} />
+                        {problems.length > 0 && (
+                            <>
+                                <span style={{ color: T.sub, fontSize: 8 }}>·</span>
+                                <M ch={`${problems.length} masala`} col={T.sub} sz={10} />
+                            </>
+                        )}
+
+                        {user && myRank && (
+                            <div style={{
+                                display: 'flex', gap: 2,
+                                background: T.surf, border: `1px solid ${T.b}`,
+                                borderRadius: 7, padding: 2, marginLeft: 4,
+                            }}>
+                                {[
+                                    { key: 'all', label: 'Hammasi' },
+                                    { key: 'me', label: `Mening o'rnim ±5` },
+                                ].map(f => (
+                                    <button key={f.key}
+                                        onClick={() => setFilterRange(f.key)}
+                                        style={{
+                                            height: 24, padding: '0 10px', borderRadius: 5,
+                                            border: 'none',
+                                            background: filterRange === f.key ? `${T.ind}18` : 'transparent',
+                                            color: filterRange === f.key ? T.ind : T.sub,
+                                            fontSize: 10, fontWeight: filterRange === f.key ? 700 : 500,
+                                            cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                                            transition: 'all .1s',
+                                        }}
+                                    >{f.label}</button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ══ CONTENT ══ */}
                 <AnimatePresence mode="wait">
                     {tab === 'scoreboard' && (
                         <motion.div key="sb"
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: .25 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: .2 }}
                         >
                             {/* Frozen banner */}
                             {c.is_frozen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: 12,
-                                        padding: '12px 18px', borderRadius: 10, marginBottom: 16,
-                                        background: 'rgba(59,130,246,0.07)',
-                                        border: '1px solid rgba(59,130,246,0.22)',
-                                        borderLeft: `3px solid ${T.blue}`,
-                                    }}
-                                >
-                                    <span style={{ fontSize: 18, animation: 'frozen-pulse 2s ease-in-out infinite' }}>❄️</span>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: 8,
+                                    padding: '8px 14px', borderRadius: 8, marginBottom: 8,
+                                    background: 'rgba(59,130,246,0.06)',
+                                    border: '1px solid rgba(59,130,246,0.16)',
+                                    borderLeft: `3px solid ${T.blue}`,
+                                }}>
+                                    <span style={{ fontSize: 14, animation: 'frozen-pulse 2s ease-in-out infinite' }}>❄️</span>
                                     <div>
-                                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 14, fontWeight: 700, color: T.blue }}>
+                                        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: T.blue }}>
                                             SCOREBOARD MUZLATILGAN
-                                        </div>
-                                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: T.sub, marginTop: 2 }}>
+                                        </span>
+                                        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub, marginLeft: 8 }}>
                                             Yangi yechimlar natijasi e'lon qilinmaydi
-                                        </div>
+                                        </span>
                                     </div>
-                                    <M ch="FROZEN" col={T.blue} sz={10} w={700} style={{ marginLeft: 'auto' }} />
-                                </motion.div>
-                            )}
-
-                            {/* Stats strip */}
-                            {board.length > 0 && <StatsStrip scoreboard={board} problems={problems} />}
-
-                            {/* Filter + controls row */}
-                            <div style={{
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                marginBottom: 12, flexWrap: 'wrap', gap: 10,
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <M ch={`${displayBoard.length} ishtirokchi`} col={T.sub} sz={11} />
-                                    {problems.length > 0 && (
-                                        <>
-                                            <span style={{ color: T.sub, fontSize: 10 }}>·</span>
-                                            <M ch={`${problems.length} masala`} col={T.sub} sz={11} />
-                                        </>
-                                    )}
                                 </div>
-
-                                {user && myRank && (
-                                    <div style={{
-                                        display: 'flex', gap: 3,
-                                        background: T.surf, border: `1px solid ${T.b}`,
-                                        borderRadius: 9, padding: 3,
-                                    }}>
-                                        {[
-                                            { key: 'all', label: 'Hammasi' },
-                                            { key: 'me', label: `Mening o'rnim ±5` },
-                                        ].map(f => (
-                                            <button key={f.key}
-                                                onClick={() => setFilterRange(f.key)}
-                                                style={{
-                                                    height: 28, padding: '0 12px', borderRadius: 7,
-                                                    border: 'none',
-                                                    background: filterRange === f.key ? `${T.ind}22` : 'transparent',
-                                                    color: filterRange === f.key ? T.ind : T.sub,
-                                                    fontSize: 11, fontWeight: filterRange === f.key ? 700 : 500,
-                                                    cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
-                                                    transition: 'all .12s',
-                                                }}
-                                            >{f.label}</button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
                             {/* Table */}
                             <div style={{
                                 overflowX: 'auto',
-                                borderRadius: 14, border: `1px solid ${T.b}`,
+                                borderRadius: 10, border: `1px solid ${T.b}`,
                                 background: T.surf,
-                                boxShadow: '0 16px 60px rgba(0,0,0,0.5)',
+                                boxShadow: 'var(--card-shadow)',
                             }}>
-                                <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse', fontSize: 13 }}>
+                                <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 12 }}>
                                     <thead>
                                         <tr style={{
-                                            background: `linear-gradient(90deg,rgba(99,102,241,0.07),rgba(0,212,255,0.04),transparent)`,
+                                            background: `linear-gradient(90deg,rgba(99,102,241,0.05),rgba(0,212,255,0.03),transparent)`,
                                             borderBottom: `1px solid ${T.b}`,
                                         }}>
                                             <th style={{
-                                                padding: '11px 14px', textAlign: 'center', width: 60,
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
-                                                color: T.sub, letterSpacing: '.1em'
+                                                padding: '8px 10px', textAlign: 'center', width: 48,
+                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, fontWeight: 700,
+                                                color: T.sub, letterSpacing: '.08em'
                                             }}>O'RIN</th>
                                             <th style={{
-                                                padding: '11px 14px', textAlign: 'left',
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
-                                                color: T.sub, letterSpacing: '.1em'
+                                                padding: '8px 10px', textAlign: 'left',
+                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, fontWeight: 700,
+                                                color: T.sub, letterSpacing: '.08em'
                                             }}>ISHTIROKCHI</th>
                                             <th style={{
-                                                padding: '11px 12px', textAlign: 'center', width: 52,
-                                                borderRight: `1px solid rgba(255,255,255,0.04)`,
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
-                                                color: T.grn, letterSpacing: '.1em'
+                                                padding: '8px 8px', textAlign: 'center', width: 44,
+                                                borderRight: `1px solid var(--bg-elevated)`,
+                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, fontWeight: 700,
+                                                color: T.grn, letterSpacing: '.08em'
                                             }}>∑</th>
                                             <th style={{
-                                                padding: '11px 12px', textAlign: 'center', width: 72,
-                                                borderRight: `1px solid rgba(255,255,255,0.04)`,
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
-                                                color: T.sub, letterSpacing: '.1em'
+                                                padding: '8px 8px', textAlign: 'center', width: 60,
+                                                borderRight: `1px solid var(--bg-elevated)`,
+                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, fontWeight: 700,
+                                                color: T.sub, letterSpacing: '.08em'
                                             }}>PEN</th>
                                             {problems.map(p => (
                                                 <ProblemHeader key={p} pid={p} title={titles[p]} scoreboard={board} />
@@ -888,13 +811,9 @@ export default function ContestScoreboard() {
                                         {displayBoard.length === 0 && (
                                             <tr>
                                                 <td colSpan={4 + problems.length}>
-                                                    <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                                                        <motion.div
-                                                            animate={{ y: [0, -6, 0] }}
-                                                            transition={{ duration: 3, repeat: Infinity }}
-                                                            style={{ fontSize: 40, marginBottom: 12 }}
-                                                        >📭</motion.div>
-                                                        <M ch="Hech kim yechim yubormadi" col={T.sub} sz={13} />
+                                                    <div style={{ textAlign: 'center', padding: '40px 16px' }}>
+                                                        <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+                                                        <M ch="Hech kim yechim yubormadi" col={T.sub} sz={12} />
                                                     </div>
                                                 </td>
                                             </tr>
@@ -906,34 +825,34 @@ export default function ContestScoreboard() {
                             {/* Virtual section */}
                             {data.virtual?.length > 0 && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
+                                    initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: .3 }}
-                                    style={{ marginTop: 32 }}
+                                    transition={{ delay: .2 }}
+                                    style={{ marginTop: 20 }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                                        <div style={{ width: 2, height: 16, borderRadius: 1, background: T.teal }} />
-                                        <M ch="VIRTUAL ISHTIROKCHILAR" col={T.teal} sz={11} w={700} />
-                                        <div style={{ height: 1, flex: 1, background: `linear-gradient(90deg,${T.teal}30,transparent)` }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                        <div style={{ width: 2, height: 12, borderRadius: 1, background: T.teal }} />
+                                        <M ch="VIRTUAL ISHTIROKCHILAR" col={T.teal} sz={9} w={700} />
+                                        <div style={{ height: 1, flex: 1, background: `linear-gradient(90deg,${T.teal}28,transparent)` }} />
                                     </div>
 
                                     <div style={{
-                                        overflowX: 'auto', borderRadius: 12,
-                                        border: `1px solid rgba(20,184,166,0.15)`,
+                                        overflowX: 'auto', borderRadius: 10,
+                                        border: `1px solid rgba(20,184,166,0.12)`,
                                         background: T.surf, opacity: .85,
                                     }}>
-                                        <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse', fontSize: 13 }}>
+                                        <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 12 }}>
                                             <thead>
                                                 <tr style={{
-                                                    background: `rgba(20,184,166,0.05)`,
-                                                    borderBottom: `1px solid rgba(20,184,166,0.12)`,
+                                                    background: `rgba(20,184,166,0.04)`,
+                                                    borderBottom: `1px solid rgba(20,184,166,0.10)`,
                                                 }}>
                                                     {['*', 'ISHTIROKCHI', '∑', 'PEN', ...problems].map((h, i) => (
                                                         <th key={i} style={{
-                                                            padding: '9px 12px', textAlign: i <= 1 ? 'left' : 'center',
+                                                            padding: '7px 10px', textAlign: i <= 1 ? 'left' : 'center',
                                                             fontFamily: "'IBM Plex Mono',monospace",
-                                                            fontSize: 9, fontWeight: 700, color: T.sub,
-                                                            letterSpacing: '.1em',
+                                                            fontSize: 8, fontWeight: 700, color: T.sub,
+                                                            letterSpacing: '.08em',
                                                         }}>{h}</th>
                                                     ))}
                                                 </tr>
@@ -941,22 +860,22 @@ export default function ContestScoreboard() {
                                             <tbody>
                                                 {data.virtual.map((row, i) => (
                                                     <tr key={i} className="sb-row"
-                                                        style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
-                                                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                                            <M ch="*" col={T.teal} sz={12} />
+                                                        style={{ borderBottom: `1px solid var(--bg-elevated)` }}>
+                                                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                                                            <M ch="*" col={T.teal} sz={11} />
                                                         </td>
-                                                        <td style={{ padding: '10px 12px' }}>
+                                                        <td style={{ padding: '6px 10px' }}>
                                                             <Link to={`/profile/${row.username}`} style={{
                                                                 fontFamily: "'DM Sans',sans-serif",
-                                                                fontSize: 13, fontWeight: 600,
+                                                                fontSize: 12, fontWeight: 600,
                                                                 color: '#7aada8', textDecoration: 'none',
                                                             }}>{row.username}</Link>
                                                         </td>
-                                                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                                            <M ch={`${row.solved}`} col={T.teal} sz={14} w={800} />
+                                                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                                                            <M ch={`${row.solved}`} col={T.teal} sz={12} w={800} />
                                                         </td>
-                                                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                                            <M ch={`${row.penalty}`} col={T.sub} sz={12} />
+                                                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                                                            <M ch={`${row.penalty}`} col={T.sub} sz={11} />
                                                         </td>
                                                         {problems.map(p => (
                                                             <Cell key={p} cell={row.problems[p]} justSolved={false} />
@@ -971,55 +890,44 @@ export default function ContestScoreboard() {
                         </motion.div>
                     )}
 
-                    {/* ── RATING TAB ── */}
+                    {/* ══ RATING TAB ══ */}
                     {tab === 'rating' && (
                         <motion.div key="rating"
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: .25 }}
-                            style={{ maxWidth: 800 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: .2 }}
+                            style={{ maxWidth: 760 }}
                         >
                             {!ratingData ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 24 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 16 }}>
                                     <div className="gs" />
-                                    <M ch="Yuklanmoqda..." col={T.sub} sz={12} />
+                                    <M ch="Yuklanmoqda..." col={T.sub} sz={11} />
                                 </div>
                             ) : !ratingData.available ? (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: .97 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    style={{
-                                        textAlign: 'center', padding: '60px 24px',
-                                        background: T.surf, borderRadius: 16,
-                                        border: `1px solid ${T.b}`,
-                                    }}
-                                >
-                                    <motion.div
-                                        animate={{ y: [0, -8, 0] }}
-                                        transition={{ duration: 3, repeat: Infinity }}
-                                        style={{
-                                            fontSize: 48, marginBottom: 16, display: 'inline-block',
-                                            filter: 'grayscale(.3)'
-                                        }}
-                                    >📊</motion.div>
+                                <div style={{
+                                    textAlign: 'center', padding: '40px 20px',
+                                    background: T.surf, borderRadius: 12,
+                                    border: `1px solid ${T.b}`,
+                                }}>
+                                    <div style={{ fontSize: 36, marginBottom: 10 }}>📊</div>
                                     <div style={{
-                                        fontFamily: "'Syne',sans-serif", fontSize: 17, fontWeight: 700,
-                                        color: T.sub, marginBottom: 8
+                                        fontFamily: "'Syne',sans-serif", fontSize: 14, fontWeight: 700,
+                                        color: T.sub, marginBottom: 6
                                     }}>
                                         Rating o'zgarishlari hozircha yo'q
                                     </div>
-                                    <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
+                                    <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5 }}>
                                         {c.is_rated
                                             ? 'Contest tugagach, rating avtomatik hisoblanadi.'
                                             : 'Bu rated contest emas.'}
                                     </div>
-                                </motion.div>
+                                </div>
                             ) : (
                                 <>
-                                    {/* Rating summary stats */}
+                                    {/* Rating summary — inline pills */}
                                     <div style={{
-                                        display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20,
+                                        display: 'flex', gap: 6, marginBottom: 10,
                                     }}>
                                         {[
                                             { label: 'Jami', val: ratingData.changes.length, color: T.cyan },
@@ -1027,48 +935,44 @@ export default function ContestScoreboard() {
                                             { label: 'Tushdi', val: ratingData.changes.filter(r => r.delta < 0).length, color: T.red },
                                         ].map((s, i) => (
                                             <div key={i} style={{
-                                                padding: '12px 16px', borderRadius: 10,
+                                                padding: '6px 14px', borderRadius: 8,
                                                 background: T.surf, border: `1px solid ${T.b}`,
-                                                textAlign: 'center',
+                                                display: 'flex', alignItems: 'center', gap: 8,
                                             }}>
                                                 <div style={{
                                                     fontFamily: "'IBM Plex Mono',monospace",
-                                                    fontSize: 22, fontWeight: 700, color: s.color,
-                                                    textShadow: `0 0 16px ${s.color}44`, lineHeight: 1
-                                                }}>
-                                                    {s.val}
-                                                </div>
+                                                    fontSize: 16, fontWeight: 700, color: s.color,
+                                                    lineHeight: 1,
+                                                }}>{s.val}</div>
                                                 <div style={{
-                                                    fontFamily: "'DM Sans',sans-serif", fontSize: 10,
+                                                    fontFamily: "'DM Sans',sans-serif", fontSize: 9,
                                                     color: T.sub, textTransform: 'uppercase',
-                                                    letterSpacing: '.07em', marginTop: 4
-                                                }}>
-                                                    {s.label}
-                                                </div>
+                                                    letterSpacing: '.06em',
+                                                }}>{s.label}</div>
                                             </div>
                                         ))}
                                     </div>
 
                                     {/* Rating table */}
                                     <div style={{
-                                        borderRadius: 14, border: `1px solid ${T.b}`,
+                                        borderRadius: 10, border: `1px solid ${T.b}`,
                                         background: T.surf, overflow: 'hidden',
-                                        boxShadow: '0 16px 60px rgba(0,0,0,0.5)',
+                                        boxShadow: 'var(--card-shadow)',
                                     }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                                             <thead>
                                                 <tr style={{
-                                                    background: `linear-gradient(90deg,rgba(99,102,241,0.07),transparent)`,
+                                                    background: `linear-gradient(90deg,rgba(99,102,241,0.05),transparent)`,
                                                     borderBottom: `1px solid ${T.b}`,
                                                 }}>
-                                                    {['O\'RIN', 'ISHTIROKCHI', 'ESKI', 'DELTA', 'YANGI'].map((h, i) => (
+                                                    {["O'RIN", 'ISHTIROKCHI', 'ESKI', 'DELTA', 'YANGI'].map((h, i) => (
                                                         <th key={i} style={{
-                                                            padding: '11px 16px',
+                                                            padding: '8px 12px',
                                                             textAlign: i <= 1 ? 'left' : 'center',
                                                             fontFamily: "'IBM Plex Mono',monospace",
-                                                            fontSize: 9, fontWeight: 700,
+                                                            fontSize: 8, fontWeight: 700,
                                                             color: i === 3 ? T.amb : T.sub,
-                                                            letterSpacing: '.1em',
+                                                            letterSpacing: '.08em',
                                                         }}>{h}</th>
                                                     ))}
                                                 </tr>

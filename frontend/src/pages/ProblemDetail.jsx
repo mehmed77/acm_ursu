@@ -23,14 +23,14 @@ import SubmissionCodeModal from '../components/submissions/SubmissionCodeModal';
    DESIGN TOKENS — Neural Terminal (unified system)
    ═══════════════════════════════════════════════════ */
 const T = {
-    bg: '#03030b',
-    surf: '#07071a',
-    surf2: '#0b0b22',
+    bg: 'var(--bg-base)',
+    surf: 'var(--bg-surface)',
+    surf2: 'var(--bg-elevated)',
     surf3: '#0d0d1f',
     b: 'rgba(255,255,255,0.055)',
     bA: 'rgba(0,212,255,0.25)',
-    text: '#dde0f5',
-    sub: '#44446a',
+    text: 'var(--text-primary)',
+    sub: 'var(--text-muted)',
     dim: '#0e0e22',
     cyan: '#00d4ff',
     grn: '#00e676',
@@ -164,9 +164,9 @@ const CSS = `
   .skel {
     border-radius:4px;
     background:linear-gradient(90deg,
-      rgba(255,255,255,.03) 25%,
-      rgba(255,255,255,.07) 50%,
-      rgba(255,255,255,.03) 75%);
+      var(--bg-elevated) 25%,
+      var(--border-subtle) 50%,
+      var(--bg-elevated) 75%);
     background-size:200% 100%;
     animation:shimmer 1.6s ease-in-out infinite;
   }
@@ -174,7 +174,7 @@ const CSS = `
   /* Scrollbar */
   ::-webkit-scrollbar       { width:4px; height:4px; }
   ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.07); border-radius:4px; }
+  ::-webkit-scrollbar-thumb { background:var(--border-subtle); border-radius:4px; }
   ::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,.25); }
 
   /* Prose overrides */
@@ -183,7 +183,7 @@ const CSS = `
     font-size:16px; font-weight:700; color:#dde0f5;
     margin:24px 0 10px; letter-spacing:-0.02em;
     padding-bottom:6px;
-    border-bottom:1px solid rgba(255,255,255,0.06);
+    border-bottom:1px solid var(--border-subtle);
   }
   .judge-prose h3 {
     font-family:'Syne',sans-serif;
@@ -303,7 +303,7 @@ function StatChip({ icon: Icon, value, label }) {
         <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             height: 26, padding: '0 10px', borderRadius: 7,
-            background: 'rgba(255,255,255,0.04)', border: `1px solid ${T.b}`,
+            background: 'var(--bg-elevated)', border: `1px solid ${T.b}`,
         }}>
             <Icon size={11} color={T.sub} />
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, fontWeight: 600, color: T.text }}>
@@ -372,7 +372,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 </div>
 
                 {/* Progress bar */}
-                <div style={{ width: 260, height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                <div style={{ width: 260, height: 3, borderRadius: 99, background: 'var(--border-subtle)', overflow: 'hidden' }}>
                     <div style={{
                         height: '100%', borderRadius: 99,
                         background: isRun
@@ -526,8 +526,8 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                         }}>KIRISH</div>
                                         <pre style={{
                                             fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
-                                            color: '#c4c4e0', background: 'rgba(255,255,255,0.04)',
-                                            border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6,
+                                            color: 'var(--text-primary)', background: 'var(--bg-elevated)',
+                                            border: '1px solid var(--border-subtle)', borderRadius: 6,
                                             padding: '8px 10px', margin: 0, whiteSpace: 'pre-wrap'
                                         }}>{t.input}</pre>
                                     </div>
@@ -586,7 +586,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             display: 'inline-flex', alignItems: 'center', gap: 8,
                             height: 36, padding: '0 20px', borderRadius: 9,
                             background: `linear-gradient(135deg,${T.ind},${T.cyan})`,
-                            border: 'none', color: '#03030b',
+                            border: 'none', color: 'var(--bg-base)',
                             fontSize: 13, fontWeight: 700, cursor: 'pointer',
                             fontFamily: "'DM Sans',sans-serif",
                             boxShadow: `0 0 24px ${T.cyan}35`,
@@ -651,8 +651,8 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             { icon: Cpu, val: result.memory_used ? `${result.memory_used}MB` : '—', label: 'Memory', color: T.text },
                         ].map((s, i) => (
                             <div key={i} style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.07)',
+                                background: 'var(--bg-elevated)',
+                                border: '1px solid var(--border-subtle)',
                                 borderRadius: 10, padding: '14px 16px',
                                 display: 'flex', alignItems: 'center', gap: 10,
                             }}>
@@ -690,9 +690,9 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             </div>
                         </div>
                     </div>
-                    <div style={{ background: '#07071a', border: '1px solid rgba(255,45,85,0.12)', borderRadius: 10, padding: 16 }}>
+                    <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,45,85,0.12)', borderRadius: 10, padding: 16 }}>
                         {[
-                            { label: 'KIRISH', value: result.failed_test?.input || '—', color: '#c4c4e0' },
+                            { label: 'KIRISH', value: result.failed_test?.input || '—', color: 'var(--text-primary)' },
                             { label: 'KUTILGAN', value: result.failed_test?.expected || '—', color: T.grn },
                             { label: 'SIZNIKI', value: result.failed_test?.actual || '—', color: T.red },
                         ].map((r, i) => (
@@ -703,7 +703,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                 }}>{r.label}</div>
                                 <pre style={{
                                     fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
-                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
                                     borderRadius: 6, padding: '8px 12px', margin: 0, whiteSpace: 'pre-wrap', color: r.color
                                 }}>
                                     {r.value}
@@ -790,7 +790,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
         /* GENERIC */
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div style={{ borderLeft: `3px solid ${T.sub}`, borderRadius: 10, padding: 20, background: 'rgba(255,255,255,0.02)' }}>
+                <div style={{ borderLeft: `3px solid ${T.sub}`, borderRadius: 10, padding: 20, background: 'var(--bg-elevated)' }}>
                     <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700, color: T.sub }}>
                         {st.replace(/_/g, ' ')}
                     </div>
@@ -1005,11 +1005,11 @@ export default function ProblemDetail() {
                 { token: 'variable', foreground: 'dde0f5' },
             ],
             colors: {
-                'editor.background': '#07071a',
-                'editor.foreground': '#dde0f5',
-                'editor.lineHighlightBackground': '#0b0b22',
+                'editor.background': '#0f172a',
+                'editor.foreground': '#f8fafc',
+                'editor.lineHighlightBackground': '#1e293b',
                 'editor.selectionBackground': '#6366f122',
-                'editorLineNumber.foreground': '#22224a',
+                'editorLineNumber.foreground': '#475569',
                 'editorLineNumber.activeForeground': '#6366f1',
                 'editorCursor.foreground': '#00d4ff',
                 'editorIndentGuide.background': '#ffffff05',
@@ -1017,8 +1017,8 @@ export default function ProblemDetail() {
                 'editor.findMatchBackground': '#6366f130',
                 'editorBracketMatch.background': '#6366f115',
                 'editorBracketMatch.border': '#6366f150',
-                'editorWidget.background': '#07071a',
-                'editorSuggestWidget.background': '#0b0b22',
+                'editorWidget.background': '#0f172a',
+                'editorSuggestWidget.background': '#1e293b',
                 'editorSuggestWidget.border': '#ffffff0a',
                 'editorSuggestWidget.selectedBackground': '#6366f118',
                 'scrollbarSlider.background': '#ffffff08',
@@ -1190,7 +1190,7 @@ export default function ProblemDetail() {
 
                                 {/* Description */}
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .1 }}>
-                                    <div className="judge-prose" style={{ fontSize: 14, lineHeight: 1.8, color: '#9898bb' }}>
+                                    <div className="judge-prose" style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--text-secondary)' }}>
                                         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>
                                             {p.description}
                                         </ReactMarkdown>
@@ -1208,7 +1208,7 @@ export default function ProblemDetail() {
                                                 fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 700,
                                                 color: T.ind, letterSpacing: '.1em', marginBottom: 8
                                             }}>KIRISH FORMATI</div>
-                                            <div className="judge-prose" style={{ fontSize: 13, color: '#9898bb' }}>
+                                            <div className="judge-prose" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>
                                                     {p.input_format}
                                                 </ReactMarkdown>
@@ -1226,7 +1226,7 @@ export default function ProblemDetail() {
                                                 fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 700,
                                                 color: T.grn, letterSpacing: '.1em', marginBottom: 8
                                             }}>CHIQISH FORMATI</div>
-                                            <div className="judge-prose" style={{ fontSize: 13, color: '#9898bb' }}>
+                                            <div className="judge-prose" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>
                                                     {p.output_format}
                                                 </ReactMarkdown>
@@ -1269,7 +1269,7 @@ export default function ProblemDetail() {
                                                     style={{
                                                         width: 26, height: 26, borderRadius: 6,
                                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        background: copiedIdx === i ? 'rgba(0,230,118,0.1)' : 'rgba(255,255,255,0.05)',
+                                                        background: copiedIdx === i ? 'rgba(0,230,118,0.1)' : 'var(--bg-elevated)',
                                                         border: `1px solid ${copiedIdx === i ? 'rgba(0,230,118,0.25)' : T.b}`,
                                                         color: copiedIdx === i ? T.grn : T.sub, cursor: 'pointer', transition: 'all .15s',
                                                     }}
@@ -1293,9 +1293,9 @@ export default function ProblemDetail() {
                                                         </div>
                                                         <pre style={{
                                                             fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
-                                                            color: '#c4c4e0',
-                                                            background: 'rgba(255,255,255,0.03)',
-                                                            border: `1px solid rgba(255,255,255,0.06)`,
+                                                            color: 'var(--text-primary)',
+                                                            background: 'var(--bg-elevated)',
+                                                            border: `1px solid var(--border-subtle)`,
                                                             borderRadius: 7, padding: '10px 12px',
                                                             margin: 0, lineHeight: 1.7, whiteSpace: 'pre', overflowX: 'auto',
                                                         }}>{side.value}</pre>
@@ -1418,13 +1418,13 @@ export default function ProblemDetail() {
                         width: 5, cursor: 'col-resize', flexShrink: 0,
                         background: isDragging
                             ? `linear-gradient(180deg,transparent,${T.ind},${T.cyan},${T.ind},transparent)`
-                            : 'rgba(255,255,255,0.05)',
+                            : 'var(--bg-elevated)',
                         transition: isDragging ? 'none' : 'background .2s',
                         boxShadow: isDragging ? `0 0 18px ${T.ind}50` : 'none',
                         position: 'relative', zIndex: 10,
                     }}
                     onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = `${T.ind}50`; }}
-                    onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'var(--bg-elevated)'; }}
                 />
 
                 {/* ══════════════════════════════════════
@@ -1451,7 +1451,7 @@ export default function ProblemDetail() {
                                 whileTap={{ scale: .96 }}
                                 onClick={() => setLangDropOpen(!langDropOpen)}
                                 style={{
-                                    background: langDropOpen ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.05)',
+                                    background: langDropOpen ? 'rgba(99,102,241,0.12)' : 'var(--bg-elevated)',
                                     border: `1px solid ${langDropOpen ? 'rgba(99,102,241,0.35)' : T.b}`,
                                     borderRadius: 9, padding: '0 14px', height: 34,
                                     display: 'flex', alignItems: 'center', gap: 9,
@@ -1496,7 +1496,7 @@ export default function ProblemDetail() {
                                                     color: language === l.value ? l.color : T.sub,
                                                     transition: 'all .1s',
                                                 }}
-                                                onMouseEnter={e => { if (language !== l.value) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                                                onMouseEnter={e => { if (language !== l.value) e.currentTarget.style.background = 'var(--bg-elevated)'; }}
                                                 onMouseLeave={e => { if (language !== l.value) e.currentTarget.style.background = 'transparent'; }}
                                             >
                                                 <span style={{
@@ -1525,7 +1525,7 @@ export default function ProblemDetail() {
                                     color: T.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                     fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
                                 }}
-                                onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+                                onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
                                 onMouseLeave={e => { e.currentTarget.style.color = T.sub; e.currentTarget.style.borderColor = T.b; }}
                             >
                                 <RotateCcw size={12} /> Reset
@@ -1704,7 +1704,7 @@ export default function ProblemDetail() {
                     <div style={{
                         height: 22, flexShrink: 0,
                         background: T.dim,
-                        borderTop: `1px solid rgba(255,255,255,0.04)`,
+                        borderTop: `1px solid var(--bg-elevated)`,
                         padding: '0 16px',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>

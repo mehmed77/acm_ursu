@@ -13,6 +13,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import SystemGuide from './pages/SystemGuide';
+import NewsList from './pages/NewsList';
+import NewsDetail from './pages/NewsDetail';
 
 import AdminLogin from './admin/pages/AdminLogin';
 import AdminRoute from './components/AdminRoute';
@@ -24,8 +26,19 @@ import AdminUsers from './admin/pages/AdminUsers';
 import AdminContests from './admin/pages/AdminContests';
 import AdminContestForm from './admin/pages/AdminContestForm';
 import AdminLatexGuide from './admin/pages/AdminLatexGuide';
+import AdminNews from './admin/pages/AdminNews';
+import AdminNewsForm from './admin/pages/AdminNewsForm';
+
+import { useEffect } from 'react';
+import { useThemeStore } from './store/themeStore';
 
 export default function App() {
+  const initTheme = useThemeStore(state => state.initTheme);
+
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -42,6 +55,8 @@ export default function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="system" element={<SystemGuide />} />
+          <Route path="news" element={<NewsList />} />
+          <Route path="news/:id" element={<NewsDetail />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -59,6 +74,9 @@ export default function App() {
           <Route path="contests/new" element={<AdminContestForm />} />
           <Route path="contests/:slug" element={<AdminContestForm />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="news" element={<AdminNews />} />
+          <Route path="news/new" element={<AdminNewsForm />} />
+          <Route path="news/:id" element={<AdminNewsForm />} />
           <Route path="latex-guide" element={<AdminLatexGuide />} />
         </Route>
       </Routes>

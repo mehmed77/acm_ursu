@@ -82,15 +82,15 @@ export default function Login() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.10)',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-default)',
                     borderRadius: 16,
                     padding: 40,
                     maxWidth: 420,
                     width: '100%',
                     position: 'relative',
                     zIndex: 10,
-                    boxShadow: '0 0 0 1px rgba(255,255,255,0.05), 0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    boxShadow: '0 0 0 1px var(--border-subtle), 0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 var(--border-subtle)',
                 }}
             >
                 <motion.div variants={containerVariants} initial="hidden" animate="visible">
@@ -135,7 +135,7 @@ export default function Login() {
                             <label style={{
                                 display: 'block', fontSize: 11, fontWeight: 600,
                                 letterSpacing: '0.08em', textTransform: 'uppercase',
-                                color: '#6b7280', marginBottom: 8,
+                                color: 'var(--text-muted)', marginBottom: 8,
                             }}>
                                 Login
                             </label>
@@ -154,7 +154,7 @@ export default function Login() {
                             <label style={{
                                 display: 'block', fontSize: 11, fontWeight: 600,
                                 letterSpacing: '0.08em', textTransform: 'uppercase',
-                                color: '#6b7280', marginBottom: 8,
+                                color: 'var(--text-muted)', marginBottom: 8,
                             }}>
                                 Parol
                             </label>
@@ -176,7 +176,7 @@ export default function Login() {
                                         background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                                         color: '#55556a', transition: 'color 0.2s',
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = '#9898bb'}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                                     onMouseLeave={(e) => e.currentTarget.style.color = '#55556a'}
                                 >
                                     {showPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}

@@ -47,7 +47,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const cfg = STATUS_CFG[data?.status] || { label: data?.status, color: '#6b7280' };
+    const cfg = STATUS_CFG[data?.status] || { label: data?.status, color: 'var(--text-muted)' };
 
     return (
         <AnimatePresence>
@@ -68,7 +68,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                     onClick={(e) => e.stopPropagation()}
                     style={{
                         width: '100%', maxWidth: 860, maxHeight: '90vh',
-                        background: '#0e0e1a', border: '1px solid rgba(255,255,255,0.10)',
+                        background: 'var(--bg-surface)', border: '1px solid var(--border-default)',
                         borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column',
                         boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
                     }}
@@ -76,7 +76,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                     {/* HEADER */}
                     <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                        padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)',
                         background: '#0a0a0f', flexShrink: 0,
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -85,13 +85,13 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                                 background: cfg.color, boxShadow: `0 0 8px ${cfg.color}`,
                             }} />
                             <div>
-                                <div style={{ fontSize: 15, fontWeight: 600, color: '#f0f0ff' }}>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                                     {data?.problem_title || 'Submission'}
                                     <span style={{ marginLeft: 8, fontSize: 12, color: cfg.color, fontWeight: 700 }}>
                                         {cfg.label}
                                     </span>
                                 </div>
-                                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, display: 'flex', gap: 16 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 16 }}>
                                     <span>{LANG_LABEL[data?.language] || data?.language}</span>
                                     {data?.time_used > 0 && <span>⚡ {data.time_used}ms</span>}
                                     {data?.memory_used > 0 && <span>💾 {data.memory_used}MB</span>}
@@ -104,9 +104,9 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                             <button onClick={handleCopy} style={{
                                 display: 'flex', alignItems: 'center', gap: 6,
                                 padding: '7px 14px', borderRadius: 8,
-                                background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.05)',
-                                border: `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.10)'}`,
-                                color: copied ? '#10b981' : '#9898bb',
+                                background: copied ? 'rgba(16,185,129,0.12)' : 'var(--bg-elevated)',
+                                border: `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'var(--border-default)'}`,
+                                color: copied ? '#10b981' : 'var(--text-secondary)',
                                 fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                                 fontFamily: 'Inter, sans-serif',
                             }}>
@@ -114,8 +114,8 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                             </button>
                             <button onClick={onClose} style={{
                                 width: 32, height: 32, borderRadius: 8,
-                                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
-                                color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                                color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
                                 <X style={{ width: 16, height: 16 }} />
                             </button>
@@ -127,7 +127,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                         {loading && (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 12 }}>
                                 <div className="global-spin" style={{ width: 32, height: 32 }} />
-                                <span style={{ color: '#6b7280', fontSize: 13 }}>Yuklanmoqda...</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Yuklanmoqda...</span>
                             </div>
                         )}
                         {error && (
@@ -162,7 +162,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                                         ],
                                         colors: {
                                             'editor.background': '#0a0a0f',
-                                            'editor.lineHighlightBackground': '#13131f',
+                                            'editor.lineHighlightBackground': 'var(--bg-elevated)',
                                             'editorLineNumber.foreground': '#2a2a4a',
                                             'editorLineNumber.activeForeground': '#6366f1',
                                         },
@@ -175,7 +175,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                     {/* FOOTER — failed test info */}
                     {data?.failed_test && (
                         <div style={{
-                            borderTop: '1px solid rgba(255,255,255,0.07)',
+                            borderTop: '1px solid var(--border-subtle)',
                             padding: '12px 20px', background: 'rgba(239,68,68,0.04)', flexShrink: 0,
                         }}>
                             <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>
@@ -183,7 +183,7 @@ export default function SubmissionCodeModal({ submissionId, onClose }) {
                             </span>
                             {data.failed_test.input !== 'Hidden' && (
                                 <div style={{ display: 'flex', gap: 20, marginTop: 8, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
-                                    <span style={{ color: '#6b7280' }}>Kirish: {data.failed_test.input}</span>
+                                    <span style={{ color: 'var(--text-muted)' }}>Kirish: {data.failed_test.input}</span>
                                     <span style={{ color: '#10b981' }}>Kutilgan: {data.failed_test.expected}</span>
                                     <span style={{ color: '#ef4444' }}>Sizniki: {data.failed_test.actual}</span>
                                 </div>

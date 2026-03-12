@@ -12,6 +12,7 @@ export default function AdminLayout() {
         { path: '/admin/problems', label: 'Masalalar', icon: FileText },
         { path: '/admin/contests', label: 'Musobaqalar', icon: Trophy },
         { path: '/admin/users', label: 'Foydalanuvchilar', icon: Users },
+        { path: '/admin/news', label: 'Yangiliklar', icon: FileText },
         { path: '/admin/latex-guide', label: 'LaTeX Formulalari', icon: BookOpen },
     ];
 

@@ -33,4 +33,15 @@ export const adminApi = {
     createContest: (data) => api.post('/admin/contests/', data),
     updateContest: (slug, data) => api.patch(`/admin/contests/${slug}/`, data),
     deleteContest: (slug) => api.delete(`/admin/contests/${slug}/`),
+
+    // News endpoints
+    getNewsList: () => api.get('/admin/news/'),
+    getNewsItem: (id) => api.get(`/admin/news/${id}/`),
+    createNews: (data) => api.post('/admin/news/', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    updateNews: (id, data) => api.patch(`/admin/news/${id}/`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    deleteNews: (id) => api.delete(`/admin/news/${id}/`),
 };

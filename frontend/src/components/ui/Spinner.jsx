@@ -5,7 +5,7 @@ export default function Spinner({ size = 'md', className = '' }) {
             <div
                 className={`${sizes[size]} rounded-full animate-spin`}
                 style={{
-                    border: '2px solid rgba(255,255,255,0.06)',
+                    border: '2px solid var(--border-subtle)',
                     borderTopColor: '#6366f1',
                 }}
             />
