@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -38,8 +38,9 @@
   --color-rank-cm: #a855f7;
   --color-rank-master: #f59e0b;
   
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-grotesk: 'Space Grotesk', sans-serif;
   
   --animate-fade-in: fade-in 0.5s ease-out;
   --animate-slide-up: slide-up 0.4s ease-out;
@@ -48,6 +49,11 @@
 }
 
 :root {
+  /* Fonts & Layout */
+  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --max-w-content: 1400px;
+  --max-w-text: 1200px;
   /* LIGHT MODE VARIABLES — Premium Tinted */
   --bg-base: #f0f2f8;
   --bg-surface: #f7f8fc;
@@ -266,10 +272,11 @@ body {
     linear-gradient(90deg, var(--body-dots-color) 1px, transparent 1px);
   background-size: auto, 32px 32px, 32px 32px;
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
+  font-family: var(--font-sans);
+  font-feature-settings: 'kern' 1, 'liga' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
   min-height: 100vh;
   transition: background 0.3s ease, color 0.3s ease;
 }

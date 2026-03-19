@@ -338,8 +338,8 @@ export default function Profile() {
 
             <div style={{
                 position: 'relative', zIndex: 1,
-                maxWidth: 1100, margin: '0 auto',
-                padding: '14px 16px 40px',
+                width: '100%',
+                padding: '14px 5% 40px',
                 fontFamily: "'DM Sans',sans-serif", color: T.text,
                 minHeight: '100vh',
             }}>

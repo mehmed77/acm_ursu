@@ -84,7 +84,7 @@ LANGUAGE_CONFIG: Dict[str, Dict[str, Any]] = {
             '{source}',
         ],
         'run':             [
-            '/usr/bin/java',
+            '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
             '-Xss64m', '-Xmx256m',
             '-DONLINE_JUDGE=true',
             'Solution',
@@ -688,6 +688,8 @@ def run_code_sync(
     if compile_result['status'] != 'OK':
         return {
             'status': 'COMPILATION_ERROR',
+            'time_used': 0,
+            'memory_used': 0,
             'test_results': [{
                 'test_num': 1, 'status': 'COMPILATION_ERROR',
                 'input': '', 'expected': '', 'actual': '',
@@ -701,6 +703,8 @@ def run_code_sync(
     box_pool = BoxIdPool(_get_redis_client())
     results  = []
     overall  = 'ACCEPTED'
+    max_time = 0
+    max_mem  = 0
 
     try:
         for i, tc in enumerate(test_cases, 1):
@@ -727,14 +731,19 @@ def run_code_sync(
             if status != 'ACCEPTED':
                 overall = status
 
+            time_ms = int(res['time'] * 1000)
+            mem_mb  = int(res['memory'] / 1024)
+            max_time = max(max_time, time_ms)
+            max_mem  = max(max_mem, mem_mb)
+
             results.append({
                 'test_num':  i,
                 'status':    status,
                 'input':     tc_input[:500],
                 'expected':  tc_expected.strip()[:500],
                 'actual':    res['stdout'].strip()[:500],
-                'time_ms':   int(res['time'] * 1000),
-                'memory_mb': int(res['memory'] / 1024),
+                'time_ms':   time_ms,
+                'memory_mb': mem_mb,
                 'stderr':    res['stderr'][:300],
             })
 
@@ -744,6 +753,8 @@ def run_code_sync(
 
     return {
         'status':       overall,
+        'time_used':    max_time,
+        'memory_used':  max_mem,
         'test_results': results,
         'error_message': None,
     }

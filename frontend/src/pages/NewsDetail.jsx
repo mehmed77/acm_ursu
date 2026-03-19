@@ -124,7 +124,7 @@ export default function NewsDetail() {
     };
 
     return (
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px' }}>
+        <div style={{ width: '100%', padding: '40px 5%' }}>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 {news.image && (
                     <div style={{ width: '100%', height: 360, borderRadius: 20, overflow: 'hidden', marginBottom: 32 }}>

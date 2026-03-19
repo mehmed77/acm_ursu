@@ -2,7 +2,7 @@ from rest_framework import generics, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Count
+from django.db.models import Count, F, Avg
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
@@ -10,11 +10,13 @@ import os, zipfile, io, glob
 import logging
 from django.conf import settings
 
-from .models import Problem, TestCase, Tag
+from .models import Problem, TestCase, Tag, ProblemComment, CommentLike, ProblemRating
 from .serializers import (
     ProblemListSerializer, ProblemDetailSerializer,
-    AdminProblemListSerializer, AdminProblemDetailSerializer, 
-    AdminTestCaseSerializer, TagSerializer
+    AdminProblemListSerializer, AdminProblemDetailSerializer,
+    AdminTestCaseSerializer, TagSerializer,
+    ProblemCommentSerializer, ProblemCommentWriteSerializer,
+    ProblemRatingStatsSerializer, ProblemRatingWriteSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -457,4 +459,142 @@ class AdminTagListView(generics.ListCreateAPIView):
         ).order_by('name')
 
 
+# ──────────────────────────────────────────────
+# DISCUSSION (MUHOKAMA) VIEWS
+# ──────────────────────────────────────────────
 
+class ProblemCommentsView(APIView):
+    """
+    GET  /api/problems/{slug}/comments/  — muhokama ro'yxati
+    POST /api/problems/{slug}/comments/  — yangi kommentariya (auth kerak)
+    """
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, slug):
+        problem = get_object_or_404(Problem, slug=slug, is_published=True)
+        # Faqat top-level kommentlar; replies serializerda ichida keladi
+        qs = (
+            ProblemComment.objects
+            .filter(problem=problem, parent__isnull=True, is_hidden=False)
+            .select_related('author')
+            .prefetch_related('replies__author', 'likes', 'replies__likes')
+            .order_by('-like_count', '-created_at')
+        )
+        serializer = ProblemCommentSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, slug):
+        problem = get_object_or_404(Problem, slug=slug, is_published=True)
+        serializer = ProblemCommentWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        parent = serializer.validated_data.get('parent')
+        if parent and parent.problem_id != problem.id:
+            return Response({'detail': 'Parent boshqa masalaga tegishli.'}, status=400)
+
+        comment = serializer.save(problem=problem, author=request.user)
+        out = ProblemCommentSerializer(comment, context={'request': request})
+        return Response(out.data, status=201)
+
+
+class CommentDetailView(APIView):
+    """
+    DELETE /api/problems/comments/{id}/  — o'z kommentariyasini o'chirish
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        comment = get_object_or_404(ProblemComment, pk=pk)
+        if comment.author_id != request.user.id and not request.user.is_staff:
+            return Response({'detail': 'Ruxsat yo\'q.'}, status=403)
+        comment.delete()
+        return Response(status=204)
+
+
+class CommentLikeView(APIView):
+    """
+    POST /api/problems/comments/{id}/like/  — like toggle (qo'shish/olib tashlash)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        comment = get_object_or_404(ProblemComment, pk=pk, is_hidden=False)
+        like, created = CommentLike.objects.get_or_create(
+            comment=comment, user=request.user
+        )
+        if created:
+            ProblemComment.objects.filter(pk=pk).update(
+                like_count=F('like_count') + 1
+            )
+            liked = True
+        else:
+            like.delete()
+            ProblemComment.objects.filter(pk=pk).update(
+                like_count=F('like_count') - 1
+            )
+            liked = False
+
+        comment.refresh_from_db(fields=['like_count'])
+        return Response({'liked': liked, 'like_count': comment.like_count})
+
+
+# ──────────────────────────────────────────────
+# RATING VIEWS
+# ──────────────────────────────────────────────
+
+class ProblemRatingView(APIView):
+    """
+    GET  /api/problems/{slug}/rating/  — reyting statistikasi
+    POST /api/problems/{slug}/rating/  — baholash yoki yangilash (auth kerak)
+    """
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, slug):
+        problem = get_object_or_404(Problem, slug=slug, is_published=True)
+        ratings = ProblemRating.objects.filter(problem=problem)
+        agg = ratings.aggregate(average=Avg('rating'))
+        count = ratings.count()
+        distribution = {str(i): ratings.filter(rating=i).count() for i in range(1, 6)}
+
+        user_rating = None
+        if request.user.is_authenticated:
+            try:
+                user_rating = ratings.get(user=request.user).rating
+            except ProblemRating.DoesNotExist:
+                pass
+
+        serializer = ProblemRatingStatsSerializer({
+            'average': round(agg['average'] or 0, 1),
+            'count': count,
+            'distribution': distribution,
+            'user_rating': user_rating,
+        })
+        return Response(serializer.data)
+
+    def post(self, request, slug):
+        problem = get_object_or_404(Problem, slug=slug, is_published=True)
+        serializer = ProblemRatingWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        rating_obj, _ = ProblemRating.objects.update_or_create(
+            problem=problem,
+            user=request.user,
+            defaults={'rating': serializer.validated_data['rating']},
+        )
+
+        # Yangilangan statistikani qaytaramiz
+        ratings = ProblemRating.objects.filter(problem=problem)
+        agg = ratings.aggregate(average=Avg('rating'))
+        return Response({
+            'user_rating': rating_obj.rating,
+            'average': round(agg['average'] or 0, 1),
+            'count': ratings.count(),
+        })

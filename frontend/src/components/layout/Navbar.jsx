@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import Container from '../ui/Container';
 
 const RANKS = [
     { min: 2100, color: '#f59e0b' },
@@ -117,17 +118,14 @@ export default function Navbar() {
                 position: 'fixed',
                 top: 0, left: 0, right: 0,
                 zIndex: 1000,
-                height: '56px',
+                height: '64px',
                 background: 'var(--glass-bg)',
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px)',
                 borderBottom: '1px solid var(--border-subtle)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 24px',
-                gap: '8px',
             }}>
-
+              <Container noPadding className="h-full flex items-center justify-between gap-2 px-[15px] max-w-[1400px]">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {/* ── LOGO ── */}
                 <div
                     onClick={() => navigate('/')}
@@ -158,15 +156,13 @@ export default function Navbar() {
                     }}>
                         {'<>'}
                     </div>
-                    <span style={{
-                        fontSize: '16px',
-                        fontWeight: '700',
+                    <span className="font-grotesk font-bold text-xl tracking-tight" style={{
                         color: 'var(--text-primary)',
-                        letterSpacing: '-0.3px',
                     }}>
                         Judge
                     </span>
                 </div>
+              </div>
 
                 {/* ── DIVIDER ── */}
                 <div style={{
@@ -195,8 +191,6 @@ export default function Navbar() {
                                     gap: '6px',
                                     padding: '6px 12px',
                                     borderRadius: '8px',
-                                    fontSize: '13.5px',
-                                    fontWeight: active ? '600' : '500',
                                     color: active ? 'var(--text-primary)' : 'var(--text-muted)',
                                     background: active
                                         ? 'var(--border-subtle)'
@@ -206,6 +200,7 @@ export default function Navbar() {
                                     position: 'relative',
                                     userSelect: 'none',
                                 }}
+                                className="font-sans font-medium text-sm"
                                 onMouseEnter={e => {
                                     if (!active) {
                                         e.currentTarget.style.color = 'var(--text-primary)';
@@ -685,10 +680,11 @@ export default function Navbar() {
                         </div>
                     )}
                 </div>
+              </Container>
             </nav>
 
             {/* Navbar balandligi uchun spacer */}
-            <div style={{ height: '56px' }} />
+            <div style={{ height: '64px' }} />
         </>
     );
 }

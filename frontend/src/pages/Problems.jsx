@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { getProblems } from '../api/problems';
-import { useAuthStore } from '../store/authStore';
+import Container from '../components/ui/Container';
 
 // ─────────────────────────────────────────────
 // DESIGN TOKENS  — "Hacker's Cockpit" aesthetic
@@ -85,7 +85,7 @@ const CSS = `
     transition: opacity .2s;
     box-shadow: 0 0 12px ${T.cyan};
   }
-  .row-hover:hover { background: rgba(0,212,255,.04) !important; }
+  .row-hover:hover { background: rgba(99,102,241,.05) !important; }
   .row-hover:hover::before { opacity:1; }
 
   ::-webkit-scrollbar { width:4px; height:4px; }
@@ -111,7 +111,7 @@ function PulseDot({ color }) {
 function MonoNum({ children, color = T.sub }) {
     return (
         <span style={{
-            fontFamily: "'IBM Plex Mono', monospace",
+            fontFamily: 'var(--font-mono)',
             fontSize: 13, fontWeight: 500, color,
         }}>
             {children}
@@ -127,7 +127,7 @@ function DiffBadge({ diff }) {
             height: 22, padding: '0 9px', borderRadius: 5,
             fontSize: 11, fontWeight: 700,
             color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`,
-            fontFamily: "'IBM Plex Mono',monospace", letterSpacing: '.02em',
+            fontFamily: 'var(--font-mono)', letterSpacing: '.02em',
         }}>
             {DIFF_LABEL[diff] || diff}
         </span>
@@ -158,7 +158,7 @@ function StatRing({ value, max, color, label, size = 72 }) {
                 <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="middle"
                     style={{ transform: 'rotate(90deg)', transformOrigin: `${size / 2}px ${size / 2}px` }}
                     fill={color} fontSize={14} fontWeight={700}
-                    fontFamily="'IBM Plex Mono',monospace">
+                    fontFamily="var(--font-mono)">
                     {value}
                 </text>
             </svg>
@@ -174,7 +174,6 @@ function StatRing({ value, max, color, label, size = 72 }) {
 // ─────────────────────────────────────────────
 export default function Problems() {
     const navigate = useNavigate();
-    const { user } = useAuthStore();
 
     const [problems, setProblems] = useState([]);
     const [tags, setTags] = useState([]);
@@ -211,7 +210,7 @@ export default function Problems() {
         };
         const t = setTimeout(fetch, search ? 380 : 0);
         return () => clearTimeout(t);
-    }, [search, diff, activeTag, page]);
+    }, [search, diff, activeTag, page, tags.length]);
 
     const easy = problems.filter(p => p.difficulty === 'easy').length;
     const medium = problems.filter(p => p.difficulty === 'medium').length;
@@ -221,38 +220,7 @@ export default function Problems() {
         <>
             <style>{CSS}</style>
 
-            {/* Scanline overlay */}
-            <div style={{
-                position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden',
-            }}>
-                <div style={{
-                    position: 'absolute', left: 0, right: 0, height: '2px',
-                    background: `linear-gradient(90deg,transparent,${T.cyan}33,transparent)`,
-                    animation: 'scan 8s linear infinite',
-                }} />
-            </div>
-
-            {/* Ambient glow orbs */}
-            <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-                <div style={{
-                    position: 'absolute', top: '-10%', left: '20%',
-                    width: 500, height: 500, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.cyan}08,transparent 65%)`,
-                }} />
-                <div style={{
-                    position: 'absolute', bottom: '10%', right: '10%',
-                    width: 400, height: 400, borderRadius: '50%',
-                    background: `radial-gradient(circle,${T.amber}06,transparent 65%)`,
-                }} />
-            </div>
-
-            <div style={{
-                position: 'relative', zIndex: 1,
-                maxWidth: 1380, margin: '0 auto',
-                padding: '36px 24px',
-                fontFamily: "'DM Sans',sans-serif",
-                color: T.text,
-            }}>
+            <Container className="relative z-10 py-9 font-sans text-[var(--text-primary)]">
 
                 {/* ── PAGE HEADER ─────────────────────── */}
                 <motion.div
@@ -269,7 +237,7 @@ export default function Problems() {
                                 padding: '4px 12px', borderRadius: 100,
                                 background: `${T.cyan}0f`, border: `1px solid ${T.cyan}28`,
                                 fontSize: 11, fontWeight: 700, color: T.cyan,
-                                fontFamily: "'IBM Plex Mono',monospace", letterSpacing: '.1em',
+                                fontFamily: "var(--font-mono)", letterSpacing: '.1em',
                             }}>
                                 <PulseDot color={T.cyan} />
                                 MASALALAR
@@ -282,13 +250,13 @@ export default function Problems() {
                             background: T.surf, border: `1px solid ${T.border}`,
                         }}>
                             <PulseDot color={T.grn} />
-                            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 13, color: T.sub }}>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: T.sub }}>
                                 Jami:{' '}
                             </span>
-                            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 15, fontWeight: 600, color: T.cyan }}>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 600, color: T.cyan }}>
                                 {total}
                             </span>
-                            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: T.sub }}>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: T.sub }}>
                                 ta masala
                             </span>
                         </div>
@@ -330,7 +298,7 @@ export default function Problems() {
                                             background: T.surf, border: `1px solid ${T.border}`,
                                             borderRadius: 10, padding: '0 14px 0 38px',
                                             color: T.text, fontSize: 14, outline: 'none',
-                                            fontFamily: "'DM Sans',sans-serif",
+                                            fontFamily: "var(--font-sans)",
                                             transition: 'all .2s',
                                         }}
                                         onFocus={e => {
@@ -372,7 +340,7 @@ export default function Problems() {
                                                 style={{
                                                     height: 42, padding: '0 18px', borderRadius: 10,
                                                     fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                                                    fontFamily: "'DM Sans',sans-serif",
+                                                    fontFamily: "var(--font-sans)",
                                                     border: on ? `1px solid ${d.color}45` : `1px solid ${T.border}`,
                                                     background: on ? `${d.color}12` : T.surf,
                                                     color: on ? d.color : T.sub,
@@ -457,14 +425,14 @@ export default function Problems() {
                                 display: 'grid',
                                 gridTemplateColumns: '36px 96px 1fr 96px 180px 100px 96px 72px',
                                 padding: '10px 20px',
-                                background: `linear-gradient(90deg,rgba(0,212,255,.05),transparent)`,
+                                background: 'var(--bg-elevated)',
                                 borderBottom: `1px solid ${T.border}`,
                             }}>
                                 {['#', 'ID', 'MASALA NOMI', 'QIYINLIK', 'TEGLAR', 'QABUL', 'URINISH', '%'].map((h, i) => (
                                     <span key={i} style={{
                                         fontSize: 10, fontWeight: 700, color: T.sub,
                                         letterSpacing: '.08em', textTransform: 'uppercase',
-                                        fontFamily: "'IBM Plex Mono',monospace",
+                                        fontFamily: 'var(--font-mono)',
                                         textAlign: i >= 5 ? 'center' : 'left',
                                     }}>{h}</span>
                                 ))}
@@ -476,7 +444,7 @@ export default function Problems() {
                                     display: 'grid',
                                     gridTemplateColumns: '36px 96px 1fr 96px 180px 100px 96px 72px',
                                     padding: '0 20px', height: 46, alignItems: 'center',
-                                    borderBottom: `1px solid ${T.border}`,
+                                    borderBottom: `1px solid var(--border-subtle)`,
                                 }}>
                                     {[16, 64, 220, 70, 140, 36, 36, 28].map((w, j) => (
                                         <div key={j} className="skel" style={{
@@ -489,7 +457,6 @@ export default function Problems() {
 
                             {/* Rows */}
                             {!loading && problems.map((p, idx) => {
-                                const dcfg = T[p.difficulty] || T.easy;
                                 const rate = p.total_submissions > 0
                                     ? Math.round((p.accepted_count / p.total_submissions) * 100) : 0;
                                 const rateColor = rate >= 60 ? T.grn : rate >= 30 ? T.amber : T.red;
@@ -508,9 +475,9 @@ export default function Problems() {
                                             display: 'grid',
                                             gridTemplateColumns: '36px 96px 1fr 96px 180px 100px 96px 72px',
                                             padding: '0 20px', height: 46, alignItems: 'center',
-                                            borderBottom: idx < problems.length - 1 ? `1px solid ${T.border}` : 'none',
+                                            borderBottom: `1px solid var(--border-subtle)`,
                                             cursor: 'pointer',
-                                            background: isAC ? `rgba(0,230,118,.025)` : 'transparent',
+                                            background: isAC ? `rgba(0,230,118,.025)` : idx % 2 === 1 ? 'var(--bg-elevated)' : 'transparent',
                                         }}
                                     >
                                         {/* Status */}
@@ -544,7 +511,7 @@ export default function Problems() {
                                                     background: `var(--bg-elevated)`,
                                                     border: `1px solid var(--border-subtle)`,
                                                     display: 'flex', alignItems: 'center', whiteSpace: 'nowrap',
-                                                    fontFamily: "'IBM Plex Mono',monospace",
+                                                    fontFamily: "var(--font-mono)",
                                                 }}>{t.name}</span>
                                             ))}
                                             {(p.tags || []).length > 2 && (
@@ -568,9 +535,8 @@ export default function Problems() {
                                         {/* Rate */}
                                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                                             <span style={{
-                                                fontFamily: "'IBM Plex Mono',monospace",
+                                                fontFamily: 'var(--font-mono)',
                                                 fontSize: 13, fontWeight: 700, color: rateColor,
-                                                textShadow: `0 0 12px ${rateColor}66`,
                                             }}>
                                                 {rate}%
                                             </span>
@@ -587,7 +553,7 @@ export default function Problems() {
                                 >
                                     <div style={{ fontSize: 52, marginBottom: 16, filter: 'grayscale(.4)' }}>🔍</div>
                                     <div style={{
-                                        fontFamily: "'Syne',sans-serif",
+                                        fontFamily: "var(--font-sans)",
                                         fontSize: 18, fontWeight: 700, color: T.sub, marginBottom: 8,
                                     }}>
                                         {search ? `"${search}" — topilmadi` : 'Masalalar yo\'q'}
@@ -653,7 +619,7 @@ export default function Problems() {
                             <div style={{
                                 fontSize: 10, fontWeight: 700, color: T.sub,
                                 letterSpacing: '.1em', textTransform: 'uppercase',
-                                fontFamily: "'IBM Plex Mono',monospace", marginBottom: 18,
+                                fontFamily: 'var(--font-mono)', marginBottom: 18,
                                 display: 'flex', alignItems: 'center', gap: 6,
                             }}>
                                 <PulseDot color={T.cyan} /> Statistika
@@ -674,9 +640,8 @@ export default function Problems() {
                             }}>
                                 <span style={{ fontSize: 12, color: T.sub }}>Jami masalalar</span>
                                 <span style={{
-                                    fontFamily: "'IBM Plex Mono',monospace",
+                                    fontFamily: "var(--font-mono)",
                                     fontSize: 18, fontWeight: 700, color: T.cyan,
-                                    textShadow: `0 0 16px ${T.cyan}55`,
                                 }}>
                                     {total}
                                 </span>
@@ -727,7 +692,7 @@ export default function Problems() {
                                 <div style={{
                                     fontSize: 10, fontWeight: 700, color: T.sub,
                                     letterSpacing: '.1em', textTransform: 'uppercase',
-                                    fontFamily: "'IBM Plex Mono',monospace", marginBottom: 14,
+                                    fontFamily: "var(--font-mono)", marginBottom: 14,
                                     display: 'flex', alignItems: 'center', gap: 6,
                                 }}>
                                     <PulseDot color={T.amber} /> Teglar
@@ -775,17 +740,16 @@ export default function Problems() {
                                 ⚡ Tezkor tip
                             </div>
                             <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.65 }}>
-                                Oson masalalardan boshlang va <strong style={{ color: T.text }}>acceptance
-                                    rate</strong> yuqori masalalarni tanlang. Bu reyting
-                                oshirishning eng tezkor yo'li.
-                            </div>
-                        </motion.div>
+                                    Muntazam mashq qil, <strong className="text-[var(--text-primary)]">acceptance rate</strong> yuqori masalalarni tanlang. Bu reyting
+                                    oshirishning eng tezkor yo'li.
+                                </div>
+                            </motion.div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </>
-    );
-}
+                </Container>
+            </>
+        );
+    }
 
 // ─────────────────────────────────────────────
 // PAGINATION BUTTON
@@ -801,7 +765,7 @@ function PageBtn({ onClick, disabled, active, label }) {
                 width: 34, height: 34, borderRadius: 8,
                 fontSize: 13, fontWeight: active ? 700 : 500,
                 cursor: disabled ? 'not-allowed' : 'pointer',
-                fontFamily: "'IBM Plex Mono',monospace",
+                fontFamily: "var(--font-mono)",
                 background: active
                     ? `linear-gradient(135deg,${T.cyan},${T.cyanD})`
                     : 'var(--bg-elevated)',

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Trophy, Users, LayoutDashboard, ChevronRight, Eye, MessageSquare, Calendar, ArrowRight } from 'lucide-react';
 import { getNews } from '../api/news';
+import Container from '../components/ui/Container';
 
 export default function Home() {
     const [latestNews, setLatestNews] = useState([]);
@@ -41,11 +42,11 @@ export default function Home() {
                 `
             }} />
 
-            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', paddingTop: 60 }}>
+            <Container className="pt-[60px]">
                 
                 {/* 1. Bu qanday sayt? */}
                 <motion.section initial="hidden" animate="visible" variants={fadeInUp} style={{ marginBottom: 60 }}>
-                    <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24, letterSpacing: '-0.5px' }}>
+                    <h2 className="font-grotesk font-bold tracking-tight text-3xl lg:text-4xl" style={{ color: 'var(--text-primary)', marginBottom: 24 }}>
                         Intellektual Ekotizimga Xush Kelibsiz
                     </h2>
                     <div style={{ 
@@ -71,9 +72,9 @@ export default function Home() {
                         </div>
                         
                         {/* Text Content */}
-                        <div style={{ flex: '2 1 400px', fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)' }}>
+                        <div className="font-sans text-base lg:text-lg leading-relaxed" style={{ flex: '2 1 400px', color: 'var(--text-secondary)' }}>
                             <p style={{ marginBottom: 16 }}>
-                                <strong style={{ color: 'var(--text-primary)', fontSize: 18, fontWeight: 700 }}>OnlineJudge.uz</strong> — algoritmik fikrlashni rivojlantirish, dasturlash ko'nikmalarini mukammallashtirish va xalqaro IT-kompaniyalarining texnik intervyulariga tizimli tayyorgarlik ko'rish imkonini beruvchi to'liq avtomatlashtirilgan raqamli platformadir.
+                                <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>OnlineJudge.uz</strong> — algoritmik fikrlashni rivojlantirish, dasturlash ko'nikmalarini mukammallashtirish va xalqaro IT-kompaniyalarining texnik intervyulariga tizimli tayyorgarlik ko'rish imkonini beruvchi to'liq avtomatlashtirilgan raqamli platformadir.
                             </p>
                             <p>
                                 Jahonning yetakchi algoritmik tizimlari tajribasini o'zida mujassam etgan ushbu maydon, uzluksiz ta'lim jarayonini sog'lom raqobat va o'zaro tajriba almashish orqali yangi yuqori darajaga olib chiqadi.
@@ -128,8 +129,8 @@ export default function Home() {
                                     }}>
                                         <card.icon size={40} color={card.color} strokeWidth={1.5} />
                                     </div>
-                                    <h3 style={{ fontSize: 22, fontWeight: 700, color: card.color, marginBottom: 16 }}>{card.title}</h3>
-                                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{card.desc}</p>
+                                    <h3 className="font-grotesk font-semibold text-xl lg:text-2xl" style={{ color: card.color, marginBottom: 16 }}>{card.title}</h3>
+                                    <p className="font-sans text-sm font-medium leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{card.desc}</p>
                                 </motion.div>
                             </Link>
                         ))}
@@ -139,8 +140,8 @@ export default function Home() {
                 {/* 3. Yangiliklar */}
                 <motion.section initial="hidden" animate="visible" variants={fadeInUp}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                        <h2 style={{ fontSize: 32, fontWeight: 800, color: '#3b82f6', letterSpacing: '-0.5px' }}>So'nggi innovatsiyalar va xabarlar</h2>
-                        <Link to="/news" className="btn-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, padding: '8px 16px', fontWeight: 600 }}>
+                        <h2 className="font-grotesk font-bold tracking-tight text-3xl lg:text-4xl" style={{ color: '#3b82f6' }}>So'nggi innovatsiyalar va xabarlar</h2>
+                        <Link to="/news" className="btn-ghost font-sans font-medium text-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px' }}>
                             Barcha xabarlar bilan tanishish <ChevronRight size={16} />
                         </Link>
                     </div>
@@ -181,17 +182,17 @@ export default function Home() {
                                         
                                         {/* Bottom Content Section */}
                                         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                            <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+                                            <div style={{ display: 'flex', gap: 16, marginBottom: 20 }} className="font-sans text-sm color-[var(--text-muted)]">
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={16} /> {news.views_count}</span>
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MessageSquare size={16} /> {news.comments_count}</span>
                                                 <span>Muallif: <strong style={{ color: 'var(--text-primary)' }}>{news.author_username}</strong></span>
                                             </div>
                                             
-                                            <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 24, lineHeight: 1.4, flex: 1 }}>
+                                            <h3 className="font-grotesk font-semibold text-xl lg:text-2xl" style={{ color: 'var(--text-primary)', marginBottom: 24, lineHeight: 1.4, flex: 1 }}>
                                                 {news.title}
                                             </h3>
                                             
-                                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#6366f1', fontSize: 15, fontWeight: 500 }}>
+                                            <div className="font-sans text-base font-medium" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#6366f1' }}>
                                                 Batafsil o'qish <ArrowRight size={18} />
                                             </div>
                                         </div>
@@ -206,7 +207,7 @@ export default function Home() {
                     )}
                 </motion.section>
 
-            </div>
+            </Container>
         </div>
     );
 }

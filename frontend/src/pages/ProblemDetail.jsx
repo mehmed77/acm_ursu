@@ -11,13 +11,15 @@ import {
     ChevronDown, RotateCcw, Copy, Check,
     Clock, Cpu, Send, Play, Lock, X, Code2,
     Zap, Shield, AlertTriangle, CheckCircle2, XCircle,
-    Terminal, BookOpen, History, ChevronUp,
+    Terminal, BookOpen, History, ChevronUp, MessageSquare,
 } from 'lucide-react';
 import { getProblem } from '../api/problems';
 import api from '../api/axios';
 import { useAuthStore } from '../store/authStore';
 import { submitCode } from '../services/judge';
 import SubmissionCodeModal from '../components/submissions/SubmissionCodeModal';
+import DiscussionTab from '../components/problems/DiscussionTab';
+import StarRating from '../components/problems/StarRating';
 
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS — Neural Terminal (unified system)
@@ -92,7 +94,6 @@ const SUB_STATUS = {
    GLOBAL STYLES
    ═══════════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   :root { color-scheme:dark; }
 
@@ -179,14 +180,14 @@ const CSS = `
 
   /* Prose overrides */
   .judge-prose h2 {
-    font-family:'Syne',sans-serif;
+    font-family:var(--font-sans);
     font-size:16px; font-weight:700; color:#dde0f5;
     margin:24px 0 10px; letter-spacing:-0.02em;
     padding-bottom:6px;
     border-bottom:1px solid var(--border-subtle);
   }
   .judge-prose h3 {
-    font-family:'Syne',sans-serif;
+    font-family:var(--font-sans);
     font-size:14px; font-weight:700; color:#a0a4cc;
     margin:18px 0 8px;
   }
@@ -194,7 +195,7 @@ const CSS = `
   .judge-prose ul { padding-left:20px; margin:8px 0; }
   .judge-prose li { margin:4px 0; line-height:1.7; }
   .judge-prose code {
-    fontFamily:"'IBM Plex Mono',monospace";
+    fontFamily:"var(--font-mono)";
     font-size:12px; background:rgba(99,102,241,0.1);
     border:1px solid rgba(99,102,241,0.2);
     border-radius:5px; padding:2px 7px; color:#a5b4fc;
@@ -219,7 +220,7 @@ const CSS = `
 /* Monospace span */
 function M({ ch, col = T.sub, sz = 12, w = 500 }) {
     return (
-        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: sz, fontWeight: w, color: col }}>
             {ch}
         </span>
     );
@@ -261,7 +262,7 @@ function DiffBadge({ diff }) {
                 boxShadow: `0 0 7px ${d.color}`,
             }} />
             <span style={{
-                fontFamily: "'IBM Plex Mono',monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 11, fontWeight: 700, color: d.color,
                 letterSpacing: '.04em', textTransform: 'uppercase',
             }}>{d.label}</span>
@@ -276,7 +277,7 @@ function Tag({ label }) {
             display: 'inline-flex', alignItems: 'center', height: 22,
             padding: '0 10px', borderRadius: 100,
             background: `${T.ind}0c`, border: `1px solid ${T.ind}22`,
-            fontFamily: "'DM Sans',sans-serif",
+            fontFamily: "var(--font-sans)",
             fontSize: 11, fontWeight: 600, color: '#7880c4',
             letterSpacing: '.02em',
         }}>{label}</span>
@@ -292,7 +293,7 @@ function LangBadge({ lang }) {
             height: 22, padding: '0 8px', borderRadius: 6,
             background: l.bg, border: `1px solid ${l.color}28`,
         }}>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700, color: l.color, letterSpacing: '.04em' }}>{l.short}</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, color: l.color, letterSpacing: '.04em' }}>{l.short}</span>
         </div>
     );
 }
@@ -306,7 +307,7 @@ function StatChip({ icon: Icon, value, label }) {
             background: 'var(--bg-elevated)', border: `1px solid ${T.b}`,
         }}>
             <Icon size={11} color={T.sub} />
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, fontWeight: 600, color: T.text }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 600, color: T.text }}>
                 {value}
             </span>
             <span style={{ fontSize: 10, color: T.sub }}>{label}</span>
@@ -326,7 +327,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
             <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
                 <Terminal size={36} color={T.sub} style={{ opacity: .4 }} />
             </motion.div>
-            <p style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: T.sub, letterSpacing: '.04em' }}>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: T.sub, letterSpacing: '.04em' }}>
                 CTRL+' → Run &nbsp;|&nbsp; CTRL+ENTER → Submit
             </p>
         </div>
@@ -363,10 +364,10 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>
+                    <div style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>
                         {isRun ? 'Namuna testlar tekshirilmoqda' : 'Sandbox baholayapti'}
                     </div>
-                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: T.sub }}>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: T.sub }}>
                         {isRun ? 'sample test cases' : 'barcha test caselar'}
                     </div>
                 </div>
@@ -400,11 +401,11 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                     <AlertTriangle size={18} color={T.red} />
-                    <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700, color: T.red }}>
+                    <span style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 700, color: T.red }}>
                         Xatolik yuz berdi
                     </span>
                 </div>
-                <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: T.sub, marginBottom: 16, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: T.sub, marginBottom: 16, lineHeight: 1.6 }}>
                     {message}
                 </p>
                 <button onClick={onRetry} style={{
@@ -412,7 +413,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                     height: 32, padding: '0 14px', borderRadius: 8,
                     background: 'rgba(255,45,85,0.08)', border: `1px solid rgba(255,45,85,0.22)`,
                     color: T.red, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: "'DM Sans',sans-serif",
+                    fontFamily: "var(--font-sans)",
                 }}>
                     <RotateCcw size={12} /> Qayta urinish
                 </button>
@@ -443,12 +444,12 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                         }
                         <div>
                             <div style={{
-                                fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700,
+                                fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 700,
                                 color: allOk ? T.grn : T.red
                             }}>
                                 {allOk ? "Barcha namuna testlar o'tdi!" : isCE ? 'Kompilyatsiya xatosi' : 'Xato topildi'}
                             </div>
-                            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: T.sub, marginTop: 2 }}>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: T.sub, marginTop: 2 }}>
                                 Run mode · sample test cases
                             </div>
                         </div>
@@ -457,7 +458,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                         <div style={{
                             padding: '4px 14px', borderRadius: 100,
                             background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.25)',
-                            fontFamily: "'IBM Plex Mono',monospace",
+                            fontFamily: "var(--font-mono)",
                             fontSize: 11, fontWeight: 700, color: T.grn,
                         }}>100% PASS</div>
                     )}
@@ -467,7 +468,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 {isCE && (
                     <pre style={{
                         background: 'rgba(255,45,85,0.05)', border: '1px solid rgba(255,45,85,0.15)',
-                        borderRadius: 8, padding: 14, fontFamily: "'IBM Plex Mono',monospace",
+                        borderRadius: 8, padding: 14, fontFamily: "var(--font-mono)",
                         fontSize: 12, color: '#ff8fa3', lineHeight: 1.6, overflowX: 'auto',
                         marginBottom: 16, whiteSpace: 'pre-wrap',
                     }}>{result.error_message}</pre>
@@ -497,19 +498,19 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <span style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, fontWeight: 700,
+                                            fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
                                             color: ok ? T.grn : T.red
                                         }}>
                                             {ok ? '✓' : '✗'} Test #{t.test_num}
                                         </span>
                                         {t.time_ms && (
-                                            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: T.sub }}>
+                                            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: T.sub }}>
                                                 {t.time_ms}ms
                                             </span>
                                         )}
                                     </div>
                                     <span style={{
-                                        fontFamily: "'IBM Plex Mono',monospace",
+                                        fontFamily: "var(--font-mono)",
                                         fontSize: 10, fontWeight: 700,
                                         color: ok ? T.grn : T.red,
                                         background: ok ? 'rgba(0,230,118,0.1)' : 'rgba(255,45,85,0.1)',
@@ -521,11 +522,11 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                 <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                                     <div>
                                         <div style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
+                                            fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700,
                                             color: T.sub, letterSpacing: '.1em', marginBottom: 6
                                         }}>KIRISH</div>
                                         <pre style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                                            fontFamily: "var(--font-mono)", fontSize: 12,
                                             color: 'var(--text-primary)', background: 'var(--bg-elevated)',
                                             border: '1px solid var(--border-subtle)', borderRadius: 6,
                                             padding: '8px 10px', margin: 0, whiteSpace: 'pre-wrap'
@@ -533,13 +534,13 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                     </div>
                                     <div>
                                         <div style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
+                                            fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700,
                                             color: T.sub, letterSpacing: '.1em', marginBottom: 6
                                         }}>
                                             {ok ? 'CHIQISH' : 'KUTILGAN / KELGAN'}
                                         </div>
                                         <pre style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                                            fontFamily: "var(--font-mono)", fontSize: 12,
                                             color: ok ? T.grn : T.red,
                                             background: ok ? 'rgba(0,230,118,0.04)' : 'rgba(255,45,85,0.04)',
                                             border: `1px solid ${ok ? 'rgba(0,230,118,0.12)' : 'rgba(255,45,85,0.12)'}`,
@@ -552,11 +553,11 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                                 {t.stderr && (
                                     <div style={{ padding: '0 14px 12px' }}>
                                         <div style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
+                                            fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700,
                                             color: T.red, letterSpacing: '.1em', marginBottom: 4
                                         }}>STDERR</div>
                                         <pre style={{
-                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 11,
+                                            fontFamily: "var(--font-mono)", fontSize: 11,
                                             color: '#ff8fa3', background: 'rgba(255,45,85,0.05)',
                                             padding: '8px 10px', borderRadius: 6, margin: 0, overflowX: 'auto'
                                         }}>
@@ -579,7 +580,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             border: '1px solid rgba(0,212,255,0.12)',
                         }}
                     >
-                        <p style={{ fontSize: 12, color: T.sub, marginBottom: 10, fontFamily: "'DM Sans',sans-serif" }}>
+                        <p style={{ fontSize: 12, color: T.sub, marginBottom: 10, fontFamily: "var(--font-sans)" }}>
                             Barcha namuna testlar muvaffaqiyatli o'tdi!
                         </p>
                         <button onClick={onSubmitFull} style={{
@@ -588,7 +589,7 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             background: `linear-gradient(135deg,${T.ind},${T.cyan})`,
                             border: 'none', color: 'var(--bg-base)',
                             fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                            fontFamily: "'DM Sans',sans-serif",
+                            fontFamily: "var(--font-sans)",
                             boxShadow: `0 0 24px ${T.cyan}35`,
                         }}>
                             <Send size={13} /> Rasmiy topshirish →
@@ -634,12 +635,12 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                         </div>
                         <div>
                             <div style={{
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "var(--font-sans)",
                                 fontSize: 24, fontWeight: 800, color: T.grn,
                                 textShadow: `0 0 24px ${T.grn}44`,
                                 letterSpacing: '-.02em',
                             }}>Accepted!</div>
-                            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: 'rgba(0,230,118,0.6)', marginTop: 2 }}>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: 'rgba(0,230,118,0.6)', marginTop: 2 }}>
                                 Barcha test caselar muvaffaqiyatli o'tdi ✓
                             </div>
                         </div>
@@ -647,8 +648,8 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, position: 'relative' }}>
                         {[
-                            { icon: Clock, val: result.time_used ? `${result.time_used}ms` : '—', label: 'Runtime', color: T.text },
-                            { icon: Cpu, val: result.memory_used ? `${result.memory_used}MB` : '—', label: 'Memory', color: T.text },
+                            { icon: Clock, val: result.time_used ? `${result.time_used}ms` : '—', label: 'Max Runtime', color: T.text },
+                            { icon: Cpu, val: result.memory_used ? `${result.memory_used}MB` : '—', label: 'Max Memory', color: T.text },
                         ].map((s, i) => (
                             <div key={i} style={{
                                 background: 'var(--bg-elevated)',
@@ -658,10 +659,10 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                             }}>
                                 <s.icon size={14} color={T.grn} />
                                 <div>
-                                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 18, fontWeight: 700, color: s.color, lineHeight: 1 }}>
+                                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: s.color, lineHeight: 1 }}>
                                         {s.val}
                                     </div>
-                                    <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: T.sub, marginTop: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                                    <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: T.sub, marginTop: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>
                                         {s.label}
                                     </div>
                                 </div>
@@ -684,8 +685,8 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                         <XCircle size={20} color={T.red} />
                         <div>
-                            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 17, fontWeight: 700, color: T.red }}>Wrong Answer</div>
-                            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: T.sub, marginTop: 2 }}>
+                            <div style={{ fontFamily: "var(--font-sans)", fontSize: 17, fontWeight: 700, color: T.red }}>Wrong Answer</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: T.sub, marginTop: 2 }}>
                                 Test #{result.failed_test?.number || '?'} da xato
                             </div>
                         </div>
@@ -698,11 +699,11 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                         ].map((r, i) => (
                             <div key={i} style={{ marginBottom: i < 2 ? 14 : 0 }}>
                                 <div style={{
-                                    fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
+                                    fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700,
                                     letterSpacing: '.1em', color: T.sub, marginBottom: 6
                                 }}>{r.label}</div>
                                 <pre style={{
-                                    fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                                    fontFamily: "var(--font-mono)", fontSize: 12,
                                     background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
                                     borderRadius: 6, padding: '8px 12px', margin: 0, whiteSpace: 'pre-wrap', color: r.color
                                 }}>
@@ -721,10 +722,10 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 <div style={{ borderRadius: 12, padding: 20, background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.14)', borderLeft: `3px solid ${T.org}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                         <AlertTriangle size={18} color={T.org} />
-                        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.org }}>Compilation Error</span>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: T.org }}>Compilation Error</span>
                     </div>
                     <pre style={{
-                        fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                        fontFamily: "var(--font-mono)", fontSize: 12,
                         background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.12)',
                         borderRadius: 8, padding: 14, color: '#fdba74', lineHeight: 1.6, overflowX: 'auto', whiteSpace: 'pre-wrap', margin: 0
                     }}>
@@ -740,9 +741,9 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 <div style={{ borderRadius: 12, padding: 20, background: 'rgba(255,179,0,0.04)', border: '1px solid rgba(255,179,0,0.14)', borderLeft: `3px solid ${T.amb}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                         <Clock size={18} color={T.amb} />
-                        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.amb }}>Time Limit Exceeded</span>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: T.amb }}>Time Limit Exceeded</span>
                     </div>
-                    <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
+                    <p style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
                         Kod <M ch={`${problem?.time_limit || 1}s`} col={T.amb} sz={13} w={700} /> dan ko'proq vaqt oldi. Algoritmni optimizatsiya qiling.
                     </p>
                 </div>
@@ -755,10 +756,10 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 <div style={{ borderRadius: 12, padding: 20, background: 'rgba(255,45,85,0.04)', border: '1px solid rgba(255,45,85,0.14)', borderLeft: `3px solid ${T.red}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                         <Zap size={18} color={T.red} />
-                        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.red }}>Runtime Error</span>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: T.red }}>Runtime Error</span>
                     </div>
                     <pre style={{
-                        fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                        fontFamily: "var(--font-mono)", fontSize: 12,
                         background: 'rgba(255,45,85,0.04)', border: '1px solid rgba(255,45,85,0.12)',
                         borderRadius: 8, padding: 14, color: '#ff8fa3', lineHeight: 1.6, overflowX: 'auto', whiteSpace: 'pre-wrap', margin: 0
                     }}>
@@ -774,10 +775,10 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
                 <div style={{ borderRadius: 12, padding: 20, background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.14)', borderLeft: `3px solid ${T.pur}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                         <Shield size={18} color={T.pur} />
-                        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.pur }}>Security Violation</span>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: T.pur }}>Security Violation</span>
                     </div>
                     <pre style={{
-                        fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                        fontFamily: "var(--font-mono)", fontSize: 12,
                         background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.12)',
                         borderRadius: 8, padding: 14, color: '#c4b5fd', lineHeight: 1.6, overflowX: 'auto', whiteSpace: 'pre-wrap', margin: 0
                     }}>
@@ -791,11 +792,11 @@ function ResultContent({ submitState, fakeProgress, problem, onRetry, onSubmitFu
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div style={{ borderLeft: `3px solid ${T.sub}`, borderRadius: 10, padding: 20, background: 'var(--bg-elevated)' }}>
-                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700, color: T.sub }}>
+                    <div style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 700, color: T.sub }}>
                         {st.replace(/_/g, ' ')}
                     </div>
                     {result.error_message && (
-                        <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: T.sub, marginTop: 8 }}>
+                        <p style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: T.sub, marginTop: 8 }}>
                             {result.error_message}
                         </p>
                     )}
@@ -1089,7 +1090,7 @@ export default function ProblemDetail() {
                     display: 'flex', height: 'calc(100vh - 56px)',
                     overflow: 'hidden',
                     userSelect: isDragging ? 'none' : 'auto',
-                    fontFamily: "'DM Sans',sans-serif",
+                    fontFamily: "var(--font-sans)",
                     color: T.text,
                 }}
             >
@@ -1118,6 +1119,7 @@ export default function ProblemDetail() {
                         {[
                             { key: 'problem', label: 'Masala', Icon: BookOpen },
                             { key: 'submissions', label: 'Mening yechimlarim', Icon: History },
+                            { key: 'discussion', label: 'Muhokama', Icon: MessageSquare },
                         ].map(t => {
                             const active = tab === t.key;
                             return (
@@ -1125,7 +1127,7 @@ export default function ProblemDetail() {
                                     display: 'flex', alignItems: 'center', gap: 7,
                                     padding: '10px 14px', fontSize: 12, fontWeight: active ? 700 : 500,
                                     cursor: 'pointer', border: 'none', background: 'transparent',
-                                    fontFamily: "'DM Sans',sans-serif",
+                                    fontFamily: "var(--font-sans)",
                                     color: active ? T.cyan : T.sub,
                                     borderRadius: '6px 6px 0 0',
                                     position: 'relative', transition: 'color .15s',
@@ -1149,7 +1151,7 @@ export default function ProblemDetail() {
                     </div>
 
                     {/* Content scroll area */}
-                    <div style={{ flex: 1, overflowY: 'auto', padding: tab === 'problem' ? '24px 22px' : '16px' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: tab === 'problem' ? '24px 22px' : '16px 18px' }}>
 
                         {/* ── PROBLEM TAB ── */}
                         {tab === 'problem' && (
@@ -1164,7 +1166,7 @@ export default function ProblemDetail() {
                                             <M ch={p.slug} sz={10} col={T.sub} />
                                         </div>
                                         <h1 style={{
-                                            fontFamily: "'Syne',sans-serif",
+                                            fontFamily: "var(--font-sans)",
                                             fontSize: 22, fontWeight: 800, color: T.text,
                                             letterSpacing: '-.03em', lineHeight: 1.2, margin: 0,
                                         }}>{p.title}</h1>
@@ -1175,6 +1177,7 @@ export default function ProblemDetail() {
                                         <DiffBadge diff={p.difficulty} />
                                         <StatChip icon={Clock} value={`${p.time_limit}s`} label="TL" />
                                         <StatChip icon={Cpu} value={`${p.memory_limit}MB`} label="ML" />
+                                        <StarRating slug={p.slug} />
                                     </div>
 
                                     {/* Tags */}
@@ -1205,7 +1208,7 @@ export default function ProblemDetail() {
                                             background: `${T.ind}06`, border: `1px solid ${T.ind}16`,
                                         }}>
                                             <div style={{
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 700,
+                                                fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700,
                                                 color: T.ind, letterSpacing: '.1em', marginBottom: 8
                                             }}>KIRISH FORMATI</div>
                                             <div className="judge-prose" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -1223,7 +1226,7 @@ export default function ProblemDetail() {
                                             background: 'rgba(0,230,118,0.04)', border: '1px solid rgba(0,230,118,0.10)',
                                         }}>
                                             <div style={{
-                                                fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 700,
+                                                fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700,
                                                 color: T.grn, letterSpacing: '.1em', marginBottom: 8
                                             }}>CHIQISH FORMATI</div>
                                             <div className="judge-prose" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -1286,13 +1289,13 @@ export default function ProblemDetail() {
                                                 ].map((side, si) => (
                                                     <div key={si}>
                                                         <div style={{
-                                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, fontWeight: 700,
+                                                            fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700,
                                                             color: side.color, letterSpacing: '.1em', marginBottom: 6, opacity: .7
                                                         }}>
                                                             {side.label.toUpperCase()}
                                                         </div>
                                                         <pre style={{
-                                                            fontFamily: "'IBM Plex Mono',monospace", fontSize: 12,
+                                                            fontFamily: "var(--font-mono)", fontSize: 12,
                                                             color: 'var(--text-primary)',
                                                             background: 'var(--bg-elevated)',
                                                             border: `1px solid var(--border-subtle)`,
@@ -1317,7 +1320,7 @@ export default function ProblemDetail() {
                                             <Lock size={40} color={T.sub} style={{ opacity: .5, margin: '0 auto 16px' }} />
                                         </motion.div>
                                         <div style={{
-                                            fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700,
+                                            fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700,
                                             color: T.sub, marginBottom: 8
                                         }}>Kiring</div>
                                         <p style={{ fontSize: 13, color: T.sub, marginBottom: 20 }}>
@@ -1330,7 +1333,7 @@ export default function ProblemDetail() {
                                                 height: 36, padding: '0 20px', borderRadius: 9,
                                                 background: `${T.ind}14`, border: `1px solid ${T.ind}35`,
                                                 color: '#818cf8', fontSize: 13, fontWeight: 600,
-                                                cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                                                cursor: 'pointer', fontFamily: "var(--font-sans)",
                                             }}
                                         >Kirish →</motion.button>
                                     </div>
@@ -1343,7 +1346,7 @@ export default function ProblemDetail() {
                                     <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                                         <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }}
                                             style={{ fontSize: 44, marginBottom: 16 }}>📭</motion.div>
-                                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: T.sub, marginBottom: 6 }}>
+                                        <div style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: T.sub, marginBottom: 6 }}>
                                             Hali submission yo'q
                                         </div>
                                         <p style={{ fontSize: 12, color: T.sub }}>Birinchi yechimingizni yuboring!</p>
@@ -1362,7 +1365,7 @@ export default function ProblemDetail() {
                                         }}>
                                             {['VAQT', 'NATIJA', 'TIL', 'MS', 'MB'].map((h, i) => (
                                                 <span key={i} style={{
-                                                    fontFamily: "'IBM Plex Mono',monospace",
+                                                    fontFamily: "var(--font-mono)",
                                                     fontSize: 9, fontWeight: 700, color: T.sub, letterSpacing: '.1em'
                                                 }}>{h}</span>
                                             ))}
@@ -1386,14 +1389,14 @@ export default function ProblemDetail() {
                                                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,212,255,0.025)'}
                                                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                                 >
-                                                    <span style={{ fontSize: 11, color: T.sub, fontFamily: "'IBM Plex Mono',monospace" }}>
+                                                    <span style={{ fontSize: 11, color: T.sub, fontFamily: "var(--font-mono)" }}>
                                                         {new Date(sub.created_at).toLocaleString('uz-UZ')}
                                                     </span>
                                                     <span style={{
                                                         display: 'inline-block', padding: '3px 8px',
                                                         borderRadius: 6, fontSize: 10, fontWeight: 700,
                                                         color: sc.color, background: sc.bg, border: `1px solid ${sc.bd}`,
-                                                        fontFamily: "'IBM Plex Mono',monospace",
+                                                        fontFamily: "var(--font-mono)",
                                                         width: 'fit-content',
                                                     }}>{sc.short}</span>
                                                     <LangBadge lang={sub.language} />
@@ -1405,6 +1408,11 @@ export default function ProblemDetail() {
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {/* ── DISCUSSION TAB ── */}
+                        {tab === 'discussion' && (
+                            <DiscussionTab slug={slug} />
                         )}
                     </div>
                 </div>
@@ -1457,7 +1465,7 @@ export default function ProblemDetail() {
                                     display: 'flex', alignItems: 'center', gap: 9,
                                     fontSize: 12, fontWeight: 600, color: T.text,
                                     cursor: 'pointer', minWidth: 148,
-                                    fontFamily: "'DM Sans',sans-serif",
+                                    fontFamily: "var(--font-sans)",
                                     transition: 'all .15s',
                                 }}
                             >
@@ -1491,7 +1499,7 @@ export default function ProblemDetail() {
                                                     display: 'flex', alignItems: 'center', gap: 10,
                                                     padding: '0 12px', fontSize: 12, fontWeight: 500,
                                                     cursor: 'pointer', border: 'none',
-                                                    fontFamily: "'DM Sans',sans-serif",
+                                                    fontFamily: "var(--font-sans)",
                                                     background: language === l.value ? `${l.bg}` : 'transparent',
                                                     color: language === l.value ? l.color : T.sub,
                                                     transition: 'all .1s',
@@ -1500,7 +1508,7 @@ export default function ProblemDetail() {
                                                 onMouseLeave={e => { if (language !== l.value) e.currentTarget.style.background = 'transparent'; }}
                                             >
                                                 <span style={{
-                                                    fontFamily: "'IBM Plex Mono',monospace",
+                                                    fontFamily: "var(--font-mono)",
                                                     fontSize: 9, fontWeight: 700, color: l.color,
                                                     background: l.bg, padding: '2px 5px', borderRadius: 4
                                                 }}>{l.short}</span>
@@ -1523,7 +1531,7 @@ export default function ProblemDetail() {
                                     padding: '0 12px', borderRadius: 8,
                                     background: 'transparent', border: `1px solid ${T.b}`,
                                     color: T.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                                    fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
+                                    fontFamily: "var(--font-sans)", transition: 'all .15s',
                                 }}
                                 onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
                                 onMouseLeave={e => { e.currentTarget.style.color = T.sub; e.currentTarget.style.borderColor = T.b; }}
@@ -1543,7 +1551,7 @@ export default function ProblemDetail() {
                                     padding: '0 16px', borderRadius: 8,
                                     background: 'rgba(0,230,118,0.09)', border: `1px solid rgba(0,230,118,0.22)`,
                                     color: T.grn, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                                    fontFamily: "'DM Sans',sans-serif", transition: 'all .15s',
+                                    fontFamily: "var(--font-sans)", transition: 'all .15s',
                                     opacity: isRunning ? .75 : 1,
                                 }}
                                 onMouseEnter={e => { if (!isRunning) { e.currentTarget.style.background = 'rgba(0,230,118,0.16)'; e.currentTarget.style.boxShadow = `0 0 16px rgba(0,230,118,0.2)`; } }}
@@ -1567,7 +1575,7 @@ export default function ProblemDetail() {
                                     color: 'white', fontSize: 12, fontWeight: 700,
                                     cursor: isRunning ? 'not-allowed' : 'pointer',
                                     opacity: isRunning ? .8 : 1,
-                                    fontFamily: "'DM Sans',sans-serif",
+                                    fontFamily: "var(--font-sans)",
                                     boxShadow: `0 0 20px rgba(99,102,241,0.3)`,
                                     transition: 'all .15s',
                                 }}
@@ -1596,7 +1604,7 @@ export default function ProblemDetail() {
                                 fontSize: 14,
                                 fontFamily: "'JetBrains Mono','Fira Code',monospace",
                                 fontLigatures: true,
-                                minimap: { enabled: true, renderCharacters: false, scale: 0.75 },
+                                minimap: { enabled: false },
                                 scrollBeyondLastLine: false,
                                 lineNumbers: 'on',
                                 glyphMargin: false,
@@ -1616,7 +1624,7 @@ export default function ProblemDetail() {
                                 autoClosingQuotes: 'always',
                                 suggestOnTriggerCharacters: true,
                                 tabSize: 4,
-                                wordWrap: 'on',
+                                wordWrap: 'off',
                                 scrollbar: { vertical: 'visible', horizontal: 'visible', verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
                                 overviewRulerLanes: 0,
                                 renderWhitespace: 'selection',
@@ -1655,7 +1663,7 @@ export default function ProblemDetail() {
                                     <Dot color={rm.dot} size={7} pulse={false} />
                                 )}
                                 <span style={{
-                                    fontFamily: "'IBM Plex Mono',monospace",
+                                    fontFamily: "var(--font-mono)",
                                     fontSize: 12, fontWeight: 600, color: rm.labelColor,
                                     letterSpacing: '.03em',
                                 }}>{rm.label}</span>
@@ -1752,7 +1760,7 @@ export default function ProblemDetail() {
                                 <Lock size={22} color='#818cf8' />
                             </div>
                             <h3 style={{
-                                fontFamily: "'Syne',sans-serif", fontSize: 18, fontWeight: 800,
+                                fontFamily: "var(--font-sans)", fontSize: 18, fontWeight: 800,
                                 color: T.text, marginBottom: 8
                             }}>
                                 Kirish kerak
@@ -1768,7 +1776,7 @@ export default function ProblemDetail() {
                                         height: 36, padding: '0 18px', borderRadius: 9,
                                         border: `1px solid ${T.b}`, background: 'transparent',
                                         color: T.sub, fontSize: 12, fontWeight: 600,
-                                        cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                                        cursor: 'pointer', fontFamily: "var(--font-sans)",
                                     }}
                                 >Bekor qilish</motion.button>
                                 <motion.button
@@ -1779,7 +1787,7 @@ export default function ProblemDetail() {
                                         background: `linear-gradient(135deg,${T.ind},#7c3aed)`,
                                         border: 'none', color: 'white',
                                         fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                                        fontFamily: "'DM Sans',sans-serif",
+                                        fontFamily: "var(--font-sans)",
                                         boxShadow: `0 0 20px ${T.ind}44`,
                                     }}
                                 >Kirish →</motion.button>

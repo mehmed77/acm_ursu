@@ -33,7 +33,7 @@ export default function NewsList() {
     }
 
     return (
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px' }}>
+        <div style={{ width: '100%', padding: '40px 5%' }}>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 40, textAlign: 'center' }}>
                 <h1 style={{ fontSize: 40, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>So'nggi Yangiliklar</h1>
                 <p style={{ fontSize: 16, color: 'var(--text-secondary)' }}>Platformadagi barcha yangiliklar, e'lonlar va musobaqa natijalari</p>

@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Tag(models.Model):
@@ -128,6 +129,92 @@ class Problem(models.Model):
 
     def __str__(self):
         return f"{self.id}. {self.title}"
+
+
+class ProblemRating(models.Model):
+    """Foydalanuvchi masalani 1-5 yulduz bilan baholaydi."""
+    problem = models.ForeignKey(
+        Problem,
+        on_delete=models.CASCADE,
+        related_name='ratings',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='problem_ratings',
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('problem', 'user')
+
+    def __str__(self):
+        return f"{self.user} → {self.problem.slug}: {self.rating}★"
+
+
+class ProblemComment(models.Model):
+    """Masala bo'yicha muhokama kommentariyasi."""
+
+    class CommentType(models.TextChoices):
+        GENERAL  = 'general',  'Umumiy'
+        QUESTION = 'question', 'Savol'
+        FEEDBACK = 'feedback', 'Fikr-mulohaza'
+
+    problem = models.ForeignKey(
+        Problem,
+        on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='problem_comments',
+    )
+    content = models.TextField(max_length=2000)
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies',
+    )
+    comment_type = models.CharField(
+        max_length=10,
+        choices=CommentType.choices,
+        default=CommentType.GENERAL,
+    )
+    like_count = models.PositiveIntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-like_count', '-created_at']
+
+    def __str__(self):
+        return f"{self.author} on {self.problem.slug}"
+
+
+class CommentLike(models.Model):
+    """Foydalanuvchi kommentariyaga like bosishi."""
+    comment = models.ForeignKey(
+        ProblemComment,
+        on_delete=models.CASCADE,
+        related_name='likes',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='comment_likes',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('comment', 'user')
 
 
 class TestCase(models.Model):

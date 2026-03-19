@@ -297,23 +297,23 @@ function processFile(filePath) {
 
     for (const [key, val] of Object.entries(REPLACEMENTS)) {
         let regexStr = escapeRegExp(key);
-        // Replace >Text<
+        // Ensure regex string is valid before passing to RegExp
         let regex = new RegExp('>\\s*' + regexStr + '\\s*<', 'g');
         text = text.replace(regex, '>' + val + '<');
         // Replace "Text"
-        regex = new RegExp('\"' + regexStr + '\"', 'g');
-        text = text.replace(regex, '\"' + val + '\"');
+        regex = new RegExp('"' + regexStr + '"', 'g');
+        text = text.replace(regex, '"' + val + '"');
         // Replace 'Text'
-        regex = new RegExp('\\'' + regexStr + '\\'', 'g');
-        text = text.replace(regex, '\\''+val+'\\'');
+        regex = new RegExp("'" + regexStr + "'", 'g');
+        text = text.replace(regex, "'" + val + "'");
         // Replace placeholder="Text"
-        regex = new RegExp('placeholder=(["\\'])' + regexStr + '\\1', 'g');
+        regex = new RegExp('placeholder=(["\'])' + regexStr + '\\1', 'g');
         text = text.replace(regex, 'placeholder=$1' + val + '$1');
         // Replace placeholder="Text..."
-        regex = new RegExp('placeholder=(["\\'])' + regexStr + '\\.\\.\\.\\1', 'g');
+        regex = new RegExp('placeholder=(["\'])' + regexStr + '\\.\\.\\.\\1', 'g');
         text = text.replace(regex, 'placeholder=$1' + val + '...$1');
         // Replace title="Text"
-        regex = new RegExp('title=(["\\'])' + regexStr + '\\1', 'g');
+        regex = new RegExp('title=(["\'])' + regexStr + '\\1', 'g');
         text = text.replace(regex, 'title=$1' + val + '$1');
         // Replace >Text...<
         regex = new RegExp('>\\s*' + regexStr + '\\s*\\.\\.\\.<', 'g');

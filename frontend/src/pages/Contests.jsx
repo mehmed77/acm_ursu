@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contestsApi } from '../api/contests';
 import { useAuthStore } from '../store/authStore';
+import Container from '../components/ui/Container';
 
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS
@@ -520,13 +521,7 @@ export default function Contests() {
         <>
             <style>{CSS}</style>
 
-            <div style={{
-                position: 'relative', zIndex: 1,
-                maxWidth: 1200, margin: '0 auto',
-                padding: '20px 20px 60px',
-                fontFamily: "'DM Sans',sans-serif", color: T.text,
-                minHeight: '100vh',
-            }}>
+            <Container className="relative z-10 min-h-screen pt-5 pb-15 font-sans text-[var(--text-primary)]">
 
                 {/* ── COMPACT HERO ── */}
                 <motion.div
@@ -741,7 +736,7 @@ export default function Contests() {
                         </AnimatePresence>
                     </motion.div>
                 )}
-            </div>
+            </Container>
         </>
     );
 }

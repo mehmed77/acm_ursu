@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Problem, TestCase, Tag
+from .models import Problem, TestCase, Tag, ProblemComment, ProblemRating
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -151,6 +151,86 @@ class AdminProblemListSerializer(serializers.ModelSerializer):
             status='accepted'
         ).count()
         return round(ac / total * 100, 1)
+
+
+class ProblemRatingStatsSerializer(serializers.Serializer):
+    """Masala reytingi statistikasi."""
+    average = serializers.FloatField()
+    count = serializers.IntegerField()
+    distribution = serializers.DictField(child=serializers.IntegerField())
+    user_rating = serializers.IntegerField(allow_null=True)
+
+
+class ProblemRatingWriteSerializer(serializers.ModelSerializer):
+    """Foydalanuvchi reytingini yaratish/yangilash."""
+
+    class Meta:
+        model = ProblemRating
+        fields = ('rating',)
+
+    def validate_rating(self, value):
+        if not (1 <= value <= 5):
+            raise serializers.ValidationError("Reyting 1 dan 5 gacha bo'lishi kerak.")
+        return value
+
+
+class CommentAuthorSerializer(serializers.Serializer):
+    """Minimal muallif ma'lumoti."""
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+
+
+class ProblemCommentSerializer(serializers.ModelSerializer):
+    """Muhokama kommentariyasi (o'qish uchun)."""
+    author = CommentAuthorSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProblemComment
+        fields = (
+            'id', 'author', 'content', 'comment_type',
+            'like_count', 'is_liked', 'is_owner',
+            'parent', 'replies', 'created_at', 'updated_at',
+        )
+
+    def get_replies(self, obj):
+        if obj.parent is not None:
+            return []
+        qs = obj.replies.filter(is_hidden=False).order_by('created_at')
+        return ProblemCommentSerializer(qs, many=True, context=self.context).data
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.likes.filter(user=request.user).exists()
+
+    def get_is_owner(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.author_id == request.user.id
+
+
+class ProblemCommentWriteSerializer(serializers.ModelSerializer):
+    """Yangi kommentariya yozish uchun."""
+
+    class Meta:
+        model = ProblemComment
+        fields = ('content', 'comment_type', 'parent')
+
+    def validate_content(self, value):
+        value = value.strip()
+        if len(value) < 5:
+            raise serializers.ValidationError("Kommentariya kamida 5 belgidan iborat bo'lishi kerak.")
+        return value
+
+    def validate_parent(self, value):
+        if value and value.parent is not None:
+            raise serializers.ValidationError("Ikki darajali javobga javob berib bo'lmaydi.")
+        return value
 
 
 class AdminProblemDetailSerializer(serializers.ModelSerializer):

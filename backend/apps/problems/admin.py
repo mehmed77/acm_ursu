@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Problem, TestCase, Tag
+from .models import Problem, TestCase, Tag, ProblemComment, ProblemRating
 from .testcase_loader import count_testcases
 
 
@@ -42,3 +42,20 @@ class TagAdmin(admin.ModelAdmin):
 class TestCaseAdmin(admin.ModelAdmin):
     list_display = ('problem', 'file_number', 'is_sample')
     list_filter = ('is_sample', 'problem')
+
+
+@admin.register(ProblemComment)
+class ProblemCommentAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'author', 'problem', 'comment_type', 'like_count', 'is_hidden', 'created_at')
+    list_filter   = ('comment_type', 'is_hidden', 'problem')
+    search_fields = ('content', 'author__username')
+    list_editable = ('is_hidden',)
+    raw_id_fields = ('author', 'problem', 'parent')
+
+
+@admin.register(ProblemRating)
+class ProblemRatingAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'user', 'problem', 'rating', 'created_at')
+    list_filter   = ('rating', 'problem')
+    search_fields = ('user__username',)
+    raw_id_fields = ('user', 'problem')

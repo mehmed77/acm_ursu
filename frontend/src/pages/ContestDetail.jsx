@@ -335,54 +335,59 @@ export default function ContestDetail() {
     };
 
     return (
-        <div style={{ maxWidth: 1300, margin: '0 auto', padding: '24px 20px' }}>
+        <div style={{ width: '100%', padding: '28px 5%', fontFamily: 'var(--font-sans)' }}>
             {/* ── BIRINCHI QATOR: Breadcrumb + Meta ── */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '8px',
+                marginBottom: '10px',
             }}>
                 {/* Breadcrumb */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    fontSize: '12px',
+                    fontSize: '13px',
+                    fontWeight: '500',
                     color: 'var(--text-muted)',
                 }}>
                     <span
                         onClick={() => navigate('/contests')}
-                        style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
-                        onMouseEnter={e => e.target.style.color = '#a5b4fc'}
+                        style={{ cursor: 'pointer', color: 'var(--text-muted)', transition: 'color 0.15s' }}
+                        onMouseEnter={e => e.target.style.color = 'var(--accent-hover)'}
                         onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
                     >
                         Musobaqalar
                     </span>
-                    <span>/</span>
-                    <span style={{ color: 'var(--text-muted)' }}>
+                    <span style={{ opacity: 0.4 }}>/</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>
                         {contest.title}
                     </span>
                 </div>
 
                 {/* O'ng: Ishtirokchilar + Scoreboard link */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '500' }}>
                         👥 {contest.reg_count || 0} ta ishtirokchi
                     </span>
                     <button
                         onClick={() => navigate(`/contests/${slug}/scoreboard`)}
                         style={{
-                            height: '30px',
+                            height: '32px',
                             padding: '0 14px',
-                            borderRadius: '7px',
+                            borderRadius: '8px',
                             background: 'rgba(99,102,241,0.10)',
-                            border: '1px solid rgba(99,102,241,0.25)',
-                            color: '#a5b4fc',
-                            fontSize: '12px',
+                            border: '1px solid rgba(99,102,241,0.22)',
+                            color: 'var(--accent-hover)',
+                            fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
+                            fontFamily: 'var(--font-sans)',
+                            transition: 'all 0.15s',
                         }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.18)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.10)'; }}
                     >
                         🏆 Natijalar jadvali
                     </button>
@@ -394,7 +399,7 @@ export default function ContestDetail() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '14px',
+                marginBottom: '18px',
                 gap: '16px',
             }}>
                 {/* Chap: Title + badges */}
@@ -407,13 +412,16 @@ export default function ContestDetail() {
                     minWidth: 0,
                 }}>
                     <h1 style={{
-                        fontSize: '20px',
+                        fontSize: '22px',
                         fontWeight: '800',
+                        letterSpacing: '-0.02em',
                         color: 'var(--text-primary)',
                         margin: 0,
+                        fontFamily: 'var(--font-sans)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
+                        lineHeight: 1.2,
                     }}>
                         {contest.title}
                     </h1>
@@ -423,11 +431,11 @@ export default function ContestDetail() {
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '5px',
+                            gap: '6px',
                             background: 'rgba(16,185,129,0.10)',
-                            border: '1px solid rgba(16,185,129,0.25)',
+                            border: '1px solid rgba(16,185,129,0.22)',
                             borderRadius: '100px',
-                            padding: '3px 10px',
+                            padding: '4px 12px',
                         }}>
                             <div style={{
                                 width: '6px',
@@ -436,10 +444,12 @@ export default function ContestDetail() {
                                 background: '#10b981',
                                 boxShadow: '0 0 6px #10b981',
                                 animation: 'pulse 2s infinite',
+                                flexShrink: 0,
                             }} />
                             <span style={{
                                 fontSize: '11px',
                                 fontWeight: '700',
+                                letterSpacing: '0.06em',
                                 color: '#10b981',
                             }}>
                                 JONLI
@@ -450,12 +460,13 @@ export default function ContestDetail() {
                     {contest.is_rated && (
                         <span style={{
                             background: 'rgba(99,102,241,0.10)',
-                            border: '1px solid rgba(99,102,241,0.25)',
+                            border: '1px solid rgba(99,102,241,0.22)',
                             borderRadius: '100px',
-                            padding: '3px 10px',
+                            padding: '4px 12px',
                             fontSize: '11px',
                             fontWeight: '700',
-                            color: '#a5b4fc',
+                            letterSpacing: '0.04em',
+                            color: 'var(--accent-hover)',
                         }}>
                             Reytingli
                         </span>
@@ -464,11 +475,12 @@ export default function ContestDetail() {
                     {contest.is_team && (
                         <span style={{
                             background: 'rgba(245,158,11,0.10)',
-                            border: '1px solid rgba(245,158,11,0.25)',
+                            border: '1px solid rgba(245,158,11,0.22)',
                             borderRadius: '100px',
-                            padding: '3px 10px',
+                            padding: '4px 12px',
                             fontSize: '11px',
                             fontWeight: '700',
+                            letterSpacing: '0.04em',
                             color: '#f59e0b',
                         }}>
                             Jamoaviy
@@ -481,22 +493,24 @@ export default function ContestDetail() {
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        background: 'var(--bg-elevated)',
+                        gap: '6px',
+                        background: 'var(--bg-surface)',
                         border: `1px solid ${countdown.h === 0 && countdown.m < 10
                             ? 'rgba(239,68,68,0.30)'
                             : countdown.h === 0
                                 ? 'rgba(245,158,11,0.25)'
-                                : 'var(--border-subtle)'
+                                : 'var(--border-default)'
                             }`,
-                        borderRadius: '10px',
-                        padding: '6px 14px',
+                        borderRadius: '12px',
+                        padding: '8px 16px',
                         flexShrink: 0,
+                        boxShadow: 'var(--card-shadow)',
                     }}>
                         <span style={{
-                            fontSize: '11px',
+                            fontSize: '12px',
+                            fontWeight: '500',
                             color: 'var(--text-muted)',
-                            marginRight: '6px',
+                            marginRight: '4px',
                             whiteSpace: 'nowrap',
                         }}>
                             {contest.status === 'upcoming'
@@ -513,10 +527,11 @@ export default function ContestDetail() {
                             <React.Fragment key={i}>
                                 {i > 0 && (
                                     <span style={{
-                                        color: '#2a2a4a',
-                                        fontSize: '16px',
+                                        color: 'var(--text-muted)',
+                                        fontSize: '18px',
                                         fontWeight: '300',
-                                        margin: '0 2px',
+                                        margin: '0 1px',
+                                        opacity: 0.5,
                                     }}>
                                         :
                                     </span>
@@ -524,22 +539,24 @@ export default function ContestDetail() {
                                 <div style={{ textAlign: 'center' }}>
                                     <div style={{
                                         fontSize: '22px',
-                                        fontWeight: '800',
-                                        fontFamily: "'JetBrains Mono', monospace",
+                                        fontWeight: '700',
+                                        fontFamily: 'var(--font-mono)',
                                         color: countdown.h === 0 && countdown.m < 10
                                             ? '#ef4444'
                                             : countdown.h === 0
                                                 ? '#f59e0b'
                                                 : '#10b981',
                                         lineHeight: 1,
-                                        minWidth: '32px',
+                                        minWidth: '30px',
                                     }}>
                                         {String(t.val).padStart(2, '0')}
                                     </div>
                                     <div style={{
-                                        fontSize: '9px',
-                                        color: '#2a2a4a',
-                                        marginTop: '2px',
+                                        fontSize: '10px',
+                                        fontWeight: '500',
+                                        color: 'var(--text-muted)',
+                                        marginTop: '3px',
+                                        letterSpacing: '0.03em',
                                     }}>
                                         {t.label}
                                     </div>
@@ -555,8 +572,21 @@ export default function ContestDetail() {
 
                 {/* LEFT PANEL */}
                 <div>
+                    {/* Upcoming — masalalar yashiriladi */}
+                    {contest.status === 'upcoming' && (
+                        <div style={{
+                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                            borderRadius: 14, padding: '40px 20px', textAlign: 'center',
+                        }}>
+                            <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔒</span>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>
+                                Masalalar kontest boshlanganidan keyin ko'rinadi
+                            </p>
+                        </div>
+                    )}
+
                     {/* Problem tabs */}
-                    {problems.length > 0 && (
+                    {problems.length > 0 && contest.status !== 'upcoming' && (
                         <>
                             {/* ── UCHINCHI QATOR: Problem tabs ── */}
                             <div style={{
@@ -638,7 +668,8 @@ export default function ContestDetail() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '14px',
-                                    fontSize: '12px',
+                                    fontSize: '13px',
+                                    fontWeight: '500',
                                     color: 'var(--text-muted)',
                                 }}>
                                     <span>
@@ -651,30 +682,78 @@ export default function ContestDetail() {
                             {/* Problem content */}
                             {currentProblem && (
                                 <div style={{
-                                    background: 'var(--bg-elevated)',
-                                    border: '1px solid var(--border-subtle)',
-                                    borderRadius: 14, padding: 24,
+                                    background: 'var(--bg-surface)',
+                                    border: '1px solid var(--border-default)',
+                                    borderRadius: 16,
+                                    padding: '28px 30px',
+                                    boxShadow: 'var(--card-shadow)',
                                 }}>
-                                    <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                                    <h2 style={{
+                                        fontSize: 20,
+                                        fontWeight: 700,
+                                        color: 'var(--text-primary)',
+                                        marginBottom: 8,
+                                        fontFamily: 'var(--font-sans)',
+                                        letterSpacing: '-0.01em',
+                                        lineHeight: 1.3,
+                                    }}>
                                         {currentProblem.label}. {currentProblem.title}
                                     </h2>
-                                    <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 12, color: 'var(--text-muted)' }}>
-                                        <span>⏱ {currentProblem.time_limit}s</span>
-                                        <span>💾 {currentProblem.memory_limit}MB</span>
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: 8,
+                                        marginBottom: 20,
+                                        paddingBottom: 20,
+                                        borderBottom: '1px solid var(--border-subtle)',
+                                    }}>
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                                            padding: '4px 10px', borderRadius: 6,
+                                            background: 'var(--bg-elevated)',
+                                            border: '1px solid var(--border-subtle)',
+                                            fontSize: 12, fontWeight: 600,
+                                            color: 'var(--text-secondary)',
+                                        }}>⏱ {currentProblem.time_limit}s</span>
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                                            padding: '4px 10px', borderRadius: 6,
+                                            background: 'var(--bg-elevated)',
+                                            border: '1px solid var(--border-subtle)',
+                                            fontSize: 12, fontWeight: 600,
+                                            color: 'var(--text-secondary)',
+                                        }}>💾 {currentProblem.memory_limit}MB</span>
                                     </div>
 
-                                    <div className="prose prose-invert" style={{ maxWidth: 'none', fontSize: 14, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+                                    <div className="prose prose-invert" style={{
+                                        maxWidth: 'none',
+                                        fontSize: 15,
+                                        lineHeight: 1.85,
+                                        color: 'var(--text-secondary)',
+                                        fontFamily: 'var(--font-sans)',
+                                    }}>
                                         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.description || ''}</ReactMarkdown>
 
                                         {currentProblem.input_format && (
                                             <>
-                                                <h3 style={{ fontSize: 15, color: 'var(--text-primary)', marginTop: 20 }}>Kirish formati</h3>
+                                                <h3 style={{
+                                                    fontSize: 15,
+                                                    fontWeight: 700,
+                                                    color: 'var(--text-primary)',
+                                                    marginTop: 24,
+                                                    marginBottom: 8,
+                                                }}>Kirish formati</h3>
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.input_format}</ReactMarkdown>
                                             </>
                                         )}
                                         {currentProblem.output_format && (
                                             <>
-                                                <h3 style={{ fontSize: 15, color: 'var(--text-primary)', marginTop: 20 }}>Chiqish formati</h3>
+                                                <h3 style={{
+                                                    fontSize: 15,
+                                                    fontWeight: 700,
+                                                    color: 'var(--text-primary)',
+                                                    marginTop: 24,
+                                                    marginBottom: 8,
+                                                }}>Chiqish formati</h3>
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]}>{currentProblem.output_format}</ReactMarkdown>
                                             </>
                                         )}
@@ -682,19 +761,38 @@ export default function ContestDetail() {
 
                                     {/* Samples */}
                                     {currentProblem.samples?.length > 0 && (
-                                        <div style={{ marginTop: 20 }}>
-                                            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Misollar</h3>
+                                        <div style={{ marginTop: 28 }}>
+                                            <h3 style={{
+                                                fontSize: 14,
+                                                fontWeight: 700,
+                                                color: 'var(--text-primary)',
+                                                marginBottom: 14,
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.06em',
+                                                opacity: 0.7,
+                                            }}>Misollar</h3>
                                             {currentProblem.samples.map((s, i) => (
                                                 <div key={i} style={{
-                                                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                                                    borderRadius: 12, overflow: 'hidden', marginBottom: 16,
+                                                    background: 'var(--bg-elevated)',
+                                                    border: '1px solid var(--border-default)',
+                                                    borderRadius: 12,
+                                                    overflow: 'hidden',
+                                                    marginBottom: 16,
+                                                    boxShadow: 'var(--card-shadow)',
                                                 }}>
                                                     <div style={{
-                                                        padding: '10px 14px', background: 'var(--bg-surface)',
+                                                        padding: '10px 16px',
+                                                        background: 'var(--bg-overlay)',
                                                         borderBottom: '1px solid var(--border-subtle)',
                                                         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                                     }}>
-                                                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+                                                        <span style={{
+                                                            fontSize: 12,
+                                                            fontWeight: 700,
+                                                            color: 'var(--text-secondary)',
+                                                            letterSpacing: '0.05em',
+                                                            textTransform: 'uppercase',
+                                                        }}>
                                                             Namuna #{i + 1}
                                                         </span>
                                                         <button
@@ -704,43 +802,75 @@ export default function ContestDetail() {
                                                                 const orig = btn.innerText;
                                                                 btn.innerText = '✓ Nusxalandi';
                                                                 btn.style.color = '#10b981';
-                                                                btn.style.borderColor = '#10b981';
+                                                                btn.style.borderColor = 'rgba(16,185,129,0.4)';
                                                                 setTimeout(() => {
                                                                     btn.innerText = orig;
                                                                     btn.style.color = 'var(--text-muted)';
-                                                                    btn.style.borderColor = 'var(--border-subtle)';
+                                                                    btn.style.borderColor = 'var(--border-default)';
                                                                 }, 1500);
                                                             }}
                                                             style={{
                                                                 background: 'transparent',
-                                                                border: '1px solid var(--border-subtle)',
+                                                                border: '1px solid var(--border-default)',
                                                                 color: 'var(--text-muted)',
-                                                                fontSize: 10, fontWeight: 600,
-                                                                padding: '4px 10px', borderRadius: 6,
-                                                                cursor: 'pointer', transition: 'all 0.2s'
+                                                                fontSize: 11,
+                                                                fontWeight: 600,
+                                                                padding: '4px 12px',
+                                                                borderRadius: 6,
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.15s',
+                                                                fontFamily: 'var(--font-sans)',
                                                             }}
-                                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-primary)'; }}
-                                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
                                                         >
                                                             Nusxa
                                                         </button>
                                                     </div>
-                                                    <div style={{ padding: '14px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14 }}>
+                                                    <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
                                                         <div>
-                                                            <div style={{ fontSize: 10, color: '#6366f1', marginBottom: 6, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Kirish</div>
+                                                            <div style={{
+                                                                fontSize: 11,
+                                                                fontWeight: 700,
+                                                                color: 'var(--accent-hover)',
+                                                                marginBottom: 8,
+                                                                letterSpacing: '0.07em',
+                                                                textTransform: 'uppercase',
+                                                            }}>Kirish</div>
                                                             <pre style={{
-                                                                background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                                                                borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)',
-                                                                fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                                                                background: 'var(--bg-base)',
+                                                                border: '1px solid var(--border-default)',
+                                                                borderRadius: 8,
+                                                                padding: '12px 16px',
+                                                                fontSize: 14,
+                                                                lineHeight: 1.7,
+                                                                color: 'var(--text-primary)',
+                                                                fontFamily: 'var(--font-mono)',
+                                                                whiteSpace: 'pre-wrap',
+                                                                wordBreak: 'break-word',
                                                                 margin: 0,
                                                             }}>{s.input}</pre>
                                                         </div>
                                                         <div>
-                                                            <div style={{ fontSize: 10, color: '#10b981', marginBottom: 6, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Chiqish</div>
+                                                            <div style={{
+                                                                fontSize: 11,
+                                                                fontWeight: 700,
+                                                                color: '#10b981',
+                                                                marginBottom: 8,
+                                                                letterSpacing: '0.07em',
+                                                                textTransform: 'uppercase',
+                                                            }}>Chiqish</div>
                                                             <pre style={{
-                                                                background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                                                                borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)',
-                                                                fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                                                                background: 'var(--bg-base)',
+                                                                border: '1px solid var(--border-default)',
+                                                                borderRadius: 8,
+                                                                padding: '12px 16px',
+                                                                fontSize: 14,
+                                                                lineHeight: 1.7,
+                                                                color: 'var(--text-primary)',
+                                                                fontFamily: 'var(--font-mono)',
+                                                                whiteSpace: 'pre-wrap',
+                                                                wordBreak: 'break-word',
                                                                 margin: 0,
                                                             }}>{s.output}</pre>
                                                         </div>
@@ -752,15 +882,20 @@ export default function ContestDetail() {
 
                                     {/* Code editor */}
                                     {contest.registered && (contest.status === 'running' || contest.status === 'frozen') && (
-                                        <div style={{ marginTop: 24 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Yechim</span>
+                                        <div style={{ marginTop: 28, borderTop: '1px solid var(--border-subtle)', paddingTop: 24 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Yechim yozing</span>
                                                 <select
                                                     value={lang}
                                                     onChange={e => handleLangChange(e.target.value)}
                                                     style={{
-                                                        padding: '4px 10px', borderRadius: 6, fontSize: 12,
-                                                        background: '#13131f !important', color: '#9898bb !important',
+                                                        padding: '6px 12px',
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                        fontFamily: 'var(--font-sans)',
+                                                        fontWeight: 600,
+                                                        background: 'var(--input-bg) !important',
+                                                        color: 'var(--input-text) !important',
                                                         border: '1px solid var(--border-default) !important',
                                                         width: 'auto',
                                                     }}
@@ -890,20 +1025,13 @@ export default function ContestDetail() {
                         </>
                     )}
 
-                    {/* No problems yet */}
-                    {problems.length === 0 && (
+                    {/* No problems yet (only for non-upcoming statuses) */}
+                    {problems.length === 0 && contest.status !== 'upcoming' && (
                         <div style={{
                             background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
                             borderRadius: 14, padding: '40px 20px', textAlign: 'center',
                         }}>
-                            {contest.status === 'upcoming' ? (
-                                <>
-                                    <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔒</span>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                                        Masalalar kontest boshlanganidan keyin ko'rinadi
-                                    </p>
-                                </>
-                            ) : !contest.registered ? (
+                            {!contest.registered ? (
                                 <>
                                     <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔐</span>
                                     <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
@@ -932,51 +1060,97 @@ export default function ContestDetail() {
                 </div>
 
                 {/* RIGHT SIDEBAR */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 80 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'sticky', top: 80 }}>
 
                     {/* A) Mening natijam */}
                     {userStats && (
                         <div style={{
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            borderRadius: 14, padding: 18,
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: 14,
+                            padding: '18px 20px',
+                            boxShadow: 'var(--card-shadow)',
                         }}>
-                            <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <h4 style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: 'var(--text-muted)',
+                                marginBottom: 14,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                fontFamily: 'var(--font-sans)',
+                            }}>
                                 Mening natijam
                             </h4>
 
                             {/* Stats */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-                                <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
-                                    <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>#{userStats.rank}</div>
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>O'rin</div>
-                                </div>
-                                <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
-                                    <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>{userStats.solved}/{userStats.total}</div>
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Yechildi</div>
-                                </div>
-                                <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 4px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
-                                    <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-muted)' }}>{userStats.penalty}</div>
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Penalty</div>
-                                </div>
+                                {[
+                                    { val: `#${userStats.rank}`, label: "O'rin", color: 'var(--text-primary)' },
+                                    { val: `${userStats.solved}/${userStats.total}`, label: 'Yechildi', color: '#10b981' },
+                                    { val: userStats.penalty, label: 'Penalty', color: 'var(--text-secondary)' },
+                                ].map((item, i) => (
+                                    <div key={i} style={{
+                                        background: 'var(--bg-elevated)',
+                                        borderRadius: 10,
+                                        padding: '12px 6px',
+                                        textAlign: 'center',
+                                        border: '1px solid var(--border-subtle)',
+                                    }}>
+                                        <div style={{
+                                            fontSize: 20,
+                                            fontWeight: 800,
+                                            color: item.color,
+                                            fontFamily: 'var(--font-mono)',
+                                            lineHeight: 1,
+                                            marginBottom: 5,
+                                        }}>{item.val}</div>
+                                        <div style={{
+                                            fontSize: 10,
+                                            fontWeight: 600,
+                                            color: 'var(--text-muted)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                        }}>{item.label}</div>
+                                    </div>
+                                ))}
                             </div>
 
                             {/* Progress bar */}
                             <div style={{ marginBottom: 16 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    color: 'var(--text-secondary)',
+                                    marginBottom: 6,
+                                }}>
                                     <span>Jami progress</span>
-                                    <span>{Math.round((userStats.solved / (userStats.total || 1)) * 100)}%</span>
+                                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                                        {Math.round((userStats.solved / (userStats.total || 1)) * 100)}%
+                                    </span>
                                 </div>
-                                <div style={{ height: 6, background: 'var(--border-subtle)', borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: 5, background: 'var(--border-default)', borderRadius: 3, overflow: 'hidden' }}>
                                     <div style={{
-                                        height: '100%', background: '#10b981',
+                                        height: '100%',
+                                        background: 'linear-gradient(90deg, #10b981, #34d399)',
                                         width: `${(userStats.solved / (userStats.total || 1)) * 100}%`,
-                                        transition: 'width 0.5s ease'
+                                        transition: 'width 0.5s ease',
+                                        borderRadius: 3,
                                     }} />
                                 </div>
                             </div>
 
                             {/* Mini grid */}
-                            <h5 style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>MASALALAR</h5>
+                            <div style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: 'var(--text-muted)',
+                                marginBottom: 8,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.07em',
+                            }}>Masalalar</div>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                 {problems.map((p, i) => {
                                     const st = getProblemStatus(p.label);
@@ -985,14 +1159,22 @@ export default function ContestDetail() {
                                         <button
                                             key={p.label}
                                             onClick={() => setSelectedProblem(i)}
-                                            title={pr ? `${p.label}: ${pr.solved ? `+${pr.time} min (-${pr.attempts - 1})` : `${pr.attempts} ta urinish`}` : `${p.label}: Urinilmagan`}
+                                            title={pr ? `${p.label}: ${pr.solved ? `${pr.time} daq (-${pr.attempts - 1} WA)` : `${pr.attempts} ta urinish`}` : `${p.label}: Urinilmagan`}
                                             style={{
-                                                width: 36, height: 36, borderRadius: 8,
+                                                width: 38,
+                                                height: 38,
+                                                borderRadius: 9,
                                                 border: `1px solid ${TAB_STATUS[st].border}`,
                                                 background: TAB_STATUS[st].bg,
                                                 color: st === 'none' ? 'var(--text-secondary)' : TAB_STATUS[st].color,
-                                                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                fontFamily: 'var(--font-sans)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'all 0.15s',
                                             }}
                                         >
                                             {st === 'accepted' ? '✓' : st === 'wrong' ? '✗' : st === 'pending' ? '•' : p.label}
@@ -1003,24 +1185,49 @@ export default function ContestDetail() {
                         </div>
                     )}
 
-                    {/* B) So'nggi Submissionlar Card */}
+                    {/* B) Mening submissionlarim */}
                     {userStats && (
                         <div style={{
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            borderRadius: 14, padding: 18, maxHeight: 310, display: 'flex', flexDirection: 'column'
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: 14,
+                            padding: '18px 20px',
+                            maxHeight: 320,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: 'var(--card-shadow)',
                         }}>
-                            <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <h4 style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: 'var(--text-muted)',
+                                marginBottom: 3,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                fontFamily: 'var(--font-sans)',
+                            }}>
                                 Mening submissionlarim
                             </h4>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>Ushbu contest ichida</div>
+                            <div style={{
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: 'var(--text-muted)',
+                                marginBottom: 12,
+                            }}>Ushbu contest ichida</div>
 
-                            <div style={{ overflowY: 'auto', flex: 1, paddingRight: 4 }}>
+                            <div style={{ overflowY: 'auto', flex: 1 }}>
                                 {mySubmissions.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '20px 0', color: '#55556a', fontSize: 12 }}>
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '20px 0',
+                                        color: 'var(--text-muted)',
+                                        fontSize: 13,
+                                        lineHeight: 1.7,
+                                    }}>
                                         Hali submission yo'q.<br />Masalani yechishni boshlang →
                                     </div>
                                 ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         {mySubmissions.map(s => {
                                             const sUpper = s.status?.toUpperCase() || '';
                                             const isAc = sUpper === 'ACCEPTED';
@@ -1028,24 +1235,51 @@ export default function ContestDetail() {
                                             const isPd = ['PENDING', 'RUNNING'].includes(sUpper);
                                             return (
                                                 <div key={s.id} style={{
-                                                    display: 'flex', alignItems: 'center', gap: 8,
-                                                    padding: '8px 0', borderBottom: '1px solid var(--bg-elevated)',
-                                                    background: isAc ? 'rgba(16,185,129,0.03)' : isWa ? 'rgba(239,68,68,0.03)' : 'transparent',
-                                                    margin: '0 -8px', paddingLeft: 8, paddingRight: 8,
-                                                    borderRadius: 4
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 10,
+                                                    padding: '9px 0',
+                                                    borderBottom: '1px solid var(--border-subtle)',
                                                 }}>
                                                     <span style={{
-                                                        fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
-                                                        background: isAc ? 'rgba(16,185,129,0.12)' : isWa ? 'rgba(239,68,68,0.12)' : isPd ? 'rgba(245,158,11,0.12)' : 'var(--border-default)',
+                                                        fontSize: 11,
+                                                        fontWeight: 700,
+                                                        fontFamily: 'var(--font-mono)',
+                                                        padding: '3px 7px',
+                                                        borderRadius: 5,
+                                                        background: isAc ? 'rgba(16,185,129,0.12)' : isWa ? 'rgba(239,68,68,0.10)' : isPd ? 'rgba(245,158,11,0.10)' : 'var(--bg-elevated)',
                                                         color: isAc ? '#10b981' : isWa ? '#ef4444' : isPd ? '#f59e0b' : 'var(--text-muted)',
-                                                        minWidth: 42, textAlign: 'center'
+                                                        minWidth: 40,
+                                                        textAlign: 'center',
+                                                        flexShrink: 0,
                                                     }}>
-                                                        {isAc ? '✓ AC' : isWa ? '✗ WA' : isPd ? '⏳' : s.status.substring(0, 3)}
+                                                        {isAc ? 'AC' : isWa ? 'WA' : isPd ? '···' : s.status.substring(0, 3)}
                                                     </span>
-                                                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', width: 20 }}>{s.label}</span>
-                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.problem_title}</span>
-                                                        <span style={{ fontSize: 10, color: '#55556a' }}>{new Date(s.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })} • {s.time_used}ms</span>
+                                                    <span style={{
+                                                        fontSize: 13,
+                                                        fontWeight: 700,
+                                                        fontFamily: 'var(--font-mono)',
+                                                        color: 'var(--accent-hover)',
+                                                        width: 18,
+                                                        flexShrink: 0,
+                                                    }}>{s.label}</span>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{
+                                                            fontSize: 12,
+                                                            fontWeight: 500,
+                                                            color: 'var(--text-secondary)',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                        }}>{s.problem_title}</div>
+                                                        <div style={{
+                                                            fontSize: 11,
+                                                            color: 'var(--text-muted)',
+                                                            marginTop: 1,
+                                                            fontFamily: 'var(--font-mono)',
+                                                        }}>
+                                                            {new Date(s.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })} · {s.time_used}ms
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -1059,22 +1293,32 @@ export default function ContestDetail() {
                     {/* C) Reyting o'zgarishi Card */}
                     {contest.is_rated && userStats && (
                         <div style={{
-                            background: contest.status === 'running' ? 'rgba(99,102,241,0.05)' : (!ratingData?.available ? 'rgba(245,158,11,0.05)' : 'var(--bg-elevated)'),
-                            border: `1px solid ${contest.status === 'running' ? 'rgba(99,102,241,0.12)' : (!ratingData?.available ? 'rgba(245,158,11,0.15)' : 'var(--border-subtle)')}`,
-                            borderRadius: 14, padding: 18,
+                            background: 'var(--bg-surface)',
+                            border: `1px solid ${contest.status !== 'finished' ? 'var(--border-default)' : (!ratingData?.available ? 'rgba(245,158,11,0.20)' : 'var(--border-default)')}`,
+                            borderRadius: 14,
+                            padding: '18px 20px',
+                            boxShadow: 'var(--card-shadow)',
                         }}>
-                            <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <h4 style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: 'var(--text-muted)',
+                                marginBottom: 14,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                fontFamily: 'var(--font-sans)',
+                            }}>
                                 Reyting o'zgarishi
                             </h4>
 
                             {contest.status !== 'finished' ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 12 }}>
-                                    <div style={{ fontSize: 16 }}>🔒</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-muted)' }}>
+                                    <span style={{ fontSize: 18, flexShrink: 0 }}>🔒</span>
                                     <div>
-                                        <div style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
+                                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                                             Musobaqa tugagandan keyin hisoblanadi
                                         </div>
-                                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>
                                             Reytingli musobaqa
                                         </div>
                                     </div>
@@ -1083,27 +1327,30 @@ export default function ContestDetail() {
                                 <div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <div style={{
-                                            width: 20, height: 20, borderRadius: '50%',
+                                            width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
                                             border: '2px solid rgba(245,158,11,0.20)',
                                             borderTopColor: '#f59e0b',
-                                            animation: 'spin 1s linear infinite', flexShrink: 0,
+                                            animation: 'spin 1s linear infinite',
                                         }} />
                                         <div>
                                             <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>
                                                 Reyting hisoblanmoqda...
                                             </div>
-                                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                                                 Har 10 soniyada tekshiriladi
                                             </div>
                                         </div>
                                     </div>
                                     <div style={{
-                                        marginTop: 10, padding: '8px 10px',
-                                        background: 'rgba(245,158,11,0.06)', borderRadius: 8,
-                                        fontSize: 11, color: 'var(--text-muted)',
+                                        marginTop: 12, padding: '10px 12px',
+                                        background: 'rgba(245,158,11,0.06)',
+                                        border: '1px solid rgba(245,158,11,0.12)',
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        lineHeight: 1.5,
+                                        color: 'var(--text-muted)',
                                     }}>
                                         💡 Agar uzoq vaqt o'tsa, sahifani yangilang.
-                                        Muammo davom etsa admin'ga murojaat qiling.
                                     </div>
                                 </div>
                             ) : (
@@ -1112,36 +1359,41 @@ export default function ContestDetail() {
                                         const myChange = ratingData.changes?.find(c => c.username === currentUser?.username);
                                         return myChange ? (
                                             <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                                                    <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-muted)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                                    <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                                                         {myChange.old_rating}
                                                     </span>
-                                                    <span style={{ color: 'var(--text-muted)' }}>→</span>
-                                                    <span style={{ fontSize: 20, fontWeight: 800, color: getRatingColor(myChange.new_rating) }}>
+                                                    <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>→</span>
+                                                    <span style={{ fontSize: 20, fontWeight: 800, color: getRatingColor(myChange.new_rating), fontFamily: 'var(--font-mono)' }}>
                                                         {myChange.new_rating}
                                                     </span>
                                                     <span style={{
-                                                        padding: '3px 8px', borderRadius: 100, fontSize: 12, fontWeight: 700,
-                                                        background: myChange.delta > 0 ? 'rgba(16,185,129,0.15)' : myChange.delta < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(107,114,128,0.12)',
+                                                        padding: '3px 9px', borderRadius: 100, fontSize: 12, fontWeight: 700,
+                                                        fontFamily: 'var(--font-mono)',
+                                                        background: myChange.delta > 0 ? 'rgba(16,185,129,0.12)' : myChange.delta < 0 ? 'rgba(239,68,68,0.10)' : 'rgba(107,114,128,0.10)',
                                                         color: myChange.delta > 0 ? '#10b981' : myChange.delta < 0 ? '#ef4444' : 'var(--text-muted)',
                                                     }}>
                                                         {myChange.delta > 0 ? `▲ +${myChange.delta}` : myChange.delta < 0 ? `▼ ${myChange.delta}` : '= 0'}
                                                     </span>
                                                 </div>
-                                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    O'rin: <strong style={{ color: 'var(--text-primary)' }}>#{myChange.rank}</strong>
+                                                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+                                                    O'rin: <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>#{myChange.rank}</strong>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Siz musobaqada ishtirok etmadingiz</div>
+                                            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Siz musobaqada ishtirok etmadingiz</div>
                                         );
                                     })()}
                                     <button
                                         onClick={() => navigate(`/contests/${slug}/scoreboard`)}
                                         style={{
-                                            width: '100%', marginTop: 12, height: 32, borderRadius: 8,
-                                            background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.20)',
-                                            color: '#a5b4fc', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                            width: '100%', marginTop: 14, height: 34, borderRadius: 8,
+                                            background: 'rgba(99,102,241,0.08)',
+                                            border: '1px solid rgba(99,102,241,0.18)',
+                                            color: 'var(--accent-hover)',
+                                            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                                            fontFamily: 'var(--font-sans)',
+                                            transition: 'all 0.15s',
                                         }}
                                     >📊 Batafsil reyting o'zgarishlari</button>
                                 </div>
@@ -1152,64 +1404,61 @@ export default function ContestDetail() {
                     {/* Team Card */}
                     {contest.is_team && contest.registered && (
                         <div style={{
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            borderRadius: 14, padding: 18,
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: 14,
+                            padding: '18px 20px',
+                            boxShadow: 'var(--card-shadow)',
                         }}>
-                            <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                Jamoa
-                            </h4>
+                            <h4 style={{
+                                fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
+                                marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em',
+                            }}>Jamoa</h4>
                             {contest.team ? (
                                 <div>
-                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>{contest.team.name}</div>
-                                    <div style={{ fontSize: 11, color: '#55556a', marginBottom: 10 }}>Invite: <code style={{ fontSize: 11 }}>{contest.team.invite_code}</code></div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{contest.team.name}</div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 500 }}>
+                                        Invite: <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)' }}>{contest.team.invite_code}</code>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                                         {contest.team.members?.map(m => (
                                             <div key={m.username} style={{
                                                 display: 'flex', alignItems: 'center', gap: 8,
-                                                padding: '4px 8px', borderRadius: 6,
+                                                padding: '6px 10px', borderRadius: 8,
                                                 background: 'var(--bg-elevated)',
+                                                border: '1px solid var(--border-subtle)',
                                             }}>
                                                 <span style={{
-                                                    width: 22, height: 22, borderRadius: '50%',
+                                                    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                                                     background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: 10, fontWeight: 700, color: 'white',
+                                                    fontSize: 11, fontWeight: 700, color: 'white',
                                                 }}>{m.username[0].toUpperCase()}</span>
-                                                <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{m.username}</span>
-                                                {m.role === 'leader' && <span style={{ fontSize: 9, color: '#f59e0b' }}>👑</span>}
+                                                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{m.username}</span>
+                                                {m.role === 'leader' && <span style={{ fontSize: 11, marginLeft: 'auto' }}>👑</span>}
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                     <div>
-                                        <input
-                                            value={teamName}
-                                            onChange={e => setTeamName(e.target.value)}
-                                            placeholder="Jamoa nomi..."
-                                            style={{ fontSize: 13, padding: '8px 12px' }}
-                                        />
+                                        <input value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="Jamoa nomi..." style={{ fontSize: 13 }} />
                                         <button onClick={handleCreateTeam} style={{
-                                            marginTop: 6, padding: '6px 14px', borderRadius: 6,
+                                            marginTop: 8, padding: '8px 14px', borderRadius: 8,
                                             background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                                            border: 'none', color: 'white', fontSize: 12, fontWeight: 600,
-                                            cursor: 'pointer', width: '100%',
+                                            border: 'none', color: 'white', fontSize: 13, fontWeight: 600,
+                                            cursor: 'pointer', width: '100%', fontFamily: 'var(--font-sans)',
                                         }}>+ Jamoa yaratish</button>
                                     </div>
-                                    <div style={{ textAlign: 'center', fontSize: 11, color: '#55556a' }}>yoki</div>
+                                    <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>yoki</div>
                                     <div>
-                                        <input
-                                            value={inviteCode}
-                                            onChange={e => setInviteCode(e.target.value)}
-                                            placeholder="Invite code..."
-                                            style={{ fontSize: 13, padding: '8px 12px', fontFamily: "'JetBrains Mono', monospace" }}
-                                        />
+                                        <input value={inviteCode} onChange={e => setInviteCode(e.target.value)} placeholder="Invite code..." style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }} />
                                         <button onClick={handleJoinTeam} style={{
-                                            marginTop: 6, padding: '6px 14px', borderRadius: 6,
-                                            background: 'var(--border-subtle)', border: '1px solid var(--border-default)',
-                                            color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600,
-                                            cursor: 'pointer', width: '100%',
+                                            marginTop: 8, padding: '8px 14px', borderRadius: 8,
+                                            background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                                            color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
+                                            cursor: 'pointer', width: '100%', fontFamily: 'var(--font-sans)',
                                         }}>Qo'shilish</button>
                                     </div>
                                 </div>
@@ -1220,38 +1469,42 @@ export default function ContestDetail() {
                     {/* Registration Card */}
                     {!contest.registered && (
                         <div style={{
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            borderRadius: 14, padding: 18,
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: 14,
+                            padding: '18px 20px',
+                            boxShadow: 'var(--card-shadow)',
                         }}>
                             {contest.status === 'finished' && contest.is_virtual_allowed ? (
                                 <div style={{ textAlign: 'center' }}>
-                                    <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>▶</span>
-                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
+                                    <span style={{ fontSize: 26, display: 'block', marginBottom: 8 }}>▶</span>
+                                    <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
                                         O'tgan contestni qaytadan ishlang
                                     </p>
                                     <button
                                         onClick={() => handleRegister(true)}
                                         disabled={registering}
                                         style={{
-                                            padding: '8px 20px', borderRadius: 8, width: '100%',
-                                            background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)',
+                                            padding: '10px 20px', borderRadius: 8, width: '100%',
+                                            background: 'rgba(6,182,212,0.10)', border: '1px solid rgba(6,182,212,0.22)',
                                             color: '#67e8f9', fontSize: 13, fontWeight: 700,
-                                            cursor: 'pointer',
+                                            cursor: 'pointer', fontFamily: 'var(--font-sans)',
                                         }}
                                     >{registering ? 'Kutib turing...' : 'Virtual ishtirok'}</button>
                                 </div>
                             ) : contest.status !== 'finished' ? (
                                 <div style={{ textAlign: 'center' }}>
-                                    <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🔔</span>
+                                    <span style={{ fontSize: 26, display: 'block', marginBottom: 8 }}>🔔</span>
                                     <button
                                         onClick={() => handleRegister(false)}
                                         disabled={registering}
                                         style={{
-                                            padding: '10px 20px', borderRadius: 8, width: '100%',
+                                            padding: '11px 20px', borderRadius: 9, width: '100%',
                                             background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                             border: 'none', color: 'white', fontSize: 14, fontWeight: 700,
-                                            cursor: 'pointer',
-                                            boxShadow: '0 0 16px rgba(99,102,241,0.3)',
+                                            cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                                            boxShadow: '0 4px 16px rgba(99,102,241,0.30)',
+                                            transition: 'all 0.15s',
                                         }}
                                     >{registering ? 'Kutib turing...' : "Ro'yxatdan o'tish"}</button>
                                 </div>
@@ -1263,30 +1516,42 @@ export default function ContestDetail() {
                     {contest.status !== 'upcoming' && (
                         <Link to={`/contests/${contest.slug}/scoreboard`} style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            padding: '10px 16px', borderRadius: 10, textDecoration: 'none',
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
+                            padding: '11px 16px', borderRadius: 10, textDecoration: 'none',
+                            background: 'var(--bg-surface)', border: '1px solid var(--border-default)',
+                            color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
+                            transition: 'all 0.15s', boxShadow: 'var(--card-shadow)',
                         }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
                         >🏆 Scoreboard</Link>
                     )}
 
                     {/* Meta info */}
                     <div style={{
-                        background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                        borderRadius: 14, padding: 16,
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 14,
+                        padding: '16px 20px',
+                        boxShadow: 'var(--card-shadow)',
                     }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {[
                                 { icon: '📅', label: 'Boshlanish', value: new Date(contest.start_time).toLocaleString('uz-UZ') },
                                 { icon: '🏁', label: 'Tugash', value: new Date(contest.end_time).toLocaleString('uz-UZ') },
                                 { icon: '⏱', label: 'Davomiyligi', value: `${Math.floor(contest.duration_min / 60)} soat ${contest.duration_min % 60} daqiqa` },
                                 { icon: '👥', label: 'Ishtirokchilar', value: contest.reg_count },
                             ].map(m => (
-                                <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                                    <span style={{ color: '#55556a' }}>{m.icon} {m.label}</span>
-                                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{m.value}</span>
+                                <div key={m.label} style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'baseline',
+                                    gap: 8,
+                                    fontSize: 13,
+                                    paddingBottom: 10,
+                                    borderBottom: '1px solid var(--border-subtle)',
+                                }}>
+                                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, flexShrink: 0 }}>{m.icon} {m.label}</span>
+                                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'right' }}>{m.value}</span>
                                 </div>
                             ))}
                         </div>

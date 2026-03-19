@@ -4,7 +4,7 @@ import {
     BookOpen, Terminal, AlertCircle, Trophy,
     ChevronRight, CheckCircle2, XCircle, Clock,
     Cpu, FileWarning, Code2, Play, Send,
-    ArrowRight, Hash, Copy, Check, Zap, Shield, Star
+    ArrowRight, Hash, Copy, Check, Zap, Shield
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════
@@ -199,8 +199,8 @@ export default function SystemGuide() {
             <style>{CSS}</style>
             <div style={{
                 position: 'relative', zIndex: 1,
-                maxWidth: 1100, margin: '0 auto',
-                padding: '20px 16px 60px',
+                width: '100%',
+                padding: '20px 5% 60px',
                 fontFamily: "'DM Sans',sans-serif", color: C.text,
                 minHeight: '100vh',
             }}>

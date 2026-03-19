@@ -4,19 +4,40 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
 
 # Environment
 .env
 *.env
 
+# Django generated
+backend/staticfiles/
+backend/media/
+*.log
+
 # Build
 dist/
 build/
+*.egg-info/
 
 # Node
 node_modules/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Celery
 celerybeat-schedule.bak
 celerybeat-schedule.dat
 celerybeat-schedule.dir
+
+# Local dev scripts
+backend/test_*.py

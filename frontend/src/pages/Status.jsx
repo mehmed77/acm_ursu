@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
+import Container from '../components/ui/Container';
 
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS
@@ -111,7 +112,7 @@ function LiveDot({ color = T.grn, size = 5, active = true }) {
 
 function M({ ch, col = T.sub, sz = 11, w = 500 }) {
     return (
-        <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: sz, fontWeight: w, color: col, lineHeight: 1 }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: sz, fontWeight: w, color: col, lineHeight: 1 }}>
             {ch}
         </span>
     );
@@ -142,7 +143,7 @@ function SBadge({ status }) {
                 }} />
             )}
             <span style={{
-                fontFamily: "'IBM Plex Mono',monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 9, fontWeight: 600, color: c.color,
                 letterSpacing: '.01em', whiteSpace: 'nowrap',
             }}>
@@ -163,11 +164,11 @@ function LBadge({ lang }) {
             width: 'fit-content',
         }}>
             <span style={{
-                fontFamily: "'IBM Plex Mono',monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 8, fontWeight: 700, color: c.color, letterSpacing: '.04em',
             }}>{c.icon}</span>
             <span style={{
-                fontFamily: "'IBM Plex Mono',monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 9, fontWeight: 600, color: c.color,
             }}>{c.label}</span>
         </div>
@@ -220,7 +221,7 @@ function FInput({ placeholder, value, onChange }) {
                 background: T.surf2, border: `1px solid ${T.b}`,
                 borderRadius: 6, padding: '0 10px',
                 color: T.text, fontSize: 11, outline: 'none',
-                fontFamily: "'DM Sans',sans-serif",
+                fontFamily: "var(--font-sans)",
                 transition: 'border-color .2s',
             }}
             onFocus={e => { e.target.style.borderColor = T.cyan; }}
@@ -239,7 +240,7 @@ function FSel({ value, onChange, options }) {
                 borderRadius: 6, padding: '0 8px',
                 color: value ? T.text : T.sub,
                 fontSize: 11, outline: 'none', cursor: 'pointer',
-                fontFamily: "'DM Sans',sans-serif",
+                fontFamily: "var(--font-sans)",
                 transition: 'border-color .2s',
             }}
             onFocus={e => e.target.style.borderColor = T.cyan}
@@ -281,7 +282,7 @@ function Btn({ children, onClick, active, variant = 'default', style: s = {} }) 
                 height: 28, padding: '0 10px', borderRadius: 6,
                 background: p.bg, border: `1px solid ${p.bd}`,
                 color: p.col, fontSize: 11, fontWeight: 600,
-                cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                cursor: 'pointer', fontFamily: "var(--font-sans)",
                 transition: 'all .12s', whiteSpace: 'nowrap',
                 ...s,
             }}
@@ -301,7 +302,7 @@ function PBtn({ onClick, disabled, active, label }) {
             style={{
                 width: 28, height: 28, borderRadius: 6,
                 fontSize: 11, cursor: disabled ? 'not-allowed' : 'pointer',
-                fontFamily: "'IBM Plex Mono',monospace", fontWeight: active ? 700 : 500,
+                fontFamily: "var(--font-mono)", fontWeight: active ? 700 : 500,
                 background: active
                     ? `linear-gradient(135deg,${T.ind},${T.cyan})`
                     : 'var(--bg-elevated)',
@@ -325,7 +326,6 @@ export default function Status() {
     const [totalPages, setTPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [autoRef, setAutoRef] = useState(true);
-    const [lastUp, setLastUp] = useState(null);
     const [newIds, setNewIds] = useState(new Set());
     const [newCount, setNewCount] = useState(0);
     const [fOpen, setFOpen] = useState(false);
@@ -356,17 +356,18 @@ export default function Status() {
             setSubs(results);
             setTotal(data.count || 0);
             setTPages(data.total_pages || 1);
-            setLastUp(new Date());
         } finally {
             if (!silent) setLoading(false);
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchSubs(); }, [page, filters]);
 
     useEffect(() => {
         clearInterval(timerRef.current);
         if (autoRef && page === 1) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             timerRef.current = setInterval(() => fetchSubs(true), 5000);
         }
         return () => clearInterval(timerRef.current);
@@ -393,13 +394,7 @@ export default function Status() {
         <>
             <style>{CSS}</style>
 
-            <div style={{
-                position: 'relative', zIndex: 1,
-                maxWidth: 1280, margin: '0 auto',
-                padding: '14px 16px 40px',
-                fontFamily: "'DM Sans',sans-serif", color: T.text,
-                minHeight: '100vh',
-            }}>
+            <Container className="relative z-10 min-h-screen pt-3.5 pb-10 font-sans text-[var(--text-primary)]">
 
                 {/* ══ COMPACT HEADER BAR ══ */}
                 <motion.div
@@ -436,7 +431,7 @@ export default function Status() {
                         }}>
                             <LiveDot color={autoRef ? T.grn : T.sub} size={4} active={autoRef} />
                             <span style={{
-                                fontFamily: "'IBM Plex Mono',monospace",
+                                fontFamily: "var(--font-mono)",
                                 fontSize: 8, fontWeight: 700, color: autoRef ? T.grn : T.sub,
                                 letterSpacing: '.1em',
                             }}>
@@ -446,7 +441,7 @@ export default function Status() {
 
                         <div>
                             <h1 style={{
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "var(--font-sans)",
                                 fontSize: 'clamp(18px, 2.5vw, 24px)',
                                 fontWeight: 800, letterSpacing: '-.02em',
                                 lineHeight: 1.1, margin: 0,
@@ -486,12 +481,12 @@ export default function Status() {
                                 }}>
                                     <div>
                                         <div style={{
-                                            fontFamily: "'DM Sans',sans-serif", fontSize: 7,
+                                            fontFamily: "var(--font-sans)", fontSize: 7,
                                             color: T.sub, textTransform: 'uppercase',
                                             letterSpacing: '.05em', lineHeight: 1,
                                         }}>{s.label}</div>
                                         <div style={{
-                                            fontFamily: "'IBM Plex Mono',monospace",
+                                            fontFamily: "var(--font-mono)",
                                             fontSize: 12, fontWeight: 700, color: s.color,
                                             lineHeight: 1.1,
                                         }}>{s.val}</div>
@@ -513,7 +508,7 @@ export default function Status() {
                                         height: 24, padding: '0 8px', borderRadius: 5,
                                         background: `${T.cyan}10`, border: `1px solid ${T.cyan}28`,
                                         color: T.cyan, fontSize: 10, fontWeight: 700,
-                                        cursor: 'pointer', fontFamily: "'IBM Plex Mono',monospace",
+                                        cursor: 'pointer', fontFamily: "var(--font-mono)",
                                     }}
                                 >
                                     <LiveDot color={T.cyan} size={4} />
@@ -633,7 +628,7 @@ export default function Status() {
                     }}>
                         {['#ID', 'FOYDALANUVCHI', 'MASALA', 'TIL', 'HOLATI', 'VAQT', 'XOTIRA', 'QACHON'].map((h, i) => (
                             <span key={i} style={{
-                                fontFamily: "'IBM Plex Mono',monospace",
+                                fontFamily: "var(--font-mono)",
                                 fontSize: 8, fontWeight: 700, color: T.sub,
                                 letterSpacing: '.08em', textTransform: 'uppercase',
                             }}>{h}</span>
@@ -645,7 +640,7 @@ export default function Status() {
                         <div key={i} style={{
                             display: 'grid', gridTemplateColumns: gridCols,
                             padding: '0 14px', height: 36, alignItems: 'center',
-                            borderBottom: `1px solid var(--bg-elevated)`, gap: 6,
+                            borderBottom: `1px solid var(--border-subtle)`, gap: 6,
                         }}>
                             {[36, 80, 160, 56, 80, 36, 36, 70].map((w, j) => (
                                 <div key={j} className="skel" style={{ height: 10, width: w, maxWidth: '100%' }} />
@@ -669,11 +664,10 @@ export default function Status() {
                                     style={{
                                         display: 'grid', gridTemplateColumns: gridCols,
                                         padding: '0 14px', height: 36, alignItems: 'center',
-                                        borderBottom: idx < subs.length - 1
-                                            ? `1px solid var(--bg-elevated)` : 'none',
+                                        borderBottom: `1px solid var(--border-subtle)`,
                                         background: isNew
                                             ? undefined
-                                            : isAC ? 'rgba(0,230,118,.015)' : 'transparent',
+                                            : isAC ? 'rgba(0,230,118,.015)' : idx % 2 === 1 ? 'var(--bg-elevated)' : 'transparent',
                                         animation: isNew ? 'flash-row 3s ease-out forwards' : 'none',
                                     }}
                                 >
@@ -752,7 +746,7 @@ export default function Status() {
                         <div style={{ textAlign: 'center', padding: '50px 16px' }}>
                             <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
                             <div style={{
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "var(--font-sans)",
                                 fontSize: 14, fontWeight: 700, color: T.sub, marginBottom: 6,
                             }}>
                                 {hasF ? 'Mos submission topilmadi' : "Hali submission yo'q"}
@@ -794,7 +788,7 @@ export default function Status() {
                     )}
                 </AnimatePresence>
 
-            </div>
+            </Container>
         </>
     );
 }

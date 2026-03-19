@@ -211,11 +211,11 @@ function Cell({ cell, justSolved }) {
                 height: 30, borderRadius: 5,
                 background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.18)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 0, lineHeight: 1,
+                gap: 1, lineHeight: 1,
                 animation: justSolved ? 'cell-flash-green 2s ease-out forwards' : 'none',
             }}>
-                <M ch={`+${cell.time}`} col={T.grn} sz={10} w={700} />
-                {cell.attempts > 1 && <M ch={`${cell.attempts - 1}`} col={T.red} sz={8} w={600} />}
+                <M ch={`${cell.time}m`} col={T.grn} sz={10} w={700} />
+                {cell.attempts > 1 && <M ch={`-${cell.attempts - 1}`} col={T.red} sz={8} w={600} />}
             </div>
         </td>
     );
@@ -501,8 +501,8 @@ export default function ContestScoreboard() {
 
             <div style={{
                 position: 'relative', zIndex: 1,
-                maxWidth: 1400, margin: '0 auto',
-                padding: '14px 16px 40px',
+                width: '100%',
+                padding: '14px 5% 40px',
                 fontFamily: "'DM Sans',sans-serif", color: T.text,
                 minHeight: '100vh',
             }}>
