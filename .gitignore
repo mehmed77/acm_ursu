@@ -41,3 +41,4 @@ celerybeat-schedule.dir
 
 # Local dev scripts
 backend/test_*.py
+.idea/
