@@ -2,6 +2,19 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
+
+def _display_name(user):
+    """HEMIS full_name yoki first_name/last_name dan to'liq ism."""
+    full = getattr(user, 'full_name', '') or ''
+    if full.strip():
+        return full.strip()
+    parts = [
+        (getattr(user, 'last_name',  '') or '').strip(),
+        (getattr(user, 'first_name', '') or '').strip(),
+    ]
+    return ' '.join(p for p in parts if p)
+
+
 class LeaderboardView(APIView):
     permission_classes = [AllowAny]
 
@@ -26,6 +39,7 @@ class LeaderboardView(APIView):
             data.append({
                 'rank':         i,
                 'username':     u.username,
+                'display_name': _display_name(u),
                 'rating':       getattr(u, 'rating', 0) or 0,
                 'solved_count': getattr(u, 'solved_count', 0) or 0,
                 'max_rating':   getattr(u, 'max_rating',
