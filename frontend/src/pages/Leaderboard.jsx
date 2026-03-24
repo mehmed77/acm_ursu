@@ -477,8 +477,8 @@ export default function Leaderboard() {
                                 const isTop10    = globalRank <= 10;
                                 const ratingPct  = Math.round((user.rating / MAX_RATING) * 100);
 
-                                const isHovered  = hoveredRow === user.username;
-                                const fullName   = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                                const isHovered    = hoveredRow === user.username;
+                                const displayName  = user.display_name?.trim() || '';
 
                                 return (
                                     <motion.div
@@ -529,50 +529,60 @@ export default function Leaderboard() {
 
                                             {/* ── User ── */}
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-                                                <Avatar username={user.username} gradient={rank.gradient} />
+                                                <Avatar username={displayName || user.username} gradient={rank.gradient} />
                                                 <div style={{ minWidth: 0 }}>
-                                                    {/* Username */}
-                                                    <div
-                                                        className="lb-row-name"
-                                                        style={{
-                                                            fontFamily: 'var(--font-sans)',
-                                                            fontSize: 14, fontWeight: 700,
-                                                            color: isTop3 ? rank.color : 'var(--text-primary)',
-                                                            overflow: 'hidden', textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap', transition: 'color 0.15s',
-                                                        }}
-                                                    >{user.username}</div>
-                                                    {/* Full name (if exists) + rank label */}
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'center', gap: 6, marginTop: 2,
-                                                        overflow: 'hidden',
-                                                    }}>
-                                                        {fullName ? (
-                                                            <span style={{
-                                                                fontFamily: 'var(--font-sans)',
-                                                                fontSize: 11, fontWeight: 500,
-                                                                color: isHovered ? 'var(--text-secondary)' : 'var(--text-muted)',
-                                                                overflow: 'hidden', textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap', transition: 'color 0.15s',
-                                                                maxWidth: 160,
-                                                            }}>{fullName}</span>
-                                                        ) : (
-                                                            <span style={{
+                                                    {displayName ? (
+                                                        <>
+                                                            {/* Full name — primary */}
+                                                            <div
+                                                                className="lb-row-name"
+                                                                style={{
+                                                                    fontFamily: 'var(--font-sans)',
+                                                                    fontSize: 14, fontWeight: 700,
+                                                                    color: isTop3 ? rank.color : 'var(--text-primary)',
+                                                                    overflow: 'hidden', textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap', transition: 'color 0.15s',
+                                                                }}
+                                                            >{displayName}</div>
+                                                            {/* Username + rank short — secondary */}
+                                                            <div style={{
+                                                                display: 'flex', alignItems: 'center', gap: 5, marginTop: 2,
+                                                            }}>
+                                                                <span style={{
+                                                                    fontFamily: 'var(--font-mono)',
+                                                                    fontSize: 11, fontWeight: 500,
+                                                                    color: isHovered ? 'var(--accent-hover)' : 'var(--text-muted)',
+                                                                    transition: 'color 0.15s',
+                                                                }}>@{user.username}</span>
+                                                                <span style={{
+                                                                    fontFamily: 'var(--font-mono)',
+                                                                    fontSize: 9, color: rank.color,
+                                                                    background: rank.bg,
+                                                                    border: `1px solid ${rank.bd}`,
+                                                                    padding: '1px 5px', borderRadius: 4,
+                                                                    flexShrink: 0,
+                                                                }}>{rank.short}</span>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {/* No real name: show username as primary */}
+                                                            <div
+                                                                className="lb-row-name"
+                                                                style={{
+                                                                    fontFamily: 'var(--font-sans)',
+                                                                    fontSize: 14, fontWeight: 700,
+                                                                    color: isTop3 ? rank.color : 'var(--text-primary)',
+                                                                    overflow: 'hidden', textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap', transition: 'color 0.15s',
+                                                                }}
+                                                            >{user.username}</div>
+                                                            <div style={{
                                                                 fontFamily: 'var(--font-mono)',
-                                                                fontSize: 10, color: 'var(--text-muted)',
-                                                            }}>{rank.label}</span>
-                                                        )}
-                                                        {fullName && (
-                                                            <span style={{
-                                                                fontFamily: 'var(--font-mono)',
-                                                                fontSize: 9, color: rank.color,
-                                                                background: rank.bg,
-                                                                border: `1px solid ${rank.bd}`,
-                                                                padding: '1px 5px', borderRadius: 4,
-                                                                flexShrink: 0,
-                                                            }}>{rank.short}</span>
-                                                        )}
-                                                    </div>
+                                                                fontSize: 10, color: 'var(--text-muted)', marginTop: 2,
+                                                            }}>{rank.label}</div>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
 

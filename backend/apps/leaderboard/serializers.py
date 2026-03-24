@@ -11,22 +11,31 @@ User = get_user_model()
 
 class LeaderboardSerializer(serializers.ModelSerializer):
     """Global reyting ro'yxati."""
-    username    = serializers.CharField(source='user.username')
-    first_name  = serializers.CharField(source='user.first_name')
-    last_name   = serializers.CharField(source='user.last_name')
+    username     = serializers.CharField(source='user.username')
+    display_name = serializers.SerializerMethodField()
     solved_count = serializers.IntegerField(source='user.solved_count')
-    country     = serializers.SerializerMethodField()
-    rank_title  = serializers.SerializerMethodField()
-    rank_color  = serializers.SerializerMethodField()
+    country      = serializers.SerializerMethodField()
+    rank_title   = serializers.SerializerMethodField()
+    rank_color   = serializers.SerializerMethodField()
 
     class Meta:
         model = UserRating
         fields = (
-            'rank', 'username', 'first_name', 'last_name',
+            'rank', 'username', 'display_name',
             'rating', 'max_rating',
             'rank_title', 'rank_color',
             'solved_count', 'country',
         )
+
+    def get_display_name(self, obj):
+        u = obj.user
+        # HEMIS users store full name in full_name field
+        if getattr(u, 'full_name', ''):
+            return u.full_name.strip()
+        # Regular users have first_name / last_name (Django AbstractUser)
+        parts = [u.last_name, u.first_name]
+        name = ' '.join(p for p in parts if p)
+        return name.strip()
 
     def get_country(self, obj):
         if hasattr(obj.user, 'profile'):
