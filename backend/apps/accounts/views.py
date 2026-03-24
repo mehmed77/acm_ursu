@@ -43,13 +43,20 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        refresh = RefreshToken.for_user(user)
         return Response(
             {
                 "message": "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi.",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
                 "user": {
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "rating": user.rating,
+                    "solved_count": user.solved_count,
                 }
             },
             status=status.HTTP_201_CREATED,

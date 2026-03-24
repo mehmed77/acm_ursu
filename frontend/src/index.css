@@ -550,3 +550,15 @@ pre code {
     transform: rotate(360deg);
   }
 }
+/* ═══ AUTH SPLIT LAYOUT — Responsive ══════════════ */
+@media (max-width: 680px) {
+  .auth-left-panel {
+    display: none !important;
+  }
+  .auth-right-panel {
+    padding: 36px 24px !important;
+  }
+  .auth-password-row {
+    grid-template-columns: 1fr !important;
+  }
+}
