@@ -113,6 +113,12 @@ class User(AbstractUser):
         help_text='HEMIS response hash — faqat o\'zgarganda update qilish uchun',
     )
 
+    # ─── Telegram ────────────────────────────────────────
+    telegram_chat_id = models.BigIntegerField(
+        null=True, blank=True,
+        help_text="Telegram chat ID — bot orqali bog'langan",
+    )
+
     class Meta:
         ordering = ['-rating']
         indexes = [

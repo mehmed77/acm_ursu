@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
+import { telegramLinkInit } from '../api/auth';
+import { useAuthStore } from '../store/authStore';
 
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS
@@ -241,11 +243,40 @@ function Section({ icon, title, right, children, accent = T.ind, delay = 0, styl
    ═══════════════════════════════════════════════════ */
 export default function Profile() {
     const { username } = useParams();
-    const navigate = useNavigate();
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, text: '' });
+    const navigate     = useNavigate();
+    const currentUser  = useAuthStore((s) => s.user);
+    const isOwner      = currentUser?.username === username;
+
+    const [profile, setProfile]   = useState(null);
+    const [loading, setLoading]   = useState(true);
+    const [tooltip, setTooltip]   = useState({ show: false, x: 0, y: 0, text: '' });
     const [showSubs, setShowSubs] = useState(false);
+
+    // Telegram bog'lash state
+    const [tgToken, setTgToken]     = useState(null);   // { token, bot_url, expires_in }
+    const [tgLoading, setTgLoading] = useState(false);
+    const [tgError, setTgError]     = useState('');
+    const [tgCopied, setTgCopied]   = useState(false);
+
+    const handleTelegramLink = async () => {
+        setTgLoading(true);
+        setTgError('');
+        try {
+            const res = await telegramLinkInit();
+            setTgToken(res.data);
+        } catch (err) {
+            setTgError(err.response?.data?.detail || 'Xato yuz berdi');
+        } finally {
+            setTgLoading(false);
+        }
+    };
+
+    const handleCopyToken = () => {
+        if (!tgToken) return;
+        navigator.clipboard.writeText(tgToken.token);
+        setTgCopied(true);
+        setTimeout(() => setTgCopied(false), 2000);
+    };
 
     useEffect(() => {
         const fetch = async () => {
@@ -867,6 +898,155 @@ export default function Profile() {
                 </motion.div>
 
             </div>
+
+            {/* ── Telegram bog'lash — faqat o'z profilida ── */}
+            {isOwner && (
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    style={{
+                        maxWidth: 900, margin: '0 auto 32px',
+                        background: T.surf,
+                        border: `1px solid ${T.b}`,
+                        borderRadius: 14,
+                        padding: '20px 24px',
+                    }}
+                >
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                        <div style={{
+                            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                            background: 'linear-gradient(135deg,#229ED9,#0088cc)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 16,
+                        }}>✈️</div>
+                        <div>
+                            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: T.text }}>
+                                Telegram bog'lash
+                            </div>
+                            <div style={{ fontSize: 11, color: T.sub, marginTop: 1 }}>
+                                Parolni tiklash uchun Telegram bot bilan bog'lang
+                            </div>
+                        </div>
+                        {profile.telegram_chat_id && (
+                            <div style={{
+                                marginLeft: 'auto',
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                padding: '3px 10px', borderRadius: 20,
+                                background: 'rgba(16,185,129,0.08)',
+                                border: '1px solid rgba(16,185,129,0.20)',
+                                fontSize: 11, fontWeight: 600, color: '#10b981',
+                            }}>
+                                ✓ Bog'langan
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tanlangan holat */}
+                    {!tgToken ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                            <p style={{ fontSize: 12, color: T.sub, lineHeight: 1.6, flex: 1, minWidth: 200 }}>
+                                {profile.telegram_chat_id
+                                    ? 'Telegram hisob bog\'langan. Qayta bog\'lash uchun tugmani bosing.'
+                                    : 'Botga token yuboring — chat ID saqlanadi. Keyin parolni unutsangiz, bot orqali OTP yuboriladi.'}
+                            </p>
+                            <button
+                                onClick={handleTelegramLink}
+                                disabled={tgLoading}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                    padding: '8px 16px', borderRadius: 8, border: 'none',
+                                    background: 'linear-gradient(135deg,#229ED9,#0088cc)',
+                                    color: '#fff', fontSize: 12, fontWeight: 600,
+                                    cursor: tgLoading ? 'wait' : 'pointer',
+                                    opacity: tgLoading ? 0.7 : 1, whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {tgLoading
+                                    ? 'Yuklanmoqda...'
+                                    : (profile.telegram_chat_id ? '🔄 Qayta bog\'lash' : '🔗 Token olish')}
+                            </button>
+                            {tgError && (
+                                <span style={{ fontSize: 12, color: '#f87171', width: '100%' }}>{tgError}</span>
+                            )}
+                        </div>
+                    ) : (
+                        /* Token ko'rsatish */
+                        <AnimatePresence>
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+                            >
+                                <p style={{ fontSize: 12, color: T.sub, lineHeight: 1.6 }}>
+                                    Quyidagi havolani bosing yoki tokenni botga yuboring:
+                                    <span style={{ fontFamily: "'IBM Plex Mono',monospace", marginLeft: 4 }}>
+                                        /start link_{tgToken.token}
+                                    </span>
+                                </p>
+
+                                {/* Bot URL */}
+                                <a
+                                    href={tgToken.bot_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                                        padding: '10px 16px', borderRadius: 10,
+                                        background: 'rgba(34,158,217,0.10)',
+                                        border: '1px solid rgba(34,158,217,0.25)',
+                                        color: '#229ED9', fontSize: 13, fontWeight: 600,
+                                        textDecoration: 'none', width: 'fit-content',
+                                    }}
+                                >
+                                    ✈️ Telegram botni ochish
+                                </a>
+
+                                {/* Token copy */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{
+                                        flex: 1, padding: '8px 12px', borderRadius: 8,
+                                        background: T.surf2, border: `1px solid ${T.b}`,
+                                        fontFamily: "'IBM Plex Mono',monospace",
+                                        fontSize: 16, fontWeight: 700, letterSpacing: '0.15em',
+                                        color: T.text, textAlign: 'center',
+                                    }}>
+                                        {tgToken.token}
+                                    </div>
+                                    <button
+                                        onClick={handleCopyToken}
+                                        style={{
+                                            padding: '8px 14px', borderRadius: 8, border: `1px solid ${T.b}`,
+                                            background: tgCopied ? 'rgba(16,185,129,0.10)' : T.surf2,
+                                            color: tgCopied ? '#10b981' : T.sub,
+                                            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                            transition: 'all 0.2s', whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        {tgCopied ? '✓ Nusxalandi' : 'Nusxalash'}
+                                    </button>
+                                    <button
+                                        onClick={() => setTgToken(null)}
+                                        style={{
+                                            padding: '8px 12px', borderRadius: 8,
+                                            border: `1px solid ${T.b}`, background: 'none',
+                                            color: T.sub, fontSize: 11, cursor: 'pointer',
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <p style={{ fontSize: 11, color: T.sub }}>
+                                    ⏱ Token {Math.floor(tgToken.expires_in / 60)} daqiqa davomida amal qiladi
+                                </p>
+                            </motion.div>
+                        </AnimatePresence>
+                    )}
+                </motion.div>
+            )}
+
         </>
     );
 }

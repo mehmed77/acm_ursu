@@ -11,6 +11,7 @@ import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
 import SystemGuide from './pages/SystemGuide';
 import NewsList from './pages/NewsList';
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="profile/:username" element={<Profile />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="system" element={<SystemGuide />} />
           <Route path="news" element={<NewsList />} />
           <Route path="news/:id" element={<NewsDetail />} />

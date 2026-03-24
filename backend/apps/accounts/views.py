@@ -1,5 +1,7 @@
 import json as json_mod
+import hmac
 import logging
+import secrets
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -8,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model, authenticate
+from django.core.cache import cache
 
 from .hemis_service import HemisService
 from .serializers import (
@@ -18,6 +21,13 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+# ── Login brute-force sozlamalari ───────────────────────────────────────────
+_MAX_ATTEMPTS      = 5      # necha marta xato kiritilganda bloklash
+_LOCKOUT_SECONDS   = 600    # 10 daqiqa
+_WINDOW_SECONDS    = 600    # hisoblagich TTL (10 daqiqa)
+_FAIL_KEY   = 'login_fail:{}'    # format: username (kichik harf)
+_LOCKED_KEY = 'login_locked:{}'  # format: username (kichik harf)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -68,6 +78,24 @@ class LoginView(APIView):
                 status=400,
             )
 
+        # ━━━ 0. Brute-force tekshiruvi ━━━
+        key_base   = username.lower()
+        lock_key   = _LOCKED_KEY.format(key_base)
+        fail_key   = _FAIL_KEY.format(key_base)
+
+        if cache.get(lock_key):
+            return Response(
+                {
+                    'detail': (
+                        "Hisob 10 daqiqaga bloklandi. "
+                        "Parolni unutdingizmi? Parolni tiklash uchun "
+                        "'Parolni unutdim' tugmasini bosing."
+                    ),
+                    'locked': True,
+                },
+                status=429,
+            )
+
         # ━━━ 1. Oddiy Django login ━━━
         user = authenticate(request, username=username, password=password)
 
@@ -77,6 +105,10 @@ class LoginView(APIView):
                     {'detail': 'Hisob bloklangan'},
                     status=403,
                 )
+
+            # Muvaffaqiyatli kirish — hisoblagichni tozalash
+            cache.delete(fail_key)
+            cache.delete(lock_key)
 
             refresh = RefreshToken.for_user(user)
 
@@ -90,11 +122,39 @@ class LoginView(APIView):
         hemis_result = HemisService.login_with_credentials(username, password)
 
         if not hemis_result['success']:
-            # Ikkala usul ham muvaffaqiyatsiz
+            # Ikkala usul ham muvaffaqiyatsiz — hisoblagichni oshirish
+            attempts = (cache.get(fail_key) or 0) + 1
+            remaining = _MAX_ATTEMPTS - attempts
+
+            if attempts >= _MAX_ATTEMPTS:
+                cache.set(lock_key, 1, timeout=_LOCKOUT_SECONDS)
+                cache.delete(fail_key)
+                return Response(
+                    {
+                        'detail': (
+                            "5 marta noto'g'ri parol kiritildi. "
+                            "Hisob 10 daqiqaga bloklandi."
+                        ),
+                        'locked': True,
+                    },
+                    status=429,
+                )
+
+            cache.set(fail_key, attempts, timeout=_WINDOW_SECONDS)
             return Response(
-                {'detail': "Login yoki parol noto'g'ri"},
+                {
+                    'detail': (
+                        f"Login yoki parol noto'g'ri. "
+                        f"{remaining} ta urinish qoldi."
+                    ),
+                    'attempts_remaining': remaining,
+                },
                 status=401,
             )
+
+        # HEMIS muvaffaqiyatli — hisoblagichni tozalash
+        cache.delete(fail_key)
+        cache.delete(lock_key)
 
         hemis_token = hemis_result['token']
         hemis_refresh_token = hemis_result.get('refresh_token', '')
@@ -492,4 +552,246 @@ class UserProfileView(APIView):
                 })
 
         return Response(response_data)
+
+
+# ═══════════════════════════════════════════════════════
+#  TELEGRAM BOG'LASH
+# ═══════════════════════════════════════════════════════
+
+class TelegramLinkInitView(APIView):
+    """
+    POST /api/auth/telegram/link/
+    Kirgan foydalanuvchi uchun bir martalik token yaratadi.
+    Foydalanuvchi shu tokenni botga yuboradi → bot chat_id ni saqlaydi.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from django.conf import settings as djsettings
+
+        token = secrets.token_hex(4).upper()  # "A3F2B1C9" kabi 8 belgili
+        cache.set(f'tg_link:{token}', request.user.id, timeout=300)  # 5 daqiqa
+
+        bot_username = getattr(djsettings, 'TELEGRAM_BOT_USERNAME', '')
+        return Response({
+            'token':      token,
+            'bot_url':    f'https://t.me/{bot_username}?start=link_{token}',
+            'expires_in': 300,
+        })
+
+
+class TelegramWebhookView(APIView):
+    """
+    POST /api/auth/telegram/webhook/
+    Telegram shu URL ga yangilama (update) yuboradi.
+    Handles: /start, /start link_TOKEN
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from django.conf import settings as djsettings
+        from .telegram_service import send_message
+
+        # Webhook secret tekshiruvi
+        webhook_secret = getattr(djsettings, 'TELEGRAM_WEBHOOK_SECRET', '')
+        if webhook_secret:
+            provided = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+            if not hmac.compare_digest(provided, webhook_secret):
+                return Response(status=403)
+
+        update  = request.data
+        message = update.get('message', {})
+        if not message:
+            return Response({'ok': True})
+
+        chat_id = message.get('chat', {}).get('id')
+        text    = (message.get('text') or '').strip()
+
+        if not chat_id:
+            return Response({'ok': True})
+
+        # /start link_TOKEN — hisobni bog'lash
+        if text.startswith('/start link_'):
+            token   = text[len('/start link_'):]
+            user_id = cache.get(f'tg_link:{token}')
+
+            if not user_id:
+                send_message(chat_id,
+                    '❌ Token eskirgan yoki noto\'g\'ri.\n'
+                    'Iltimos, platformada qayta token oling.')
+                return Response({'ok': True})
+
+            User.objects.filter(id=user_id).update(telegram_chat_id=chat_id)
+            cache.delete(f'tg_link:{token}')
+
+            try:
+                user = User.objects.get(id=user_id)
+                send_message(chat_id,
+                    f'✅ Hisob muvaffaqiyatli bog\'landi!\n\n'
+                    f'👤 Foydalanuvchi: <b>{user.username}</b>\n\n'
+                    f'Endi parolni unutsangiz, shu bot orqali tiklashingiz mumkin.')
+            except User.DoesNotExist:
+                pass
+
+        elif text in ('/start', '/help'):
+            send_message(chat_id,
+                '👋 Salom! Bu <b>Online Judge</b> platformasining yordamchi botidir.\n\n'
+                '📌 Nima qila olasiz:\n'
+                '• Hisobingizni bot bilan bog\'lash\n'
+                '• Parolni unutsangiz OTP orqali tiklash\n\n'
+                '🔗 Hisobni bog\'lash uchun: platformada '
+                '<b>Profil → Telegram bog\'lash</b> tugmasini bosing.')
+        else:
+            send_message(chat_id,
+                '❓ Buyruq tushunilmadi.\n'
+                'Hisobni bog\'lash uchun platformada '
+                'Profil → Telegram bog\'lash tugmasini bosing.')
+
+        return Response({'ok': True})
+
+
+# ═══════════════════════════════════════════════════════
+#  PAROLNI TIKLASH (OTP via Telegram)
+# ═══════════════════════════════════════════════════════
+
+class PasswordResetRequestView(APIView):
+    """
+    POST /api/auth/password-reset/request/
+    Body: {"username": "..."} yoki {"email": "..."}
+
+    Telegram ga bog'langan hisob bo'lsa 6 xonali OTP yuboradi.
+    Xavfsizlik uchun: bir xil javob qaytariladi (user bor/yo'qligini oshkor etmaydi).
+    """
+    permission_classes = [AllowAny]
+
+    _SAFE_RESPONSE = {
+        'detail': (
+            "Agar hisob mavjud bo'lsa va Telegram bog'langan bo'lsa, "
+            "OTP kod yuborildi."
+        )
+    }
+
+    def post(self, request):
+        from .telegram_service import send_message
+
+        identifier = (
+            request.data.get('username') or
+            request.data.get('email') or ''
+        ).strip()
+
+        if not identifier:
+            return Response(
+                {'detail': 'Username yoki email kiritilishi shart'},
+                status=400,
+            )
+
+        # Har 10 daqiqada 3 ta so'rovdan ko'p bo'lmasin
+        rate_key = f'pwd_reset_rate:{identifier.lower()}'
+        if (cache.get(rate_key) or 0) >= 3:
+            return Response(
+                {'detail': 'Juda ko\'p so\'rov. 10 daqiqadan keyin urinib ko\'ring.'},
+                status=429,
+            )
+        cache.set(rate_key, (cache.get(rate_key) or 0) + 1, timeout=600)
+
+        # Foydalanuvchini topish (xato bo'lsa ham bir xil javob)
+        try:
+            if '@' in identifier:
+                user = User.objects.get(email=identifier, is_active=True)
+            else:
+                user = User.objects.get(username=identifier, is_active=True)
+        except User.DoesNotExist:
+            return Response(self._SAFE_RESPONSE)
+
+        if not user.telegram_chat_id:
+            return Response(
+                {
+                    'detail': (
+                        "Bu hisobga Telegram bog'lanmagan. "
+                        "Avval hisobingizga kirib, Profil sahifasidan "
+                        "Telegram bog'lang."
+                    ),
+                    'no_telegram': True,
+                },
+                status=400,
+            )
+
+        # 6 xonali OTP (10 daqiqa amal qiladi)
+        otp = f'{secrets.randbelow(900000) + 100000}'
+        cache.set(f'pwd_reset_otp:{user.id}', otp, timeout=600)
+
+        sent = send_message(
+            user.telegram_chat_id,
+            f'🔐 <b>Parolni tiklash</b>\n\n'
+            f'OTP kodingiz: <code>{otp}</code>\n\n'
+            f'⏱ Kod 10 daqiqa davomida amal qiladi.\n'
+            f'⚠️ Agar siz so\'rov bermaganing bo\'lsa, e\'tibor bermang.',
+        )
+
+        if not sent:
+            return Response(
+                {'detail': 'Telegram xabari yuborilmadi. Keyinroq urinib ko\'ring.'},
+                status=502,
+            )
+
+        return Response(self._SAFE_RESPONSE)
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    POST /api/auth/password-reset/confirm/
+    Body: {"username": "...", "otp": "123456", "new_password": "..."}
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .telegram_service import send_message
+
+        username     = request.data.get('username', '').strip()
+        otp          = request.data.get('otp', '').strip()
+        new_password = request.data.get('new_password', '')
+
+        if not all([username, otp, new_password]):
+            return Response(
+                {'detail': "Barcha maydonlar to'ldirilishi shart"},
+                status=400,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {'detail': 'Yangi parol kamida 8 belgidan iborat bo\'lishi kerak'},
+                status=400,
+            )
+
+        try:
+            user = User.objects.get(username=username, is_active=True)
+        except User.DoesNotExist:
+            return Response({'detail': 'Foydalanuvchi topilmadi'}, status=404)
+
+        stored_otp = cache.get(f'pwd_reset_otp:{user.id}')
+        if not stored_otp or not hmac.compare_digest(stored_otp, otp):
+            return Response(
+                {'detail': "OTP noto'g'ri yoki eskirgan"},
+                status=400,
+            )
+
+        # Parolni yangilash
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+        cache.delete(f'pwd_reset_otp:{user.id}')
+
+        # Login hisoblagichini ham tozalash
+        cache.delete(_LOCKED_KEY.format(username.lower()))
+        cache.delete(_FAIL_KEY.format(username.lower()))
+
+        # Telegram orqali bildirishnoma
+        if user.telegram_chat_id:
+            send_message(
+                user.telegram_chat_id,
+                '✅ <b>Parolingiz muvaffaqiyatli o\'zgartirildi!</b>\n\n'
+                'Agar bu siz bo\'lmasangiz, darhol admin bilan bog\'laning.',
+            )
+
+        return Response({'detail': "Parol muvaffaqiyatli o'zgartirildi"})
+
+
 

@@ -8,3 +8,10 @@ export const updateProfile = (data) => api.put('/auth/profile/', data);
 
 // HEMIS sync (login bo'lgandan keyin)
 export const hemisSync = () => api.post('/auth/hemis/sync/');
+
+// Telegram bog'lash — kirgan foydalanuvchi uchun link token olish
+export const telegramLinkInit = () => api.post('/auth/telegram/link/');
+
+// Parolni tiklash
+export const passwordResetRequest = (data) => api.post('/auth/password-reset/request/', data);
+export const passwordResetConfirm = (data) => api.post('/auth/password-reset/confirm/', data);

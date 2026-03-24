@@ -19,6 +19,7 @@ import logging
 import tempfile
 import threading
 import subprocess
+import resource
 from dataclasses import dataclass
 from typing import Optional, Tuple, List, Dict, Any
 
@@ -125,23 +126,87 @@ LANGUAGE_CONFIG: Dict[str, Dict[str, Any]] = {
 
 BANNED_PATTERNS: Dict[str, List[str]] = {
     'python': [
-        'import os', 'import subprocess', 'import socket',
-        'import requests', 'import urllib', 'import shutil',
+        # Filesystem
+        'import os', 'import shutil', 'import pathlib',
+        'import glob', 'import tempfile',
+        'open(',
+        # Network
+        'import socket', 'import requests', 'import urllib',
+        'import http', 'import ftplib', 'import smtplib',
+        'import xmlrpc', 'import imaplib', 'import poplib',
+        # Process / code execution
+        'import subprocess', 'import multiprocessing',
+        'import threading',
         '__import__', 'exec(', 'eval(', 'compile(',
-        'open(', 'breakpoint', 'ctypes', 'pickle', 'marshal',
+        'breakpoint(',
+        # Serialization (can hide exec)
+        'import pickle', 'import marshal',
+        'import shelve', 'import dbm',
+        # C extension / low-level
+        'import ctypes', 'import cffi',
+        'import mmap',
+        # Signal / process control
+        'import signal', 'import resource',
+        'import atexit',
+        # Introspection tricks
+        '__builtins__', 'globals(', 'locals(',
+        'vars(', 'dir(',
+        'getattr(', 'setattr(', 'delattr(',
+        'importlib',
     ],
     'cpp': [
-        'system(', 'popen(', 'execve(', 'fork(',
-        'socket(', '__asm__', 'mmap(',
+        # Process execution
+        'system(', 'popen(', 'execve(', 'execvp(', 'execl(',
+        'fork(', 'vfork(', 'clone(',
+        # Network
+        'socket(', 'connect(',
+        # Memory mapping
+        'mmap(',
+        # Inline assembly
+        '__asm__', '__asm', 'asm(',
+        # Signal / process signals
+        'kill(', 'raise(',
+        # File operations beyond stdio
+        'fopen(', 'freopen(',
+        # Dangerous headers (belt-and-suspenders)
+        '#include <unistd', '#include <sys/socket',
+        '#include <arpa/', '#include <netinet/',
     ],
     'java': [
+        # Process execution
         'Runtime.getRuntime', 'ProcessBuilder',
-        'System.exit', 'FileInputStream', 'FileOutputStream',
-        'java.net.', 'ClassLoader',
+        # System control
+        'System.exit', 'System.halt',
+        # File I/O
+        'FileInputStream', 'FileOutputStream',
+        'FileReader', 'FileWriter',
+        'RandomAccessFile', 'Files.write', 'Files.read',
+        # Network
+        'java.net.', 'java.nio.channels.SocketChannel',
+        # Reflection (can bypass everything)
+        'ClassLoader', 'Class.forName', 'getDeclaredMethod',
+        'setAccessible',
+        # Native code
+        'System.loadLibrary', 'System.load',
+        # Thread manipulation
+        'Thread.stop', 'Runtime.halt',
     ],
     'csharp': [
-        'Process.Start', 'System.IO.File',
-        'System.Net', 'System.Diagnostics.Process',
+        # Process execution
+        'Process.Start', 'System.Diagnostics.Process',
+        # File I/O
+        'System.IO.File', 'System.IO.Directory',
+        'System.IO.Stream', 'StreamWriter', 'StreamReader',
+        # Network
+        'System.Net', 'WebClient', 'HttpClient',
+        'TcpClient', 'UdpClient', 'Socket',
+        # Reflection
+        'Assembly.Load', 'Activator.CreateInstance',
+        'MethodInfo', 'GetMethod', 'Invoke',
+        # Environment
+        'Environment.Exit', 'Environment.FailFast',
+        # Threading
+        'Thread.Abort',
     ],
 }
 
@@ -171,18 +236,41 @@ def check_code_safety(code: str, language: str) -> Tuple[bool, Optional[str]]:
 
     banned = BANNED_PATTERNS.get(language, [])
 
-    for line_num, line in enumerate(lines, 1):
-        stripped = line.strip()
-        # Skip comments
+    for line_num, raw_line in enumerate(lines, 1):
+        stripped = raw_line.strip()
+
+        # Skip full-line comments
         if language == 'python' and stripped.startswith('#'):
             continue
         if language in ('cpp', 'java', 'csharp') and stripped.startswith('//'):
             continue
 
-        for pattern in banned:
-            if pattern in line:
+        if language == 'python':
+            # Strip inline comment (# not inside string — simple heuristic)
+            comment_pos = raw_line.find('#')
+            work_line = raw_line[:comment_pos] if comment_pos >= 0 else raw_line
+            # Split by semicolon so each statement is checked independently.
+            # This closes the bypass: `import sys; import os` — each part is
+            # evaluated separately, so `import os` is caught regardless of
+            # `import sys` being allowed.
+            segments = [s.strip() for s in work_line.split(';')]
+        else:
+            segments = [raw_line]
+
+        for segment in segments:
+            if not segment:
+                continue
+            for pattern in banned:
+                if pattern not in segment:
+                    continue
+                # Python: allow only if THIS segment itself is a whitelisted import
                 if language == 'python':
-                    if any(a in line for a in PYTHON_ALLOWED_IMPORTS):
+                    if any(
+                        segment == a
+                        or segment.startswith(a + ' ')
+                        or segment.startswith(a + '(')
+                        for a in PYTHON_ALLOWED_IMPORTS
+                    ):
                         continue
                 return False, (
                     f'Xavfsizlik xatosi ({line_num}-qator): '
@@ -449,6 +537,27 @@ class IsolateBox:
 # COMPILE — Outside isolate, into temp directory
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _set_compile_limits() -> None:
+    """
+    Resource limits applied to the compiler subprocess (preexec_fn, Linux only).
+
+    Protects against C++ template metaprogramming attacks that can exhaust
+    host CPU/RAM during compilation — which happens OUTSIDE isolate.
+
+    Limits:
+      RLIMIT_AS    — 512 MB virtual memory  (prevents allocating huge symbol tables)
+      RLIMIT_CPU   — 30 s CPU time          (matches subprocess timeout as belt-and-suspenders)
+      RLIMIT_NPROC — 16 child processes     (prevents fork-bombs during compilation)
+    """
+    try:
+        _512mb = 512 * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS,    (_512mb, _512mb))
+        resource.setrlimit(resource.RLIMIT_CPU,   (30, 30))
+        resource.setrlimit(resource.RLIMIT_NPROC, (16, 16))
+    except Exception:
+        pass  # Silently ignore if limits cannot be set (e.g. container restrictions)
+
+
 def _compile_code(
     source_code: str,
     language: str,
@@ -496,6 +605,7 @@ def _compile_code(
             compile_cmd,
             capture_output=True, text=True,
             timeout=30,
+            preexec_fn=_set_compile_limits,   # Linux: cap compiler memory + CPU
         )
 
         if result.returncode != 0:

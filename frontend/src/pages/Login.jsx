@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { LogIn, Eye, EyeOff, AlertCircle, Lock, Timer } from 'lucide-react';
 import { login as apiLogin } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
 
@@ -24,30 +24,64 @@ function MiniSpinner() {
 }
 
 export default function Login() {
-    const navigate = useNavigate();
+    const navigate   = useNavigate();
     const loginStore = useAuthStore((s) => s.login);
-    const [form, setForm] = useState({ username: '', password: '' });
+
+    const [form, setForm]           = useState({ username: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [shakeKey, setShakeKey] = useState(0);
+    const [loading, setLoading]     = useState(false);
+    const [error, setError]         = useState('');
+    const [shakeKey, setShakeKey]   = useState(0);
+    const [locked, setLocked]       = useState(false);       // hisob bloklandi
+    const [attemptsLeft, setAttemptsLeft] = useState(null);  // qolgan urinishlar
+    const [countdown, setCountdown] = useState(0);           // qolgan soniyalar
 
     useEffect(() => { document.title = 'Kirish — OnlineJudge'; }, []);
 
+    // Bloklangan bo'lsa 10 daqiqalik countdown
+    useEffect(() => {
+        if (!locked) return;
+        setCountdown(600);
+        const id = setInterval(() => {
+            setCountdown((c) => {
+                if (c <= 1) { clearInterval(id); setLocked(false); return 0; }
+                return c - 1;
+            });
+        }, 1000);
+        return () => clearInterval(id);
+    }, [locked]);
+
+    const fmtCountdown = useCallback((s) => {
+        const m = Math.floor(s / 60);
+        const sec = String(s % 60).padStart(2, '0');
+        return `${m}:${sec}`;
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (locked) return;
         setLoading(true);
         setError('');
+        setAttemptsLeft(null);
         try {
             const res = await apiLogin(form);
             loginStore(res.data.user || res.data, {
-                access: res.data.access,
+                access:  res.data.access,
                 refresh: res.data.refresh,
             });
             navigate('/problems');
         } catch (err) {
-            setError(err.response?.data?.detail || "Login yoki parol noto'g'ri");
-            setShakeKey((k) => k + 1);
+            const data = err.response?.data || {};
+            if (data.locked || err.response?.status === 429) {
+                setLocked(true);
+                setError('');
+            } else {
+                setError(data.detail || "Login yoki parol noto'g'ri");
+                if (data.attempts_remaining != null) {
+                    setAttemptsLeft(data.attempts_remaining);
+                }
+                setShakeKey((k) => k + 1);
+            }
         } finally {
             setLoading(false);
         }
@@ -129,6 +163,39 @@ export default function Login() {
                         </p>
                     </motion.div>
 
+                    {/* ── Lockout banner ── */}
+                    {locked && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            style={{
+                                marginBottom: 24,
+                                padding: '14px 16px',
+                                borderRadius: 12,
+                                background: 'rgba(239,68,68,0.07)',
+                                border: '1px solid rgba(239,68,68,0.20)',
+                                display: 'flex', flexDirection: 'column', gap: 8,
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Lock style={{ width: 16, height: 16, color: '#f87171', flexShrink: 0 }} />
+                                <span style={{ color: '#f87171', fontSize: 13, fontWeight: 600 }}>
+                                    Hisob vaqtincha bloklandi
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fca5a5', fontSize: 12 }}>
+                                <Timer style={{ width: 13, height: 13 }} />
+                                <span>{fmtCountdown(countdown)} dan keyin qayta urinib ko'ring</span>
+                            </div>
+                            <Link to="/forgot-password" style={{
+                                fontSize: 12, color: '#818cf8', fontWeight: 500,
+                                textDecoration: 'underline', textDecorationColor: 'rgba(129,140,248,0.4)',
+                            }}>
+                                Parolni hoziroq tiklash →
+                            </Link>
+                        </motion.div>
+                    )}
+
                     <form onSubmit={handleSubmit}>
                         {/* Username / HEMIS login */}
                         <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
@@ -192,15 +259,22 @@ export default function Login() {
                                 transition={{ duration: 0.4 }}
                                 style={{
                                     marginBottom: 16,
-                                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                                    display: 'flex', flexDirection: 'column', gap: 6,
                                     padding: '10px 14px', borderRadius: 10,
                                     background: 'rgba(239,68,68,0.06)',
                                     border: '1px solid rgba(239,68,68,0.12)',
                                     color: '#f87171', fontSize: 13,
                                 }}
                             >
-                                <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
-                                <span>{error}</span>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                                    <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+                                    <span>{error}</span>
+                                </div>
+                                {attemptsLeft != null && (
+                                    <span style={{ fontSize: 12, color: '#fca5a5', paddingLeft: 26 }}>
+                                        {attemptsLeft} ta urinishdan keyin hisob bloklanadi
+                                    </span>
+                                )}
                             </motion.div>
                         )}
 
@@ -208,9 +282,10 @@ export default function Login() {
                         <motion.div variants={itemVariants}>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || locked}
                                 className="btn-glow"
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                    opacity: locked ? 0.5 : 1, cursor: locked ? 'not-allowed' : 'pointer' }}
                             >
                                 {loading ? (
                                     <><MiniSpinner /> Kirilmoqda...</>
@@ -218,6 +293,15 @@ export default function Login() {
                                     <><LogIn style={{ width: 16, height: 16 }} /> Kirish</>
                                 )}
                             </button>
+                        </motion.div>
+
+                        {/* Parolni unutdim */}
+                        <motion.div variants={itemVariants} style={{ textAlign: 'right', marginTop: 10 }}>
+                            <Link to="/forgot-password" style={{ fontSize: 12, color: '#55556a' }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = '#818cf8'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = '#55556a'}>
+                                Parolni unutdim?
+                            </Link>
                         </motion.div>
                     </form>
 

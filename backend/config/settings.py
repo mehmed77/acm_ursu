@@ -126,6 +126,21 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+
+    # ── Rate limiting ────────────────────────────────────────────────────────
+    # Protects against submission spam, brute-force, and DoS via the API.
+    # Scope rates are defined below; per-view throttles override these defaults.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon':       '60/hour',    # Anonymous: 60 req/hour (login, public pages)
+        'user':       '600/hour',   # Authenticated: general API requests
+        'submission': '30/hour',    # POST /api/submissions/ per user
+        'run_code':   '60/hour',    # POST /api/problems/:slug/run/ per user
+        'burst':      '5/10sec',    # Burst guard: max 5 req per 10 seconds
+    },
 }
 
 
@@ -185,4 +200,13 @@ HEMIS_OAUTH_CLIENT_ID = env('HEMIS_OAUTH_CLIENT_ID', default='')
 HEMIS_OAUTH_CLIENT_SECRET = env('HEMIS_OAUTH_CLIENT_SECRET', default='')
 HEMIS_OAUTH_REDIRECT_URI = env('HEMIS_OAUTH_REDIRECT_URI', default='')
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
+
+
+# Telegram Bot
+# @BotFather dan olingan token: 123456:ABC-DEF...
+TELEGRAM_BOT_TOKEN = env('TELEGRAM_BOT_TOKEN', default='')
+# Bot username (@ belgisisiz): masalan "myjudge_bot"
+TELEGRAM_BOT_USERNAME = env('TELEGRAM_BOT_USERNAME', default='')
+# Webhook xavfsizligi uchun tasodifiy string (ixtiyoriy, lekin tavsiya etiladi)
+TELEGRAM_WEBHOOK_SECRET = env('TELEGRAM_WEBHOOK_SECRET', default='')
 

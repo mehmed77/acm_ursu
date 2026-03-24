@@ -1,5 +1,6 @@
 import uuid
 import threading
+from typing import Any, Dict
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -14,6 +15,11 @@ from .serializers import (
     SubmissionListSerializer,
     SubmissionCodeSerializer,
 )
+from .throttles import SubmissionThrottle, RunCodeThrottle, BurstThrottle
+
+# Maximum pending/running submissions allowed per user at once.
+# Prevents queue flooding when the judge is slow or under load.
+MAX_PENDING_PER_USER = 3
 
 
 class RunCodeView(APIView):
@@ -27,10 +33,11 @@ class RunCodeView(APIView):
     - Windows + Linux ikkalasida ishlaydi (threading timeout)
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes   = [BurstThrottle, RunCodeThrottle]
 
     def post(self, request, slug):
         from apps.problems.models import Problem
-        from apps.submissions.judge_engine import run_code_sync
+        from apps.submissions.judge_engine import run_code_sync, check_code_safety
         from django.core.cache import cache
 
         problem  = get_object_or_404(Problem, slug=slug)
@@ -42,6 +49,25 @@ class RunCodeView(APIView):
                 {'error_message': 'Kod va til kiritilishi shart', 'status': 'SYSTEM_ERROR'},
                 status=400,
             )
+
+        # Static safety check — same gate as /submit
+        is_safe, reason = check_code_safety(code, language)
+        if not is_safe:
+            return Response(
+                {'error_message': reason, 'status': 'SECURITY_ERROR'},
+                status=400,
+            )
+
+        # Per-user cooldown: 4 seconds between consecutive runs.
+        # Prevents rapid-fire execution that saturates the judge worker.
+        cooldown_key = f'run_cooldown:{request.user.id}'
+        if cache.get(cooldown_key):
+            return Response(
+                {'error_message': 'Iltimos, keyingi rundan oldin 4 soniya kuting.',
+                 'status': 'RATE_LIMITED'},
+                status=429,
+            )
+        cache.set(cooldown_key, 1, timeout=4)
 
         sample_tests = list(problem.test_cases.filter(is_sample=True))
         if not sample_tests:
@@ -90,13 +116,16 @@ class RunCodeView(APIView):
                 'error_message': "Noma'lum xato",
             })
 
-        # Frontend polling uchun cache ga yozamiz
-        task_id = str(uuid.uuid4())
-        result['id']          = task_id
-        result['is_sync_run'] = True
-        cache.set(f'run_task_{task_id}', result, timeout=600)
+        # Frontend polling uchun cache ga yozamiz.
+        # dict() wrap — type checker uchun aniq Dict[str, Any] turi.
+        task_id: str = str(uuid.uuid4())
+        response: Dict[str, Any] = {}
+        response.update(result)
+        response['id']          = task_id
+        response['is_sync_run'] = True
+        cache.set(f'run_task_{task_id}', response, timeout=600)
 
-        return Response(result, status=200)
+        return Response(response, status=200)
 
 
 class RunTaskDetailView(generics.RetrieveAPIView):
@@ -123,6 +152,7 @@ class SubmissionCreateView(generics.CreateAPIView):
     """
     serializer_class   = SubmissionCreateSerializer
     permission_classes = [IsAuthenticated]
+    throttle_classes   = [BurstThrottle, SubmissionThrottle]
 
     def create(self, request, *args, **kwargs):
         from apps.submissions.judge_engine import check_code_safety, judge_submission_task
@@ -130,9 +160,29 @@ class SubmissionCreateView(generics.CreateAPIView):
         code     = request.data.get('code', '')
         language = request.data.get('language', 'python')
 
+        # 1. Static security check
         is_safe, reason = check_code_safety(code, language)
         if not is_safe:
             return Response({'error': reason}, status=400)
+
+        # 2. Pending submission guard — prevents queue flooding.
+        #    If a user already has MAX_PENDING_PER_USER submissions waiting,
+        #    reject until the judge processes at least one.
+        pending = Submission.objects.filter(
+            user=request.user,
+            status__in=['pending', 'running'],
+            run_type='submit',
+        ).count()
+        if pending >= MAX_PENDING_PER_USER:
+            return Response(
+                {
+                    'error': (
+                        f"Sizda hozir {pending} ta submission navbatda. "
+                        f"Iltimos, natijani kutib oling va keyin qayta yuboring."
+                    )
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
