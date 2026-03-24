@@ -26,7 +26,10 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             const refreshToken = localStorage.getItem('refresh_token');
+            const accessToken  = localStorage.getItem('access_token');
+
             if (refreshToken) {
+                // Foydalanuvchi oldin kirgan — tokenni yangilashga urinish
                 try {
                     const res = await axios.post(
                         '/api/auth/token/refresh/',
@@ -40,10 +43,12 @@ api.interceptors.response.use(
                     useAuthStore.getState().logout();
                     window.location.href = '/login';
                 }
-            } else {
+            } else if (accessToken) {
+                // Access token bor, refresh yo'q — sessiya tugagan
                 useAuthStore.getState().logout();
                 window.location.href = '/login';
             }
+            // Token umuman yo'q — kirish talab qilmaydigan sahifa, xatoni e'tiborsiz qoldirish
         }
 
         return Promise.reject(error);
