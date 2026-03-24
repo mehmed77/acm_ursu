@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../api/admin';
-import { Search, Plus, Edit2, Eye, Trash2, Zap, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Edit2, Eye, Trash2, Zap, AlertTriangle, FileText } from 'lucide-react';
 
 export default function AdminProblems() {
     const navigate = useNavigate();
