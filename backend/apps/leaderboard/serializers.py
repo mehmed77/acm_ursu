@@ -11,16 +11,19 @@ User = get_user_model()
 
 class LeaderboardSerializer(serializers.ModelSerializer):
     """Global reyting ro'yxati."""
-    username = serializers.CharField(source='user.username')
+    username    = serializers.CharField(source='user.username')
+    first_name  = serializers.CharField(source='user.first_name')
+    last_name   = serializers.CharField(source='user.last_name')
     solved_count = serializers.IntegerField(source='user.solved_count')
-    country = serializers.SerializerMethodField()
-    rank_title = serializers.SerializerMethodField()
-    rank_color = serializers.SerializerMethodField()
+    country     = serializers.SerializerMethodField()
+    rank_title  = serializers.SerializerMethodField()
+    rank_color  = serializers.SerializerMethodField()
 
     class Meta:
         model = UserRating
         fields = (
-            'rank', 'username', 'rating', 'max_rating',
+            'rank', 'username', 'first_name', 'last_name',
+            'rating', 'max_rating',
             'rank_title', 'rank_color',
             'solved_count', 'country',
         )

@@ -169,17 +169,29 @@ const CSS = `
   .lb-row {
     display: grid;
     padding: 0 20px;
-    height: 52px;
+    height: 60px;
     align-items: center;
     border-bottom: 1px solid var(--border-subtle);
     text-decoration: none;
     color: inherit;
-    transition: background 0.12s ease;
+    transition:
+      background 0.18s ease,
+      box-shadow 0.18s ease,
+      padding-left 0.18s ease;
     position: relative;
+    cursor: pointer;
   }
   .lb-row:last-child { border-bottom: none; }
-  .lb-row:hover { background: rgba(99,102,241,0.04) !important; }
-  .lb-row:hover .lb-row-name { color: var(--accent-hover) !important; }
+
+  /* Hover: shift left padding + brighter left bar */
+  .lb-row-hovered {
+    background: rgba(99,102,241,0.06) !important;
+    padding-left: 26px !important;
+    box-shadow: inset 4px 0 0 var(--accent) !important;
+  }
+  .lb-row-hovered .lb-row-name { color: var(--accent-hover) !important; }
+  .lb-row-hovered .lb-avatar   { box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent-glow); }
+  .lb-row-hovered .lb-row-arrow { opacity: 1 !important; transform: translateX(0) !important; }
 
   /* ── Avatar ── */
   .lb-avatar {
@@ -281,7 +293,7 @@ const CSS = `
   ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
 `;
 
-const GRID = '56px 1fr 110px 88px 110px 1fr';
+const GRID = '56px 1fr 110px 88px 110px 1fr 28px';
 
 /* ═══════════════════════════════════════════════════
    SUB-COMPONENTS
@@ -343,6 +355,7 @@ export default function Leaderboard() {
     const [page, setPage]             = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal]           = useState(0);
+    const [hoveredRow, setHoveredRow] = useState(null);
 
     useEffect(() => { document.title = 'Reyting Jadvali — OnlineJudge'; }, []);
 
@@ -433,7 +446,7 @@ export default function Leaderboard() {
                     >
                         {/* Head */}
                         <div className="lb-thead" style={{ gridTemplateColumns: GRID }}>
-                            {["O'RIN", "FOYDALANUVCHI", "DARAJA", "SOLVED", "RATING", "PROGRESS"].map(h => (
+                            {["O'RIN", "FOYDALANUVCHI", "DARAJA", "SOLVED", "RATING", "PROGRESS", ""].map(h => (
                                 <span key={h}>{h}</span>
                             ))}
                         </div>
@@ -444,12 +457,12 @@ export default function Leaderboard() {
                                 key={i}
                                 style={{
                                     display: 'grid', gridTemplateColumns: GRID,
-                                    padding: '0 20px', height: 52, alignItems: 'center',
+                                    padding: '0 20px', height: 60, alignItems: 'center',
                                     borderBottom: '1px solid var(--border-subtle)', gap: 8,
                                     opacity: 1 - i * 0.06,
                                 }}
                             >
-                                {[32, 160, 56, 32, 48, 90].map((w, j) => (
+                                {[32, 160, 56, 32, 48, 90, 16].map((w, j) => (
                                     <div key={j} className="lb-skel" style={{ height: 11, width: w, maxWidth: '100%' }} />
                                 ))}
                             </div>
@@ -464,6 +477,9 @@ export default function Leaderboard() {
                                 const isTop10    = globalRank <= 10;
                                 const ratingPct  = Math.round((user.rating / MAX_RATING) * 100);
 
+                                const isHovered  = hoveredRow === user.username;
+                                const fullName   = [user.first_name, user.last_name].filter(Boolean).join(' ');
+
                                 return (
                                     <motion.div
                                         key={user.username}
@@ -472,22 +488,28 @@ export default function Leaderboard() {
                                         transition={{ delay: idx * 0.02, duration: 0.18 }}
                                     >
                                         <Link
-                                            className="lb-row"
+                                            className={`lb-row${isHovered ? ' lb-row-hovered' : ''}`}
                                             to={`/profile/${user.username}`}
+                                            onMouseEnter={() => setHoveredRow(user.username)}
+                                            onMouseLeave={() => setHoveredRow(null)}
                                             style={{
                                                 gridTemplateColumns: GRID,
-                                                background: isTop3
-                                                    ? `${rank.bg}`
+                                                background: isHovered
+                                                    ? undefined   /* handled by .lb-row-hovered */
+                                                    : isTop3
+                                                    ? rank.bg
                                                     : isTop10
-                                                    ? `rgba(99,102,241,0.025)`
+                                                    ? 'rgba(99,102,241,0.025)'
                                                     : idx % 2 === 1
                                                     ? 'var(--bg-elevated)'
                                                     : 'transparent',
-                                                boxShadow: isTop3
-                                                    ? `inset 3px 0 0 ${rank.dot}`
-                                                    : isTop10
-                                                    ? 'inset 3px 0 0 rgba(99,102,241,0.25)'
-                                                    : 'none',
+                                                boxShadow: !isHovered
+                                                    ? isTop3
+                                                        ? `inset 3px 0 0 ${rank.dot}`
+                                                        : isTop10
+                                                        ? 'inset 3px 0 0 rgba(99,102,241,0.25)'
+                                                        : 'none'
+                                                    : undefined,
                                             }}
                                         >
                                             {/* ── Rank ── */}
@@ -509,6 +531,7 @@ export default function Leaderboard() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
                                                 <Avatar username={user.username} gradient={rank.gradient} />
                                                 <div style={{ minWidth: 0 }}>
+                                                    {/* Username */}
                                                     <div
                                                         className="lb-row-name"
                                                         style={{
@@ -516,14 +539,40 @@ export default function Leaderboard() {
                                                             fontSize: 14, fontWeight: 700,
                                                             color: isTop3 ? rank.color : 'var(--text-primary)',
                                                             overflow: 'hidden', textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap', transition: 'color 0.12s',
+                                                            whiteSpace: 'nowrap', transition: 'color 0.15s',
                                                         }}
                                                     >{user.username}</div>
+                                                    {/* Full name (if exists) + rank label */}
                                                     <div style={{
-                                                        fontFamily: 'var(--font-mono)',
-                                                        fontSize: 10, color: 'var(--text-muted)',
-                                                        marginTop: 1,
-                                                    }}>{rank.label}</div>
+                                                        display: 'flex', alignItems: 'center', gap: 6, marginTop: 2,
+                                                        overflow: 'hidden',
+                                                    }}>
+                                                        {fullName ? (
+                                                            <span style={{
+                                                                fontFamily: 'var(--font-sans)',
+                                                                fontSize: 11, fontWeight: 500,
+                                                                color: isHovered ? 'var(--text-secondary)' : 'var(--text-muted)',
+                                                                overflow: 'hidden', textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap', transition: 'color 0.15s',
+                                                                maxWidth: 160,
+                                                            }}>{fullName}</span>
+                                                        ) : (
+                                                            <span style={{
+                                                                fontFamily: 'var(--font-mono)',
+                                                                fontSize: 10, color: 'var(--text-muted)',
+                                                            }}>{rank.label}</span>
+                                                        )}
+                                                        {fullName && (
+                                                            <span style={{
+                                                                fontFamily: 'var(--font-mono)',
+                                                                fontSize: 9, color: rank.color,
+                                                                background: rank.bg,
+                                                                border: `1px solid ${rank.bd}`,
+                                                                padding: '1px 5px', borderRadius: 4,
+                                                                flexShrink: 0,
+                                                            }}>{rank.short}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -576,6 +625,20 @@ export default function Leaderboard() {
                                                         fontSize: 8, color: 'var(--text-muted)',
                                                     }}>{ratingPct}%</span>
                                                 </div>
+                                            </div>
+
+                                            {/* ── Arrow indicator ── */}
+                                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                <span
+                                                    className="lb-row-arrow"
+                                                    style={{
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: 14, color: 'var(--accent)',
+                                                        opacity: 0,
+                                                        transform: 'translateX(-4px)',
+                                                        transition: 'opacity 0.18s ease, transform 0.18s ease',
+                                                    }}
+                                                >→</span>
                                             </div>
                                         </Link>
                                     </motion.div>
