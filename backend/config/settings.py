@@ -139,7 +139,7 @@ REST_FRAMEWORK = {
         'user':       '600/hour',   # Authenticated: general API requests
         'submission': '30/hour',    # POST /api/submissions/ per user
         'run_code':   '60/hour',    # POST /api/problems/:slug/run/ per user
-        'burst':      '5/10sec',    # Burst guard: max 5 req per 10 seconds
+        'burst':      '5/s',         # Burst guard: max 5 req per second
     },
 }
 

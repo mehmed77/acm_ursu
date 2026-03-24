@@ -4,7 +4,7 @@ Custom DRF throttle classes for submission endpoints.
 Rates (per authenticated user):
   - SubmissionThrottle : 30 submit/hour  — prevents spam flooding
   - RunCodeThrottle    : 60 run/hour     — "Run" is cheaper, allow 2x
-  - BurstThrottle      :  5 req/10s      — prevents rapid-fire bursts
+  - BurstThrottle      :  5 req/s        — prevents rapid-fire bursts
 
 Anonymous users hit the default AnonRateThrottle (30/hour) from settings.
 """
