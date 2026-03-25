@@ -1016,6 +1016,33 @@ def judge_submission(submission: Any) -> Dict[str, Any]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _update_user_solved_count(submission) -> None:
+    """
+    Foydalanuvchi bu masalani birinchi marta ACCEPTED qilgan bo'lsa,
+    solved_count ni 1 ga oshiradi.
+    """
+    from apps.submissions.models import Submission as Sub
+    from django.db.models import F
+
+    already_accepted = Sub.objects.filter(
+        user=submission.user,
+        problem=submission.problem,
+        status='accepted',
+        run_type='submit',
+    ).exclude(id=submission.id).exists()
+
+    if not already_accepted:
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.filter(id=submission.user_id).update(
+            solved_count=F('solved_count') + 1
+        )
+        logger.info(f'[SOLVED] {submission.user.username}: solved_count += 1 ({submission.problem.slug})')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # CELERY TASK
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1060,6 +1087,10 @@ def judge_submission_task(self, submission_id: int) -> None:
             submission.compile_output = result['compile_output'][:10000]
 
         submission.save()
+
+        # ACCEPTED bo'lsa va submit mode bo'lsa — solved_count yangilash
+        if submission.status == 'accepted' and submission.run_type == 'submit':
+            _update_user_solved_count(submission)
 
         logger.info(
             f'[TASK] sub={submission_id} → {submission.status} '
