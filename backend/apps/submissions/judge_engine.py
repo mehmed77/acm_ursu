@@ -78,26 +78,30 @@ LANGUAGE_CONFIG: Dict[str, Dict[str, Any]] = {
     },
 
     'java': {
-        'file':            'Solution.java',   # javac requires filename = class name
+        'file':            'Solution.java',
         'compile':         [
             '/usr/bin/javac', '-encoding', 'UTF-8',
-            '-d', '{outdir}',   # output directory for .class files
+            '-d', '{outdir}',
             '{source}',
         ],
         'run':             [
             '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
-            '-Xss64m', '-Xmx256m',
+            '-Xss8m',                      # stack: 8MB yetarli
+            '-Xmx256m',                    # heap: 256MB
+            '-XX:ReservedCodeCacheSize=32m', # JIT cache: 240MB→32MB (virtual xotirani tejaydi)
+            '-XX:+UseSerialGC',            # GC: G1GC o'rniga serial (kam virtual xotira)
+            '-XX:TieredStopAtLevel=1',     # JIT: minimal kompilatsiya
             '-DONLINE_JUDGE=true',
             'Solution',
         ],
         'extra_dirs':      ['/usr/lib/jvm', '/usr/lib/jvm/java-17-openjdk-amd64', '/lib', '/lib64', '/usr'],
         'env':             {
-            'JAVA_HOME':   '/usr/lib/jvm/java-17-openjdk-amd64',
+            'JAVA_HOME':         '/usr/lib/jvm/java-17-openjdk-amd64',
             'JAVA_TOOL_OPTIONS': '-Dfile.encoding=UTF-8',
         },
         'time_multiplier': 2.0,
-        'memory_limit_kb': 524288,   # 512 MB (JVM overhead)
-        'max_processes':   64,        # JVM spawns threads
+        'memory_limit_kb': 786432,   # 768MB: JVM virtual address space uchun yetarli
+        'max_processes':   64,
     },
 
     'csharp': {
@@ -546,8 +550,8 @@ def _set_compile_limits() -> None:
       RLIMIT_NPROC — 16 child processes     (prevents fork-bombs during compilation)
     """
     try:
-        _512mb = 512 * 1024 * 1024
-        resource.setrlimit(resource.RLIMIT_AS,    (_512mb, _512mb))
+        _2gb = 2 * 1024 * 1024 * 1024  # Java/Mono JVM virtual address space uchun 2GB kerak
+        resource.setrlimit(resource.RLIMIT_AS,    (_2gb, _2gb))
         resource.setrlimit(resource.RLIMIT_CPU,   (30, 30))
         resource.setrlimit(resource.RLIMIT_NPROC, (16, 16))
     except Exception:
