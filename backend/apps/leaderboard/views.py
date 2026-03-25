@@ -25,11 +25,16 @@ class LeaderboardView(APIView):
         per_page = 20
         offset   = (page - 1) * per_page
 
+        sort = request.query_params.get('sort', 'rating')
+
+        if sort == 'solved':
+            order = ('-solved_count', '-rating', 'username')
+        else:
+            order = ('-rating', '-solved_count', 'username')
+
         users = User.objects.filter(
             is_active=True
-        ).order_by(
-            '-rating', '-solved_count', 'username'
-        )
+        ).order_by(*order)
 
         total = users.count()
         users = users[offset: offset + per_page]

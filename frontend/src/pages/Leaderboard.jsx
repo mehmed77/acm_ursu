@@ -356,13 +356,14 @@ export default function Leaderboard() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal]           = useState(0);
     const [hoveredRow, setHoveredRow] = useState(null);
+    const [sort, setSort]             = useState('rating');
 
     useEffect(() => { document.title = 'Reyting Jadvali — OnlineJudge'; }, []);
 
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
-        getLeaderboard({ page })
+        getLeaderboard({ page, sort })
             .then(res => {
                 if (cancelled) return;
                 const data = res.data.results ?? res.data;
@@ -373,7 +374,7 @@ export default function Leaderboard() {
             .catch(console.error)
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [page]);
+    }, [page, sort]);
 
     const rankOffset = (page - 1) * 20;
 
@@ -416,6 +417,35 @@ export default function Leaderboard() {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Sort toggle */}
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                {[
+                                    { key: 'rating', label: 'RATING' },
+                                    { key: 'solved', label: 'SOLVED' },
+                                ].map(({ key, label }) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => { setSort(key); setPage(1); }}
+                                        style={{
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: 10, fontWeight: 700,
+                                            letterSpacing: '.08em',
+                                            padding: '5px 12px',
+                                            borderRadius: 8,
+                                            border: sort === key
+                                                ? '1px solid rgba(245,158,11,0.5)'
+                                                : '1px solid var(--border-default)',
+                                            background: sort === key
+                                                ? 'linear-gradient(135deg,rgba(245,158,11,0.18),rgba(249,115,22,0.12))'
+                                                : 'var(--bg-elevated)',
+                                            color: sort === key ? '#f59e0b' : 'var(--text-muted)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s',
+                                        }}
+                                    >{label}</button>
+                                ))}
                             </div>
 
                             {/* Right — rank legend */}
