@@ -357,7 +357,17 @@ class IsolateBox:
         self.use_cg:  bool = False
 
     def __enter__(self) -> 'IsolateBox':
-        # Non-cgroup mode (Docker PID namespace uchun munosib)
+        # Oldingi init qoldig'ini tozalash (cg/non-cg mode conflict ni hal qiladi)
+        subprocess.run(
+            [ISOLATE_BIN, f'--box-id={self.box_id}', '--cg', '--cleanup'],
+            capture_output=True, timeout=10,
+        )
+        subprocess.run(
+            [ISOLATE_BIN, f'--box-id={self.box_id}', '--cleanup'],
+            capture_output=True, timeout=10,
+        )
+
+        # Non-cgroup mode — Docker ichida cgroup PID translation muammosi yo'q
         result = subprocess.run(
             [ISOLATE_BIN, f'--box-id={self.box_id}', '--init'],
             capture_output=True, text=True, timeout=10,
