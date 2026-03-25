@@ -357,21 +357,7 @@ class IsolateBox:
         self.use_cg:  bool = False
 
     def __enter__(self) -> 'IsolateBox':
-        # Try cgroup mode first (Linux production)
-        result = subprocess.run(
-            [ISOLATE_BIN, f'--box-id={self.box_id}', '--cg', '--init'],
-            capture_output=True, text=True, timeout=10,
-        )
-        if result.returncode == 0:
-            self.use_cg = True
-            self.box_dir = result.stdout.strip() + '/box'
-            return self
-
-        # Fallback: without cgroup (Docker Desktop, Windows/Mac dev)
-        logger.warning(
-            f'isolate --cg not available (box {self.box_id}), '
-            f'falling back to non-cgroup mode: {result.stderr.strip()}'
-        )
+        # Non-cgroup mode (Docker PID namespace uchun munosib)
         result = subprocess.run(
             [ISOLATE_BIN, f'--box-id={self.box_id}', '--init'],
             capture_output=True, text=True, timeout=10,
