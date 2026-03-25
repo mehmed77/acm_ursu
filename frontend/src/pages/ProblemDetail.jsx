@@ -844,6 +844,8 @@ export default function ProblemDetail() {
 
     /* fetch problem */
     useEffect(() => {
+        window.scrollTo(0, 0);
+        setLoading(true);
         (async () => {
             try {
                 const res = await getProblem(slug);
