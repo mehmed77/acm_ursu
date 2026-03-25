@@ -41,10 +41,14 @@ services:
       - /sandbox:size=100m,mode=1777
       - /tmp:size=50m
 
+    # Linux da host ga ulanish uchun
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     environment:
       - CELERY_CONCURRENCY=8
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/onlinejudge
+      - DATABASE_URL=postgresql://oj_user:oj_secret@host.docker.internal:5432/online_judge
       - SECRET_KEY=docker-judge-worker-key-not-for-production
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=config.settings

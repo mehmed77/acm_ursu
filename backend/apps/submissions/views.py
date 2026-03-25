@@ -1,5 +1,4 @@
 import uuid
-import threading
 from typing import Any, Dict
 
 from rest_framework import generics, permissions, status
@@ -28,16 +27,16 @@ class RunCodeView(APIView):
 
     Faqat namuna testlarda sinab ko'rish.
     - DB ga HECH NARSA yozmaydi
-    - Celery ishlatmaydi
-    - run_code_sync() ni to'g'ridan-to'g'ri chaqiradi
-    - Windows + Linux ikkalasida ishlaydi (threading timeout)
+    - Celery (Docker judge container) orqali ishlaydi
+    - Frontend run_status/{task_id}/ ga polling qiladi
     """
     permission_classes = [IsAuthenticated]
     throttle_classes   = [BurstThrottle, RunCodeThrottle]
 
     def post(self, request, slug):
         from apps.problems.models import Problem
-        from apps.submissions.judge_engine import run_code_sync, check_code_safety
+        from apps.submissions.judge_engine import check_code_safety
+        from apps.submissions.tasks import run_code_sync_task
         from django.core.cache import cache
 
         problem  = get_object_or_404(Problem, slug=slug)
@@ -50,7 +49,6 @@ class RunCodeView(APIView):
                 status=400,
             )
 
-        # Static safety check — same gate as /submit
         is_safe, reason = check_code_safety(code, language)
         if not is_safe:
             return Response(
@@ -58,8 +56,6 @@ class RunCodeView(APIView):
                 status=400,
             )
 
-        # Per-user cooldown: 4 seconds between consecutive runs.
-        # Prevents rapid-fire execution that saturates the judge worker.
         cooldown_key = f'run_cooldown:{request.user.id}'
         if cache.get(cooldown_key):
             return Response(
@@ -69,63 +65,18 @@ class RunCodeView(APIView):
             )
         cache.set(cooldown_key, 1, timeout=4)
 
-        sample_tests = list(problem.test_cases.filter(is_sample=True))
-        if not sample_tests:
-            sample_tests = list(problem.test_cases.all()[:3])
-
-        # ── Windows + Linux compatible timeout ──
-        result_box    = {}
-        exception_box = {}
-
-        def _run():
-            try:
-                result_box['data'] = run_code_sync(
-                    code=code,
-                    language=language,
-                    test_cases=sample_tests,
-                    time_limit=float(problem.time_limit),
-                    memory_limit=problem.memory_limit,
-                )
-            except Exception as exc:
-                exception_box['error'] = str(exc)
-
-        thread = threading.Thread(target=_run, daemon=True)
-        thread.start()
-        thread.join(timeout=35)  # 35 soniya kutadi
-
-        # ── Natijani olish ──
-        if thread.is_alive():
-            result = {
-                'status': 'SYSTEM_ERROR',
-                'test_results': [],
-                'error_message': (
-                    'Judge container 35 soniyada javob bermadi. '
-                    'Tekshiring: docker compose logs judge --tail=30'
-                ),
-            }
-        elif 'error' in exception_box:
-            result = {
-                'status': 'SYSTEM_ERROR',
-                'test_results': [],
-                'error_message': exception_box['error'],
-            }
-        else:
-            result = result_box.get('data', {
-                'status': 'SYSTEM_ERROR',
-                'test_results': [],
-                'error_message': "Noma'lum xato",
-            })
-
-        # Frontend polling uchun cache ga yozamiz.
-        # dict() wrap — type checker uchun aniq Dict[str, Any] turi.
         task_id: str = str(uuid.uuid4())
-        response: Dict[str, Any] = {}
-        response.update(result)
-        response['id']          = task_id
-        response['is_sync_run'] = True
-        cache.set(f'run_task_{task_id}', response, timeout=600)
 
-        return Response(response, status=200)
+        run_code_sync_task.delay(
+            task_id,
+            slug,
+            code,
+            language,
+            float(problem.time_limit),
+            problem.memory_limit,
+        )
+
+        return Response({'id': task_id, 'status': 'PENDING', 'is_sync_run': True}, status=202)
 
 
 class RunTaskDetailView(generics.RetrieveAPIView):
