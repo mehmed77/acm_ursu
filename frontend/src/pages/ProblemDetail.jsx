@@ -1602,6 +1602,17 @@ export default function ProblemDetail() {
                             onChange={val => setCode(val || '')}
                             theme="judge-dark"
                             beforeMount={handleEditorBeforeMount}
+                            onError={() => {/* ignore Monaco loader errors */}}
+                            loading={
+                                <div style={{
+                                    height: '100%', display: 'flex',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    background: '#0f172a', color: T.sub,
+                                    fontFamily: 'var(--font-mono)', fontSize: 12,
+                                }}>
+                                    Editor yuklanmoqda...
+                                </div>
+                            }
                             options={{
                                 fontSize: 14,
                                 fontFamily: "'JetBrains Mono','Fira Code',monospace",
