@@ -4,9 +4,12 @@ import { useAuthStore } from '../store/authStore';
 const api = axios.create({
     baseURL: '/api',
     headers: { 'Content-Type': 'application/json' },
-    // httpOnly cookie'lar avtomatik yuborilishi uchun
     withCredentials: true,
 });
+
+// Auth endpoint'lari uchun 401 interceptor ishlamasligi kerak
+const AUTH_ENDPOINTS = ['/auth/login/', '/auth/register/', '/auth/token/refresh/', '/auth/logout/'];
+const isAuthEndpoint = (url = '') => AUTH_ENDPOINTS.some(e => url.includes(e));
 
 // Response interceptor — 401 da cookie refresh yoki logout
 api.interceptors.response.use(
@@ -14,14 +17,17 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Login/register/refresh endpoint'larida 401 bo'lsa — interceptor aralashmaydi
+        // (noto'g'ri parol xatolari login sahifasida ko'rsatiladi)
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !isAuthEndpoint(originalRequest.url)
+        ) {
             originalRequest._retry = true;
 
             try {
-                // Cookie'dagi refresh_token bilan yangi access_token olish
-                // withCredentials: true bo'lgani uchun cookie avtomatik yuboriladi
                 await axios.post('/api/auth/token/refresh/', {}, { withCredentials: true });
-                // Yangi access_token cookie o'rnatildi — so'rovni qayta yuborish
                 return api(originalRequest);
             } catch {
                 useAuthStore.getState().logout();

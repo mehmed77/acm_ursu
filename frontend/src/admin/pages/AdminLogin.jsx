@@ -20,10 +20,7 @@ export default function AdminLogin() {
 
         try {
             const res = await api.post('/admin/login/', { username, password });
-            loginStore(res.data.user || res.data, {
-                access: res.data.access,
-                refresh: res.data.refresh,
-            });
+            loginStore(res.data.user || res.data);
             navigate('/admin', { replace: true });
         } catch (err) {
             setError(err.response?.data?.detail || 'Xatolik yuz berdi');
