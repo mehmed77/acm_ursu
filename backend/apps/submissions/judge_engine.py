@@ -164,6 +164,11 @@ BANNED_PATTERNS: Dict[str, List[str]] = {
         'vars(', 'dir(',
         'getattr(', 'setattr(', 'delattr(',
         'importlib',
+        # Class hierarchy traversal (sandbox escape via subclasses)
+        '__subclasses__', '__mro__', '__bases__',
+        '__globals__', '__code__', '__closure__',
+        # Prevent dynamic attribute access via dunder
+        '__getattribute__', '__class_getitem__',
     ],
     'cpp': [
         # Process execution
@@ -237,6 +242,51 @@ PYTHON_ALLOWED_IMPORTS: List[str] = [
 ]
 
 
+def _strip_python_comment(line: str) -> str:
+    """
+    Strip Python inline comment while respecting string literals.
+
+    Naive str.find('#') treats '#' inside a string as a comment start,
+    enabling the bypass:  '"#"; import os'  →  strips 'import os' silently.
+    This function walks the line char-by-char, tracking string state, and
+    only recognises '#' as a comment delimiter when outside any string.
+    """
+    i = 0
+    n = len(line)
+    while i < n:
+        c = line[i]
+        if c in ('"', "'"):
+            # Detect triple-quote opener
+            triple = line[i:i + 3]
+            if triple in ('"""', "'''"):
+                quote = triple
+                i += 3
+                while i < n:
+                    if line[i:i + 3] == quote:
+                        i += 3
+                        break
+                    if line[i] == '\\':
+                        i += 2
+                    else:
+                        i += 1
+            else:
+                quote = c
+                i += 1
+                while i < n:
+                    if line[i] == '\\':
+                        i += 2
+                        continue
+                    if line[i] == quote:
+                        i += 1
+                        break
+                    i += 1
+        elif c == '#':
+            return line[:i]   # Real comment — strip from here
+        else:
+            i += 1
+    return line
+
+
 def check_code_safety(code: str, language: str) -> Tuple[bool, Optional[str]]:
     if len(code) > MAX_CODE_LENGTH:
         return False, 'Kod hajmi 50KB dan oshmasligi kerak'
@@ -257,9 +307,10 @@ def check_code_safety(code: str, language: str) -> Tuple[bool, Optional[str]]:
             continue
 
         if language == 'python':
-            # Strip inline comment (# not inside string — simple heuristic)
-            comment_pos = raw_line.find('#')
-            work_line = raw_line[:comment_pos] if comment_pos >= 0 else raw_line
+            # Strip inline comment respecting string literals.
+            # Naive raw_line.find('#') would treat "#" inside a string as a
+            # comment start, allowing bypass: '"#"; import os' → strips 'import os'.
+            work_line = _strip_python_comment(raw_line)
             # Split by semicolon so each statement is checked independently.
             # This closes the bypass: `import sys; import os` — each part is
             # evaluated separately, so `import os` is caught regardless of

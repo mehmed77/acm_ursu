@@ -3,6 +3,8 @@ import hmac
 import logging
 import secrets
 
+from django.db.models.functions import TruncDate
+
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -297,12 +299,23 @@ class HemisSyncView(APIView):
 #  ADMIN
 # ═══════════════════════════════════════════════════════
 
+_ADMIN_MAX_ATTEMPTS    = 5
+_ADMIN_LOCKOUT_SECONDS = 1800   # 30 daqiqa (oddiy logindan qattiqroq)
+_ADMIN_FAIL_KEY        = 'admin_login_fail:{}'
+_ADMIN_LOCKED_KEY      = 'admin_login_locked:{}'
+
+
 class AdminLoginView(APIView):
     """
     POST /api/admin/login/
     Faqat is_staff=True foydalanuvchilar kirishi mumkin bo'lgan login.
     """
     permission_classes = [AllowAny]
+
+    @staticmethod
+    def _client_ip(request) -> str:
+        forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        return forwarded.split(',')[0].strip() or request.META.get('REMOTE_ADDR', 'unknown')
 
     def post(self, request):
         username = request.data.get('username', '').strip()
@@ -314,15 +327,36 @@ class AdminLoginView(APIView):
                 status=400
             )
 
+        # ── Brute-force himoyasi (IP + username asosida) ───────────────────
+        key_base   = f"{self._client_ip(request)}:{username.lower()}"
+        lock_key   = _ADMIN_LOCKED_KEY.format(key_base)
+        fail_key   = _ADMIN_FAIL_KEY.format(key_base)
+
+        if cache.get(lock_key):
+            return Response(
+                {'detail': 'Admin kirish 30 daqiqaga bloklandi.', 'locked': True},
+                status=429,
+            )
+
         user = authenticate(
             request, username=username, password=password
         )
 
         if user is None:
+            attempts = (cache.get(fail_key) or 0) + 1
+            if attempts >= _ADMIN_MAX_ATTEMPTS:
+                cache.set(lock_key, True, timeout=_ADMIN_LOCKOUT_SECONDS)
+                cache.delete(fail_key)
+            else:
+                cache.set(fail_key, attempts, timeout=_ADMIN_LOCKOUT_SECONDS)
             return Response(
                 {'detail': 'Username yoki parol noto\'g\'ri'},
                 status=401
             )
+
+        # Muvaffaqiyatli kirish — hisoblagichlarni tozalash
+        cache.delete(lock_key)
+        cache.delete(fail_key)
 
         if not user.is_active:
             return Response(
@@ -482,8 +516,8 @@ class UserProfileView(APIView):
         daily_counts = {}
         activity = submit_qs.filter(
             created_at__date__gte=year_ago
-        ).extra(
-            select={'day': 'DATE(created_at)'}
+        ).annotate(
+            day=TruncDate('created_at')
         ).values('day').annotate(count=models.Count('id'))
 
         for row in activity:

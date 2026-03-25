@@ -391,6 +391,24 @@ class ZipTestCaseImportView(APIView):
         except zipfile.BadZipFile:
             return Response({'detail': 'Noto\'g\'ri ZIP fayl'}, status=400)
 
+        # ── ZIP bomb himoyasi ─────────────────────────────────────────────────
+        MAX_UNCOMPRESSED = 200 * 1024 * 1024  # 200 MB
+        total_uncompressed = sum(info.file_size for info in zf.infolist())
+        if total_uncompressed > MAX_UNCOMPRESSED:
+            return Response(
+                {'detail': 'ZIP ichidagi fayllar umumiy hajmi 200MB dan oshmasligi kerak'},
+                status=400,
+            )
+
+        # ── Path traversal himoyasi ───────────────────────────────────────────
+        for name in zf.namelist():
+            norm = os.path.normpath(name)
+            if norm.startswith('..') or os.path.isabs(norm):
+                return Response(
+                    {'detail': f'Xavfli fayl nomi ZIP ichida: {name}'},
+                    status=400,
+                )
+
         # .in fayllarni topish va tartiblash
         in_files = sorted(
             [n for n in zf.namelist() if n.endswith('.in') and not n.startswith('__')],
