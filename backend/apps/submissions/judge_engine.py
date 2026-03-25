@@ -92,9 +92,9 @@ LANGUAGE_CONFIG: Dict[str, Dict[str, Any]] = {
         ],
         'run':             [
             '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
-            '-Xss8m',
+            '-Xss512k',                        # 8m→512k: JVM thread stack, algoritmlar uchun yetarli
             '-Xmx256m',
-            '-XX:CompressedClassSpaceSize=32m',    # 1GB → 32MB
+            '-XX:CompressedClassSpaceSize=32m',
             '-XX:ReservedCodeCacheSize=32m',
             '-XX:+UseSerialGC',
             '-XX:TieredStopAtLevel=1',
@@ -108,7 +108,7 @@ LANGUAGE_CONFIG: Dict[str, Dict[str, Any]] = {
         },
         'time_multiplier': 2.0,
         'memory_limit_kb': 786432,
-        'max_processes':   64,
+        'max_processes':   512,   # 64→512: JVM ichki threadlari (Finalizer, GC, Signal...) uchun
     },
 
     'csharp': {
