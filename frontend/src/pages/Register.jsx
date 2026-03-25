@@ -73,7 +73,7 @@ export default function Register() {
         setErrors({});
         try {
             const res = await register(form);
-            setAuth({ user: res.data.user, access: res.data.access, refresh: res.data.refresh });
+            setAuth(res.data.user || res.data);
             navigate('/problems');
         } catch (err) {
             setErrors(err.response?.data || { detail: "Xato yuz berdi. Qayta urinib ko'ring." });

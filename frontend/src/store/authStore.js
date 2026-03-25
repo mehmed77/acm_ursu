@@ -12,25 +12,24 @@ const safeParseUser = () => {
 
 export const useAuthStore = create((set) => ({
     user: safeParseUser(),
-    isAuthenticated: !!localStorage.getItem('access_token'),
+    // Token localStorage da saqlanmaydi — httpOnly cookie'da.
+    // isAuthenticated foydalanuvchi ob'ekti borligiga qarab aniqlanadi.
+    isAuthenticated: !!safeParseUser(),
 
-    login: (userData, tokens) => {
-        localStorage.setItem('access_token', tokens.access)
-        localStorage.setItem('refresh_token', tokens.refresh)
-
-        const userObj = userData.user || userData
-
+    // login va setAuth — bir xil funksiya (Login va Register sahifalari uchun)
+    login: (userData) => {
+        const userObj = userData?.user || userData
         localStorage.setItem('user', JSON.stringify(userObj))
+        set({ user: userObj, isAuthenticated: true })
+    },
 
-        set({
-            user: userObj,
-            isAuthenticated: true,
-        })
+    setAuth: (userData) => {
+        const userObj = userData?.user || userData
+        localStorage.setItem('user', JSON.stringify(userObj))
+        set({ user: userObj, isAuthenticated: true })
     },
 
     logout: () => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
         localStorage.removeItem('user')
         set({ user: null, isAuthenticated: false })
     },

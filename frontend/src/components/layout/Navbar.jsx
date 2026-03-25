@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import { logout as apiLogout } from '../../api/auth';
 import Container from '../ui/Container';
 
 const RANKS = [
@@ -601,7 +602,8 @@ export default function Navbar() {
                                             icon="🚪"
                                             label="Chiqish"
                                             color="#ef4444"
-                                            onClick={() => {
+                                            onClick={async () => {
+                                                try { await apiLogout(); } catch { /* ignore */ }
                                                 logout();
                                                 navigate('/');
                                                 setDropdown(false);

@@ -77,10 +77,7 @@ export default function Login() {
         setAttemptsLeft(null);
         try {
             const res = await apiLogin(form);
-            loginStore(res.data.user || res.data, {
-                access:  res.data.access,
-                refresh: res.data.refresh,
-            });
+            loginStore(res.data.user || res.data);
             navigate('/problems');
         } catch (err) {
             const data = err.response?.data || {};

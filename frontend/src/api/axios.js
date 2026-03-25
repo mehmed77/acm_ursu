@@ -1,22 +1,14 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-// Vite proxy orqali ishlashi uchun nisbiy yol (/api)
 const api = axios.create({
     baseURL: '/api',
     headers: { 'Content-Type': 'application/json' },
+    // httpOnly cookie'lar avtomatik yuborilishi uchun
+    withCredentials: true,
 });
 
-// Request interceptor — JWT token qo'shish
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-// Response interceptor — 401 da refresh yoki logout
+// Response interceptor — 401 da cookie refresh yoki logout
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -25,30 +17,16 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            const refreshToken = localStorage.getItem('refresh_token');
-            const accessToken  = localStorage.getItem('access_token');
-
-            if (refreshToken) {
-                // Foydalanuvchi oldin kirgan — tokenni yangilashga urinish
-                try {
-                    const res = await axios.post(
-                        '/api/auth/token/refresh/',
-                        { refresh: refreshToken }
-                    );
-                    const { access } = res.data;
-                    localStorage.setItem('access_token', access);
-                    originalRequest.headers.Authorization = `Bearer ${access}`;
-                    return api(originalRequest);
-                } catch {
-                    useAuthStore.getState().logout();
-                    window.location.href = '/login';
-                }
-            } else if (accessToken) {
-                // Access token bor, refresh yo'q — sessiya tugagan
+            try {
+                // Cookie'dagi refresh_token bilan yangi access_token olish
+                // withCredentials: true bo'lgani uchun cookie avtomatik yuboriladi
+                await axios.post('/api/auth/token/refresh/', {}, { withCredentials: true });
+                // Yangi access_token cookie o'rnatildi — so'rovni qayta yuborish
+                return api(originalRequest);
+            } catch {
                 useAuthStore.getState().logout();
                 window.location.href = '/login';
             }
-            // Token umuman yo'q — kirish talab qilmaydigan sahifa, xatoni e'tiborsiz qoldirish
         }
 
         return Promise.reject(error);

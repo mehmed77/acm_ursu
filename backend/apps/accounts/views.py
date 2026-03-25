@@ -3,6 +3,7 @@ import hmac
 import logging
 import secrets
 
+from django.conf import settings as djsettings
 from django.db.models.functions import TruncDate
 
 from rest_framework import generics, status
@@ -10,9 +11,38 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken
 from django.contrib.auth import get_user_model, authenticate
 from django.core.cache import cache
+
+
+# ── httpOnly Cookie yordamchisi ───────────────────────────────────────────────
+
+_COOKIE_ACCESS_AGE  = 60 * 60          # 1 soat (ACCESS_TOKEN_LIFETIME bilan bir xil)
+_COOKIE_REFRESH_AGE = 7 * 24 * 60 * 60 # 7 kun (REFRESH_TOKEN_LIFETIME bilan bir xil)
+
+
+def _set_auth_cookies(response, access_token, refresh_token=None):
+    """
+    JWT tokenlarni httpOnly cookie sifatida o'rnatadi.
+    - httponly=True  → JavaScript o'qiy olmaydi (XSS himoyasi)
+    - samesite='Lax' → Cross-site POST da cookie yuborilmaydi (CSRF himoyasi)
+    - secure         → Production da faqat HTTPS orqali yuboriladi
+    """
+    is_secure = not djsettings.DEBUG
+    common = dict(httponly=True, secure=is_secure, samesite='Lax', path='/')
+    response.set_cookie('access_token', str(access_token),
+                        max_age=_COOKIE_ACCESS_AGE, **common)
+    if refresh_token is not None:
+        response.set_cookie('refresh_token', str(refresh_token),
+                            max_age=_COOKIE_REFRESH_AGE, **common)
+
+
+def _clear_auth_cookies(response):
+    """Login chiqishda tokenlarni o'chiradi."""
+    response.delete_cookie('access_token',  path='/')
+    response.delete_cookie('refresh_token', path='/')
 
 from .hemis_service import HemisService
 from .serializers import (
@@ -46,11 +76,9 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
-        return Response(
+        response = Response(
             {
                 "message": "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi.",
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
                 "user": {
                     "id": user.id,
                     "username": user.username,
@@ -63,6 +91,8 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+        _set_auth_cookies(response, refresh.access_token, refresh)
+        return response
 
 
 class LoginView(APIView):
@@ -120,12 +150,9 @@ class LoginView(APIView):
             cache.delete(lock_key)
 
             refresh = RefreshToken.for_user(user)
-
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': self._user_response(user),
-            })
+            response = Response({'user': self._user_response(user)})
+            _set_auth_cookies(response, refresh.access_token, refresh)
+            return response
 
         # ━━━ 2. HEMIS login ━━━
         hemis_result = HemisService.login_with_credentials(username, password)
@@ -200,11 +227,9 @@ class LoginView(APIView):
             user.hemis_id,
         )
 
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': self._user_response(user),
-        })
+        response = Response({'user': self._user_response(user)})
+        _set_auth_cookies(response, refresh.access_token, refresh)
+        return response
 
     @staticmethod
     def _user_response(user):
@@ -372,9 +397,7 @@ class AdminLoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
-        return Response({
-            'access':  str(refresh.access_token),
-            'refresh': str(refresh),
+        response = Response({
             'user': {
                 'id':           user.id,
                 'username':     user.username,
@@ -383,6 +406,54 @@ class AdminLoginView(APIView):
                 'is_superuser': user.is_superuser,
             }
         })
+        _set_auth_cookies(response, refresh.access_token, refresh)
+        return response
+
+
+class CookieTokenRefreshView(APIView):
+    """
+    POST /api/auth/token/refresh/
+    Cookie'dagi refresh_token dan yangi access_token cookie yaratadi.
+    Request body talab qilmaydi — cookie avtomatik yuboriladi.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token topilmadi'}, status=401)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            new_access = refresh.access_token
+        except TokenError as exc:
+            _clear_auth_cookies(Response())
+            raise InvalidToken({'detail': str(exc)}) from exc
+
+        response = Response({'detail': 'Token yangilandi'})
+        _set_auth_cookies(response, new_access)   # faqat access yangilanadi
+        return response
+
+
+class LogoutView(APIView):
+    """
+    POST /api/auth/logout/
+    httpOnly cookie'larni o'chiradi va refresh tokenni blacklist qiladi.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass  # token allaqachon eskirgan yoki noto'g'ri
+
+        response = Response({'detail': 'Chiqildi'})
+        _clear_auth_cookies(response)
+        return response
 
 
 class AdminUserListView(APIView):
